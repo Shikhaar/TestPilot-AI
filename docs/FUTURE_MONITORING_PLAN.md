@@ -1,4 +1,4 @@
-# 📊 Future Roadmap: Observability & Monitoring Redesign
+#  Future Roadmap: Observability & Monitoring Redesign
 
 This document outlines the proposed architecture and implementation plan for a production-grade, native observability dashboard for TestPilot AI. 
 
@@ -6,7 +6,7 @@ The goal is to replace direct user exposure of Celery Flower and Grafana with a 
 
 ---
 
-## 🏗️ Proposed Architecture
+##  Proposed Architecture
 
 ```
                                ┌───────────────────────────┐
@@ -40,7 +40,7 @@ The goal is to replace direct user exposure of Celery Flower and Grafana with a 
 
 ---
 
-## 📈 Components to Instrument & Collect
+##  Components to Instrument & Collect
 
 ### 1. Backend (FastAPI)
 * Request count & response statuses
@@ -102,7 +102,7 @@ Create endpoints that query the Prometheus API, parse results, and format it int
 
 ---
 
-## 🎨 Next.js Dashboard Layout & UI Design
+##  Next.js Dashboard Layout & UI Design
 
 The UI will be designed natively inside the Next.js App Router using the existing Tailwind styling system, combined with modern elements inspired by Linear, Datadog, and Vercel.
 
