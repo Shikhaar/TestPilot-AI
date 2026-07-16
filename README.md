@@ -1,4 +1,4 @@
-# ✈️ TestPilot AI
+#  TestPilot AI
 
 [![CD Build Status](https://github.com/Shikhaar/TestPilot-AI/actions/workflows/cd.yml/badge.svg)](https://github.com/Shikhaar/TestPilot-AI/actions)
 [![CI Check Status](https://github.com/Shikhaar/TestPilot-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/Shikhaar/TestPilot-AI/actions)
@@ -11,7 +11,7 @@ TestPilot AI is a production-grade AI platform that automatically analyzes GitHu
 
 ---
 
-## 🏗️ System Architecture
+##  System Architecture
 
 ```
                     ┌───────────────────────────┐
@@ -49,7 +49,7 @@ The core engine uses a state-of-the-art **multi-agent orchestration workflow** p
 
 ---
 
-## 🛠️ Technology Stack
+##  Technology Stack
 
 * **Frontend**: Next.js 15 (React 19, TailwindCSS, CSS Variables)
 * **Backend**: FastAPI, SQLAlchemy 2, Alembic, Poetry
@@ -60,7 +60,7 @@ The core engine uses a state-of-the-art **multi-agent orchestration workflow** p
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 
@@ -82,7 +82,7 @@ Ensure the following variables are set in `.env`:
 
 ---
 
-## 💻 CLI Developer Commands (Makefile)
+## CLI Developer Commands (Makefile)
 
 A `Makefile` is provided with helpful shortcuts for local execution:
 
@@ -116,7 +116,7 @@ make test-cov        # Run tests and output HTML coverage reports
 
 ---
 
-## 📊 Monitoring & Port Mappings
+##  Monitoring & Port Mappings
 
 Once running (`make dev`), you can access different platform dashboards:
 
@@ -130,6 +130,6 @@ Once running (`make dev`), you can access different platform dashboards:
 
 ---
 
-## 🛡️ License
+## License
 
 Distributed under the **MIT License**. See `LICENSE` for more information.
