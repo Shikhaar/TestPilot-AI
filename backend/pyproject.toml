@@ -1,0 +1,191 @@
+[tool.poetry]
+name = "testpilot-ai-backend"
+version = "0.1.0"
+description = "TestPilot AI — AI-Powered Regression Testing Platform"
+authors = ["TestPilot AI <team@testpilot.ai>"]
+readme = "README.md"
+packages = [{include = "app"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+# Web Framework
+fastapi = "^0.115.6"
+uvicorn = {extras = ["standard"], version = "^0.34.0"}
+
+# Pydantic
+pydantic = "^2.10.4"
+pydantic-settings = "^2.7.1"
+
+# Database
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.37"}
+alembic = "^1.14.1"
+asyncpg = "^0.30.0"
+greenlet = "^3.1.1"
+
+# Redis / Celery
+redis = {extras = ["hiredis"], version = "^5.2.1"}
+celery = {extras = ["redis"], version = "^5.4.0"}
+flower = "^2.0.1"
+
+# GitHub
+pygithub = "^2.5.0"
+httpx = {extras = ["http2"], version = "^0.28.1"}
+
+# JWT / Security
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+python-multipart = "^0.0.20"
+cryptography = "^44.0.0"
+
+# AI / LLM
+langchain = "^0.3.13"
+langchain-openai = "^0.3.0"
+langchain-community = "^0.3.13"
+langgraph = "^0.2.64"
+litellm = "^1.59.9"
+instructor = "^1.7.9"
+openai = "^1.59.7"
+tenacity = "^9.0.0"
+
+# Embeddings / Vector Store
+sentence-transformers = "^3.3.1"
+qdrant-client = {extras = ["fastembed"], version = "^1.13.0"}
+
+# AST Parsing
+tree-sitter = "^0.23.2"
+tree-sitter-python = "^0.23.6"
+tree-sitter-javascript = "^0.23.1"
+tree-sitter-typescript = "^0.23.2"
+tree-sitter-java = "^0.23.5"
+tree-sitter-go = "^0.23.4"
+tree-sitter-rust = "^0.23.2"
+
+# Graph Analysis
+networkx = "^3.4.2"
+
+# Git
+gitpython = "^3.1.43"
+
+# Logging / Observability
+structlog = "^24.4.0"
+opentelemetry-api = "^1.29.0"
+opentelemetry-sdk = "^1.29.0"
+opentelemetry-instrumentation-fastapi = "^0.50b0"
+opentelemetry-instrumentation-sqlalchemy = "^0.50b0"
+opentelemetry-instrumentation-redis = "^0.50b0"
+opentelemetry-instrumentation-celery = "^0.50b0"
+opentelemetry-exporter-otlp-proto-grpc = "^1.29.0"
+prometheus-client = "^0.21.1"
+
+# Utilities
+orjson = "^3.10.13"
+python-dotenv = "^1.0.1"
+click = "^8.1.8"
+rich = "^13.9.4"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.4"
+pytest-asyncio = "^0.25.2"
+pytest-cov = "^6.0.0"
+pytest-mock = "^3.14.0"
+httpx = {extras = ["http2"], version = "^0.28.1"}
+factory-boy = "^3.3.1"
+faker = "^33.3.1"
+black = "^24.10.0"
+ruff = "^0.9.1"
+mypy = "^1.14.1"
+types-redis = "^4.6.0"
+types-passlib = "^1.7.7"
+types-python-jose = "^3.3.4"
+pre-commit = "^4.0.1"
+ipython = "^8.31.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+# ==============================================================================
+# Tool Configuration
+# ==============================================================================
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  alembic/versions
+)/
+'''
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["alembic/versions"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "ARG", # flake8-unused-arguments
+    "SIM", # flake8-simplify
+]
+ignore = [
+    "E501",   # line too long (handled by black)
+    "B008",   # do not perform function calls in default arguments
+    "C901",   # too complex
+    "ARG001", # unused function argument
+    "ARG002", # unused method argument
+]
+
+[tool.ruff.lint.isort]
+known-third-party = ["fastapi", "pydantic", "sqlalchemy", "celery", "langchain", "langgraph"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+ignore_missing_imports = true
+exclude = ["alembic/"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "unit: Unit tests (no external dependencies)",
+    "integration: Integration tests (requires database, redis)",
+    "e2e: End-to-end tests",
+    "slow: Slow tests",
+]
+addopts = [
+    "--tb=short",
+    "--strict-markers",
+    "-p no:warnings",
+]
+
+[tool.coverage.run]
+source = ["app"]
+omit = ["tests/*", "alembic/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]

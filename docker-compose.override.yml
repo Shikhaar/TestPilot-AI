@@ -1,0 +1,50 @@
+# ==============================================================================
+# TestPilot AI — Docker Compose Development Override
+# Maps local source directories into containers to support hot-reloading (uvicorn).
+# ==============================================================================
+
+services:
+  backend:
+    build:
+      context: ./backend
+    volumes:
+      - ./backend:/app
+      - ./secrets/testpilot-ai-shikhar.2026-07-14.private-key.pem:/app/private-key.pem
+    environment:
+      - APP_ENV=dev
+      - DEBUG=True
+    ports:
+      - "8000:8000"
+
+  celery-worker:
+    build:
+      context: ./backend
+    volumes:
+      - ./backend:/app
+      - ./secrets/testpilot-ai-shikhar.2026-07-14.private-key.pem:/app/private-key.pem
+    environment:
+      - APP_ENV=dev
+      - DEBUG=True
+
+  celery-beat:
+    build:
+      context: ./backend
+    volumes:
+      - ./backend:/app
+      - ./secrets/testpilot-ai-shikhar.2026-07-14.private-key.pem:/app/private-key.pem
+    environment:
+      - APP_ENV=dev
+      - DEBUG=True
+
+  postgres:
+    ports:
+      - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"
+
+  qdrant:
+    ports:
+      - "6333:6333"
+      - "6334:6334"
