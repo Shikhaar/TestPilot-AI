@@ -1,0 +1,96 @@
+# ==============================================================================
+# TestPilot AI — GitHub Actions Continuous Integration (CI)
+# ==============================================================================
+
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend-test:
+    name: Backend Lint, Type Check & Test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: testpilot_test
+          POSTGRES_USER: testpilot
+          POSTGRES_PASSWORD: testpilot_secret
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Cache Poetry Virtualenv
+        uses: actions/cache@v4
+        id: cached-poetry-dependencies
+        with:
+          path: backend/.venv
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install Dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: |
+          cd backend
+          poetry install --no-interaction --no-root
+
+      - name: Lint with Ruff
+        run: |
+          cd backend
+          poetry run ruff check .
+
+      - name: Check Formatting
+        run: |
+          cd backend
+          poetry run ruff format --check .
+
+      - name: Type Check with Mypy
+        run: |
+          cd backend
+          poetry run mypy app/
+
+      - name: Run Backend Tests
+        env:
+          DATABASE_URL: postgresql+asyncpg://testpilot:testpilot_secret@localhost:5432/testpilot_test
+          REDIS_URL: redis://localhost:6379/15
+          SECRET_KEY: test-secret-key-for-testing-only
+          JWT_SECRET_KEY: test-jwt-secret-key
+          OPENAI_API_KEY: sk-test-placeholder
+          USE_LOCAL_EMBEDDINGS: "True"
+        run: |
+          cd backend
+          poetry run pytest tests/ -v -m "unit"
