@@ -130,6 +130,6 @@ Once running (`make dev`), you can access different platform dashboards:
 
 ---
 
-## 🛡️ License
+## License
 
 Distributed under the **MIT License**. See `LICENSE` for more information.
