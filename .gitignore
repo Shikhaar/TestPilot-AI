@@ -60,3 +60,6 @@ secrets/
 
 # Alembic
 backend/alembic/versions/*.pyc
+
+# Celery Beat
+backend/celerybeat-schedule*
