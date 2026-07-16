@@ -64,6 +64,7 @@ services:
       - "8000:8000"
     volumes:
       - repo-storage:/tmp/repos
+      - ./backend/private-key.pem:/app/private-key.pem:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -85,6 +86,7 @@ services:
       --hostname=worker@%h
     volumes:
       - repo-storage:/tmp/repos
+      - ./backend/private-key.pem:/app/private-key.pem:ro
     healthcheck:
       test: ["CMD", "celery", "-A", "app.workers.celery_app", "inspect", "ping"]
       interval: 60s
@@ -98,6 +100,8 @@ services:
       celery -A app.workers.celery_app beat
       --loglevel=info
       --scheduler=celery.beat:PersistentScheduler
+    volumes:
+      - ./backend/private-key.pem:/app/private-key.pem:ro
 
   celery-flower:
     <<: *backend-common
@@ -106,6 +110,8 @@ services:
       celery -A app.workers.celery_app flower
       --port=5555
       --basic_auth=${FLOWER_USER}:${FLOWER_PASSWORD}
+    volumes:
+      - ./backend/private-key.pem:/app/private-key.pem:ro
     ports:
       - "5555:5555"
 
