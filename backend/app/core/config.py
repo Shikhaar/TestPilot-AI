@@ -132,8 +132,9 @@ class Settings(BaseSettings):
     # LiteLLM / AI
     # --------------------------------------------------------------------------
     openai_api_key: str = Field(default="sk-placeholder")
-    litellm_default_model: str = Field(default="gpt-4o-mini")
-    litellm_fallback_model: str = Field(default="ollama/mistral")
+    gemini_api_key: str = Field(default="", description="Google Gemini API key")
+    litellm_default_model: str = Field(default="gemini/gemini-2.0-flash")
+    litellm_fallback_model: str = Field(default="gemini/gemini-1.5-flash")
     litellm_embedding_model: str = Field(default="text-embedding-3-small")
     ollama_host: str = Field(default="http://localhost:11434")
     anthropic_api_key: str = Field(default="")

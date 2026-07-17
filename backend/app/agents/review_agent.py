@@ -175,6 +175,7 @@ Format the markdown_review as a GitHub PR comment with sections:
         response_model=PRReviewOutput,
         max_tokens=2048,
         temperature=0.1,
+        api_key=settings.gemini_api_key or settings.openai_api_key or None,
     )
     return result
 

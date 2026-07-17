@@ -145,6 +145,7 @@ unrelated to the PR changes, say so clearly.
             response_model=FailureAnalysisResult,
             max_tokens=1024,
             temperature=0.0,
+            api_key=settings.gemini_api_key or settings.openai_api_key or None,
         )
 
         return FailureAnalysis(
