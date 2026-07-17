@@ -142,6 +142,8 @@ ignore = [
     "C901",   # too complex
     "ARG001", # unused function argument
     "ARG002", # unused method argument
+    "E402",   # Module level import not at top of file (dynamic/graph imports)
+    "B904",   # Within an except clause, raise exceptions with raise ... from
 ]
 
 [tool.ruff.lint.isort]
