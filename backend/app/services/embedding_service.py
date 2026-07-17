@@ -8,6 +8,7 @@ Supports local SentenceTransformer embeddings or cloud-based LiteLLM embeddings.
 from __future__ import annotations
 
 from functools import lru_cache
+from typing import Any
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
@@ -28,11 +29,16 @@ class EmbeddingService:
         if self._local_model is None:
             try:
                 from sentence_transformers import SentenceTransformer
+
                 self._local_model = SentenceTransformer(settings.sentence_transformer_model)
-                logger.info("SentenceTransformer model loaded", model=settings.sentence_transformer_model)
+                logger.info(
+                    "SentenceTransformer model loaded", model=settings.sentence_transformer_model
+                )
             except ImportError as e:
                 logger.error("Failed to load sentence-transformers library", error=str(e))
-                raise RuntimeError("sentence-transformers not installed. Install it or set USE_LOCAL_EMBEDDINGS=False")
+                raise RuntimeError(
+                    "sentence-transformers not installed. Install it or set USE_LOCAL_EMBEDDINGS=False"
+                ) from e
         return self._local_model
 
     def generate_embedding(self, text: str) -> list[float]:
@@ -44,13 +50,17 @@ class EmbeddingService:
         else:
             try:
                 import litellm
+
                 response = litellm.embedding(
                     model=settings.litellm_default_model,  # e.g. text-embedding-3-small
                     input=[text],
                 )
                 return response.data[0]["embedding"]
             except Exception as e:
-                logger.warning("Cloud embedding generation failed, falling back to local if possible", error=str(e))
+                logger.warning(
+                    "Cloud embedding generation failed, falling back to local if possible",
+                    error=str(e),
+                )
                 # Fallback to local if installed
                 try:
                     model = self._get_local_model()
@@ -72,13 +82,17 @@ class EmbeddingService:
         else:
             try:
                 import litellm
+
                 response = litellm.embedding(
                     model=settings.litellm_default_model,
                     input=texts,
                 )
                 return [item["embedding"] for item in response.data]
             except Exception as e:
-                logger.warning("Batch cloud embedding failed, falling back to sequential local/mock", error=str(e))
+                logger.warning(
+                    "Batch cloud embedding failed, falling back to sequential local/mock",
+                    error=str(e),
+                )
                 return [self.generate_embedding(t) for t in texts]
 
 

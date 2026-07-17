@@ -3,15 +3,17 @@
 from __future__ import annotations
 
 import asyncio
-from logging.config import fileConfig
-from pathlib import Path
-
-from alembic import context
-from sqlalchemy import pool
-from sqlalchemy.ext.asyncio import async_engine_from_config
 
 # Load environment variables
 import sys
+from logging.config import fileConfig
+from pathlib import Path
+
+from sqlalchemy import pool
+from sqlalchemy.ext.asyncio import async_engine_from_config
+
+from alembic import context
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.core.config import get_settings

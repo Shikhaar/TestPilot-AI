@@ -7,7 +7,7 @@ used across all API endpoints.
 
 from __future__ import annotations
 
-from typing import Any, Generic, TypeVar
+from typing import Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -61,7 +61,7 @@ class PaginatedResponse(BaseModel, Generic[T]):
         total: int,
         page: int,
         page_size: int,
-    ) -> "PaginatedResponse[T]":
+    ) -> PaginatedResponse[T]:
         """Factory method to create a paginated response.
 
         Args:

@@ -9,14 +9,12 @@ and runs the full LangGraph multi-agent pipeline.
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
 from typing import Any
 
-import structlog
 from celery import Task
 
-from app.workers.celery_app import celery_app
 from app.core.logging import get_logger
+from app.workers.celery_app import celery_app
 
 logger = get_logger(__name__)
 
@@ -154,6 +152,7 @@ async def _update_pr_status(
 ) -> None:
     """Update the PR analysis status in the database."""
     from sqlalchemy import update
+
     from app.database.session import get_session
     from app.models.pull_request import PullRequest
 
@@ -169,7 +168,9 @@ async def _update_pr_status(
 async def _store_analysis_results(pr_id: str, state: dict[str, Any]) -> None:
     """Store the complete analysis results in the database."""
     import json
+
     from sqlalchemy import update
+
     from app.database.session import get_session
     from app.models.pull_request import PullRequest
     from app.models.review_comment import ReviewComment
@@ -193,14 +194,16 @@ async def _store_analysis_results(pr_id: str, state: dict[str, Any]) -> None:
 
         # Store the review comment
         if review:
-            db.add(ReviewComment(
-                pull_request_id=pr_id,
-                body=review.get("full_review_body", ""),
-                risk_level=review.get("risk_level", "low"),
-                risk_score=review.get("risk_score", 0.0),
-                summary=review.get("summary"),
-                action_items=json.dumps(review.get("action_items", [])),
-                is_posted=False,
-            ))
+            db.add(
+                ReviewComment(
+                    pull_request_id=pr_id,
+                    body=review.get("full_review_body", ""),
+                    risk_level=review.get("risk_level", "low"),
+                    risk_score=review.get("risk_score", 0.0),
+                    summary=review.get("summary"),
+                    action_items=json.dumps(review.get("action_items", [])),
+                    is_posted=False,
+                )
+            )
 
         logger.info("Analysis results stored", pr_id=pr_id)

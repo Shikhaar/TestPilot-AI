@@ -66,7 +66,8 @@ async def test_get_repository_success(
 async def test_health_check() -> None:
     """Test the health check endpoint returns healthy status."""
     # Health check doesn't need auth
-    from httpx import AsyncClient, ASGITransport
+    from httpx import ASGITransport, AsyncClient
+
     from app.main import app
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:

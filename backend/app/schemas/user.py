@@ -12,6 +12,7 @@ from app.schemas.common import BaseSchema
 
 class UserRole(str, Enum):
     """User role enum."""
+
     ADMIN = "admin"
     MEMBER = "member"
     VIEWER = "viewer"

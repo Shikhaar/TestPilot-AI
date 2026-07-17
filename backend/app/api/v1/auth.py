@@ -21,8 +21,10 @@ async def github_login_url() -> dict[str, str]:
     Returns:
         The GitHub OAuth URL to redirect the user to.
     """
-    from app.core.config import get_settings
     import secrets
+
+    from app.core.config import get_settings
+
     settings = get_settings()
 
     state = secrets.token_urlsafe(32)
@@ -47,10 +49,12 @@ async def github_callback(
     fetches the user's GitHub profile, and creates/updates
     the user record in the database.
     """
+    import uuid
+
     from sqlalchemy import select
+
     from app.models.user import User
     from app.services.github_service import GitHubService
-    import uuid
 
     github = GitHubService()
 
@@ -61,7 +65,7 @@ async def github_callback(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"GitHub OAuth error: {e}",
-        )
+        ) from e
 
     access_token = token_data.get("access_token")
     if not access_token:
@@ -77,12 +81,10 @@ async def github_callback(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Could not fetch GitHub user: {e}",
-        )
+        ) from e
 
     # Create or update user
-    result = await db.execute(
-        select(User).where(User.github_id == str(gh_user["id"]))
-    )
+    result = await db.execute(select(User).where(User.github_id == str(gh_user["id"])))
     user = result.scalar_one_or_none()
 
     if not user:
@@ -111,6 +113,7 @@ async def github_callback(
     jwt_refresh = create_refresh_token(user.id)
 
     from app.core.config import get_settings
+
     settings = get_settings()
 
     # Set HTTP-only cookie for refresh token
@@ -141,6 +144,7 @@ async def refresh_token(
     """Refresh an expired access token using a refresh token from cookies or request body."""
     from jose import JWTError
     from sqlalchemy import select
+
     from app.models.user import User
 
     # Priority: Cookie > Request Body
@@ -158,11 +162,11 @@ async def refresh_token(
         payload = decode_token(token)
         if payload.get("type") != "refresh":
             raise ValueError("Not a refresh token")
-    except (Exception, JWTError):
+    except (Exception, JWTError) as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid refresh token",
-        )
+        ) from e
 
     user_id = payload.get("sub")
     result = await db.execute(select(User).where(User.id == user_id, User.is_active.is_(True)))

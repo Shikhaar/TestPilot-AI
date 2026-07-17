@@ -64,11 +64,11 @@ async def github_webhook(
 
     try:
         payload = await request.json()
-    except Exception:
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid JSON payload",
-        )
+        ) from e
 
     logger.info(
         "GitHub webhook received",
@@ -82,14 +82,10 @@ async def github_webhook(
         return {"status": "pong", "delivery_id": x_github_delivery or ""}
 
     elif x_github_event == "pull_request":
-        background_tasks.add_task(
-            _handle_pull_request_event, payload, x_github_delivery
-        )
+        background_tasks.add_task(_handle_pull_request_event, payload, x_github_delivery)
 
     elif x_github_event == "installation":
-        background_tasks.add_task(
-            _handle_installation_event, payload
-        )
+        background_tasks.add_task(_handle_installation_event, payload)
 
     return {
         "status": "accepted",
@@ -127,17 +123,17 @@ async def _handle_pull_request_event(
         return
 
     # Look up or create the PR record and trigger analysis
+    import uuid
+
+    from sqlalchemy import select
+
     from app.database.session import get_session
     from app.models.pull_request import PullRequest
     from app.models.repository import Repository
-    from sqlalchemy import select
-    import uuid
 
     async with get_session() as db:
         repo_result = await db.execute(
-            select(Repository).where(
-                Repository.full_name == repo_data.get("full_name")
-            )
+            select(Repository).where(Repository.full_name == repo_data.get("full_name"))
         )
         repo = repo_result.scalar_one_or_none()
 
@@ -181,6 +177,7 @@ async def _handle_pull_request_event(
 
     # Enqueue the analysis task
     from app.tasks.pr_pipeline import run_pr_analysis
+
     run_pr_analysis.delay(
         pr_id=pr.id,
         repository_id=repo.id,

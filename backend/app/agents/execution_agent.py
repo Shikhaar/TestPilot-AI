@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import json
 import subprocess
-import tempfile
 import time
+from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
@@ -53,10 +53,8 @@ def execution_agent_node(state: AgentState) -> dict[str, Any]:
 
         # Cleanup generated test files
         for f in written_files:
-            try:
+            with suppress(OSError):
                 f.unlink(missing_ok=True)
-            except OSError:
-                pass
 
         duration = time.monotonic() - start_time
         logger.info(
@@ -87,7 +85,10 @@ def execution_agent_node(state: AgentState) -> dict[str, Any]:
             "execution_results": TestExecutionResult(
                 runner="unknown",
                 status="error",
-                total=0, passed=0, failed=0, skipped=0,
+                total=0,
+                passed=0,
+                failed=0,
+                skipped=0,
                 duration_seconds=0.0,
                 coverage_percentage=None,
                 failed_tests=[],
@@ -147,18 +148,24 @@ def _run_tests(
     """
     commands = {
         "pytest": [
-            "python", "-m", "pytest",
+            "python",
+            "-m",
+            "pytest",
             "--json-report",
             "--json-report-file=/tmp/testpilot_report.json",
             "--cov=.",
             "--cov-report=json:/tmp/testpilot_coverage.json",
-            "-v", "--tb=short",
+            "-v",
+            "--tb=short",
             "--no-header",
         ],
         "jest": [
-            "npx", "jest",
-            "--json", "--outputFile=/tmp/testpilot_jest.json",
-            "--coverage", "--coverageReporters=json",
+            "npx",
+            "jest",
+            "--json",
+            "--outputFile=/tmp/testpilot_jest.json",
+            "--coverage",
+            "--coverageReporters=json",
         ],
         "go_test": ["go", "test", "./...", "-v", "-cover"],
         "maven": ["mvn", "test", "-q"],
@@ -187,7 +194,10 @@ def _run_tests(
         return TestExecutionResult(
             runner=runner,
             status="error",
-            total=0, passed=0, failed=0, skipped=0,
+            total=0,
+            passed=0,
+            failed=0,
+            skipped=0,
             duration_seconds=float(timeout),
             coverage_percentage=None,
             failed_tests=[],
@@ -198,7 +208,10 @@ def _run_tests(
         return TestExecutionResult(
             runner=runner,
             status="error",
-            total=0, passed=0, failed=0, skipped=0,
+            total=0,
+            passed=0,
+            failed=0,
+            skipped=0,
             duration_seconds=0.0,
             coverage_percentage=None,
             failed_tests=[],
@@ -228,11 +241,13 @@ def _parse_pytest_results(
 
             for test in report.get("tests", []):
                 if test.get("outcome") == "failed":
-                    failed_tests.append({
-                        "name": test.get("nodeid", "unknown"),
-                        "message": test.get("call", {}).get("longrepr", ""),
-                        "duration": test.get("call", {}).get("duration", 0),
-                    })
+                    failed_tests.append(
+                        {
+                            "name": test.get("nodeid", "unknown"),
+                            "message": test.get("call", {}).get("longrepr", ""),
+                            "duration": test.get("call", {}).get("duration", 0),
+                        }
+                    )
         except (json.JSONDecodeError, KeyError):
             pass
 

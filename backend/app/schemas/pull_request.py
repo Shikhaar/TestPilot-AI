@@ -12,6 +12,7 @@ from app.schemas.common import BaseSchema
 
 class RiskLevel(str, Enum):
     """PR risk classification levels."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -20,6 +21,7 @@ class RiskLevel(str, Enum):
 
 class AnalysisStatus(str, Enum):
     """PR analysis pipeline status."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"

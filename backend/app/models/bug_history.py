@@ -7,7 +7,7 @@ it is stored here with an embedding reference for future similarity search.
 
 from __future__ import annotations
 
-from sqlalchemy import Float, ForeignKey, String, Text
+from sqlalchemy import ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base_class import Base
@@ -57,7 +57,7 @@ class BugHistory(Base, UUIDMixin, TimestampMixin):
     tags: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON list[str]
 
     # Relationships
-    repository: Mapped["Repository"] = relationship(  # type: ignore[name-defined]  # noqa: F821
+    repository: Mapped[Repository] = relationship(  # type: ignore[name-defined]  # noqa: F821
         "Repository",
         back_populates="bug_history",
     )

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy import Float, ForeignKey, Integer, String, Text
+from sqlalchemy import ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base_class import Base
@@ -40,7 +40,7 @@ class AgentRun(Base, UUIDMixin, TimestampMixin):
     started_at: Mapped[str | None] = mapped_column(String(50), nullable=True)
     finished_at: Mapped[str | None] = mapped_column(String(50), nullable=True)
     duration_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    input_data: Mapped[str | None] = mapped_column(Text, nullable=True)   # JSON
+    input_data: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON
     output_data: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     retry_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
@@ -48,7 +48,7 @@ class AgentRun(Base, UUIDMixin, TimestampMixin):
     total_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     # Relationships
-    pull_request: Mapped["PullRequest"] = relationship(  # type: ignore[name-defined]  # noqa: F821
+    pull_request: Mapped[PullRequest] = relationship(  # type: ignore[name-defined]  # noqa: F821
         "PullRequest",
         back_populates="agent_runs",
     )

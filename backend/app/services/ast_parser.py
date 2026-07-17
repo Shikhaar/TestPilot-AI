@@ -15,7 +15,6 @@ Supports: Python, JavaScript, TypeScript, Java, Go, Rust.
 from __future__ import annotations
 
 import hashlib
-import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -40,6 +39,7 @@ LANGUAGE_EXTENSIONS: dict[str, str] = {
 @dataclass
 class FunctionInfo:
     """Extracted function/method information."""
+
     name: str
     parameters: list[str]
     return_type: str | None
@@ -55,6 +55,7 @@ class FunctionInfo:
 @dataclass
 class ClassInfo:
     """Extracted class/interface information."""
+
     name: str
     base_classes: list[str]
     methods: list[str]
@@ -68,6 +69,7 @@ class ClassInfo:
 @dataclass
 class ImportInfo:
     """Extracted import statement."""
+
     module: str
     names: list[str]
     alias: str | None
@@ -78,6 +80,7 @@ class ImportInfo:
 @dataclass
 class RouteInfo:
     """Extracted API route definition."""
+
     path: str
     method: str
     handler_name: str
@@ -88,6 +91,7 @@ class RouteInfo:
 @dataclass
 class ParseResult:
     """Result of parsing a single source file."""
+
     file_path: str
     language: str
     functions: list[FunctionInfo] = field(default_factory=list)
@@ -115,11 +119,11 @@ class ASTParser:
     def _load_grammars(self) -> None:
         """Load Tree-sitter grammar parsers for supported languages."""
         try:
-            import tree_sitter_python as tspython
-            import tree_sitter_javascript as tsjavascript
-            import tree_sitter_typescript as tstypescript
-            import tree_sitter_java as tsjava
             import tree_sitter_go as tsgo
+            import tree_sitter_java as tsjava
+            import tree_sitter_javascript as tsjavascript
+            import tree_sitter_python as tspython
+            import tree_sitter_typescript as tstypescript
             from tree_sitter import Language, Parser
 
             self._parsers["python"] = Parser(Language(tspython.language()))
@@ -223,6 +227,7 @@ class ASTParser:
             List of ParseResult for each parsed file.
         """
         from app.core.config import get_settings
+
         settings = get_settings()
 
         ignored_dirs = ignored_dirs or settings.ignored_directories
@@ -257,21 +262,17 @@ class ASTParser:
     # Python Extractor
     # --------------------------------------------------------------------------
 
-    def _extract_python(
-        self, root_node: Any, source: str, result: ParseResult
-    ) -> None:
+    def _extract_python(self, root_node: Any, source: str, result: ParseResult) -> None:
         """Extract Python code symbols from Tree-sitter AST."""
-        lines = source.splitlines()
 
         def get_text(node: Any) -> str:
-            return source[node.start_byte:node.end_byte]
+            return source[node.start_byte : node.end_byte]
 
         def get_line(node: Any) -> int:
             return node.start_point[0] + 1
 
         # Walk all nodes
         stack = [root_node]
-        current_class: str | None = None
 
         while stack:
             node = stack.pop()
@@ -286,13 +287,15 @@ class ASTParser:
                         for c in child.children:
                             if c.type == "dotted_name":
                                 names.append(get_text(c))
-                result.imports.append(ImportInfo(
-                    module=module,
-                    names=names,
-                    alias=None,
-                    is_relative=False,
-                    line=get_line(node),
-                ))
+                result.imports.append(
+                    ImportInfo(
+                        module=module,
+                        names=names,
+                        alias=None,
+                        is_relative=False,
+                        line=get_line(node),
+                    )
+                )
 
             elif node.type == "import_from_statement":
                 module = ""
@@ -308,13 +311,15 @@ class ASTParser:
                         pass
                     elif child.type == "identifier":
                         names.append(get_text(child))
-                result.imports.append(ImportInfo(
-                    module=module,
-                    names=names,
-                    alias=None,
-                    is_relative=is_relative,
-                    line=get_line(node),
-                ))
+                result.imports.append(
+                    ImportInfo(
+                        module=module,
+                        names=names,
+                        alias=None,
+                        is_relative=is_relative,
+                        line=get_line(node),
+                    )
+                )
 
             elif node.type == "class_definition":
                 name_node = node.child_by_field_name("name")
@@ -336,16 +341,18 @@ class ASTParser:
                             if fn_name:
                                 methods.append(get_text(fn_name))
 
-                result.classes.append(ClassInfo(
-                    name=class_name,
-                    base_classes=base_classes,
-                    methods=methods,
-                    attributes=[],
-                    decorators=decorators,
-                    line_start=get_line(node),
-                    line_end=node.end_point[0] + 1,
-                    docstring=None,
-                ))
+                result.classes.append(
+                    ClassInfo(
+                        name=class_name,
+                        base_classes=base_classes,
+                        methods=methods,
+                        attributes=[],
+                        decorators=decorators,
+                        line_start=get_line(node),
+                        line_end=node.end_point[0] + 1,
+                        docstring=None,
+                    )
+                )
 
             elif node.type == "function_definition":
                 name_node = node.child_by_field_name("name")
@@ -359,28 +366,33 @@ class ASTParser:
                         if f".{method}(" in dec or f"@{method}(" in dec:
                             # Try to extract path
                             import re
+
                             path_match = re.search(r'["\']([^"\']+)["\']', dec)
                             if path_match:
-                                result.routes.append(RouteInfo(
-                                    path=path_match.group(1),
-                                    method=method.upper(),
-                                    handler_name=fn_name,
-                                    line=get_line(node),
-                                    framework="fastapi",
-                                ))
+                                result.routes.append(
+                                    RouteInfo(
+                                        path=path_match.group(1),
+                                        method=method.upper(),
+                                        handler_name=fn_name,
+                                        line=get_line(node),
+                                        framework="fastapi",
+                                    )
+                                )
 
-                result.functions.append(FunctionInfo(
-                    name=fn_name,
-                    parameters=[],
-                    return_type=None,
-                    decorators=decorators,
-                    line_start=get_line(node),
-                    line_end=node.end_point[0] + 1,
-                    is_async=is_async,
-                    is_method=False,
-                    class_name=None,
-                    docstring=None,
-                ))
+                result.functions.append(
+                    FunctionInfo(
+                        name=fn_name,
+                        parameters=[],
+                        return_type=None,
+                        decorators=decorators,
+                        line_start=get_line(node),
+                        line_end=node.end_point[0] + 1,
+                        is_async=is_async,
+                        is_method=False,
+                        class_name=None,
+                        docstring=None,
+                    )
+                )
 
             # Continue traversal
             stack.extend(reversed(node.children))
@@ -392,7 +404,7 @@ class ASTParser:
         if parent:
             for sibling in parent.children:
                 if sibling.end_byte <= node.start_byte and sibling.type == "decorator":
-                    decorators.append(source[sibling.start_byte:sibling.end_byte])
+                    decorators.append(source[sibling.start_byte : sibling.end_byte])
         return decorators
 
     # --------------------------------------------------------------------------
@@ -405,7 +417,7 @@ class ASTParser:
         """Extract JS/TS code symbols from Tree-sitter AST."""
 
         def get_text(node: Any) -> str:
-            return source[node.start_byte:node.end_byte]
+            return source[node.start_byte : node.end_byte]
 
         def get_line(node: Any) -> int:
             return node.start_point[0] + 1
@@ -422,43 +434,49 @@ class ASTParser:
                         module = get_text(child).strip("'\"")
                     elif child.type in ("identifier", "import_clause"):
                         names.append(get_text(child))
-                result.imports.append(ImportInfo(
-                    module=module,
-                    names=names,
-                    alias=None,
-                    is_relative=module.startswith("."),
-                    line=get_line(node),
-                ))
+                result.imports.append(
+                    ImportInfo(
+                        module=module,
+                        names=names,
+                        alias=None,
+                        is_relative=module.startswith("."),
+                        line=get_line(node),
+                    )
+                )
 
             elif node.type in ("function_declaration", "function_definition", "method_definition"):
                 name_node = node.child_by_field_name("name")
                 fn_name = get_text(name_node) if name_node else "anonymous"
-                result.functions.append(FunctionInfo(
-                    name=fn_name,
-                    parameters=[],
-                    return_type=None,
-                    decorators=[],
-                    line_start=get_line(node),
-                    line_end=node.end_point[0] + 1,
-                    is_async=any(c.type == "async" for c in node.children),
-                    is_method=node.type == "method_definition",
-                    class_name=None,
-                    docstring=None,
-                ))
+                result.functions.append(
+                    FunctionInfo(
+                        name=fn_name,
+                        parameters=[],
+                        return_type=None,
+                        decorators=[],
+                        line_start=get_line(node),
+                        line_end=node.end_point[0] + 1,
+                        is_async=any(c.type == "async" for c in node.children),
+                        is_method=node.type == "method_definition",
+                        class_name=None,
+                        docstring=None,
+                    )
+                )
 
             elif node.type == "class_declaration":
                 name_node = node.child_by_field_name("name")
                 class_name = get_text(name_node) if name_node else "Unknown"
-                result.classes.append(ClassInfo(
-                    name=class_name,
-                    base_classes=[],
-                    methods=[],
-                    attributes=[],
-                    decorators=[],
-                    line_start=get_line(node),
-                    line_end=node.end_point[0] + 1,
-                    docstring=None,
-                ))
+                result.classes.append(
+                    ClassInfo(
+                        name=class_name,
+                        base_classes=[],
+                        methods=[],
+                        attributes=[],
+                        decorators=[],
+                        line_start=get_line(node),
+                        line_end=node.end_point[0] + 1,
+                        docstring=None,
+                    )
+                )
 
             elif node.type == "export_statement":
                 result.exports.append(get_text(node)[:100])
@@ -469,13 +487,11 @@ class ASTParser:
     # Java Extractor
     # --------------------------------------------------------------------------
 
-    def _extract_java(
-        self, root_node: Any, source: str, result: ParseResult
-    ) -> None:
+    def _extract_java(self, root_node: Any, source: str, result: ParseResult) -> None:
         """Extract Java code symbols from Tree-sitter AST."""
 
         def get_text(node: Any) -> str:
-            return source[node.start_byte:node.end_byte]
+            return source[node.start_byte : node.end_byte]
 
         def get_line(node: Any) -> int:
             return node.start_point[0] + 1
@@ -485,43 +501,49 @@ class ASTParser:
             node = stack.pop()
 
             if node.type == "import_declaration":
-                result.imports.append(ImportInfo(
-                    module=get_text(node).replace("import ", "").replace(";", "").strip(),
-                    names=[],
-                    alias=None,
-                    is_relative=False,
-                    line=get_line(node),
-                ))
+                result.imports.append(
+                    ImportInfo(
+                        module=get_text(node).replace("import ", "").replace(";", "").strip(),
+                        names=[],
+                        alias=None,
+                        is_relative=False,
+                        line=get_line(node),
+                    )
+                )
 
             elif node.type == "class_declaration":
                 name_node = node.child_by_field_name("name")
                 if name_node:
-                    result.classes.append(ClassInfo(
-                        name=get_text(name_node),
-                        base_classes=[],
-                        methods=[],
-                        attributes=[],
-                        decorators=[],
-                        line_start=get_line(node),
-                        line_end=node.end_point[0] + 1,
-                        docstring=None,
-                    ))
+                    result.classes.append(
+                        ClassInfo(
+                            name=get_text(name_node),
+                            base_classes=[],
+                            methods=[],
+                            attributes=[],
+                            decorators=[],
+                            line_start=get_line(node),
+                            line_end=node.end_point[0] + 1,
+                            docstring=None,
+                        )
+                    )
 
             elif node.type == "method_declaration":
                 name_node = node.child_by_field_name("name")
                 if name_node:
-                    result.functions.append(FunctionInfo(
-                        name=get_text(name_node),
-                        parameters=[],
-                        return_type=None,
-                        decorators=[],
-                        line_start=get_line(node),
-                        line_end=node.end_point[0] + 1,
-                        is_async=False,
-                        is_method=True,
-                        class_name=None,
-                        docstring=None,
-                    ))
+                    result.functions.append(
+                        FunctionInfo(
+                            name=get_text(name_node),
+                            parameters=[],
+                            return_type=None,
+                            decorators=[],
+                            line_start=get_line(node),
+                            line_end=node.end_point[0] + 1,
+                            is_async=False,
+                            is_method=True,
+                            class_name=None,
+                            docstring=None,
+                        )
+                    )
 
             stack.extend(reversed(node.children))
 
@@ -529,13 +551,11 @@ class ASTParser:
     # Go Extractor
     # --------------------------------------------------------------------------
 
-    def _extract_go(
-        self, root_node: Any, source: str, result: ParseResult
-    ) -> None:
+    def _extract_go(self, root_node: Any, source: str, result: ParseResult) -> None:
         """Extract Go code symbols from Tree-sitter AST."""
 
         def get_text(node: Any) -> str:
-            return source[node.start_byte:node.end_byte]
+            return source[node.start_byte : node.end_byte]
 
         def get_line(node: Any) -> int:
             return node.start_point[0] + 1
@@ -549,45 +569,51 @@ class ASTParser:
                     if child.type == "import_spec":
                         for c in child.children:
                             if c.type == "interpreted_string_literal":
-                                result.imports.append(ImportInfo(
-                                    module=get_text(c).strip('"'),
-                                    names=[],
-                                    alias=None,
-                                    is_relative=False,
-                                    line=get_line(node),
-                                ))
+                                result.imports.append(
+                                    ImportInfo(
+                                        module=get_text(c).strip('"'),
+                                        names=[],
+                                        alias=None,
+                                        is_relative=False,
+                                        line=get_line(node),
+                                    )
+                                )
 
             elif node.type == "function_declaration":
                 name_node = node.child_by_field_name("name")
                 if name_node:
-                    result.functions.append(FunctionInfo(
-                        name=get_text(name_node),
-                        parameters=[],
-                        return_type=None,
-                        decorators=[],
-                        line_start=get_line(node),
-                        line_end=node.end_point[0] + 1,
-                        is_async=False,
-                        is_method=False,
-                        class_name=None,
-                        docstring=None,
-                    ))
+                    result.functions.append(
+                        FunctionInfo(
+                            name=get_text(name_node),
+                            parameters=[],
+                            return_type=None,
+                            decorators=[],
+                            line_start=get_line(node),
+                            line_end=node.end_point[0] + 1,
+                            is_async=False,
+                            is_method=False,
+                            class_name=None,
+                            docstring=None,
+                        )
+                    )
 
             elif node.type == "type_declaration":
                 for child in node.children:
                     if child.type == "type_spec":
                         name_node = child.child_by_field_name("name")
                         if name_node:
-                            result.classes.append(ClassInfo(
-                                name=get_text(name_node),
-                                base_classes=[],
-                                methods=[],
-                                attributes=[],
-                                decorators=[],
-                                line_start=get_line(node),
-                                line_end=node.end_point[0] + 1,
-                                docstring=None,
-                            ))
+                            result.classes.append(
+                                ClassInfo(
+                                    name=get_text(name_node),
+                                    base_classes=[],
+                                    methods=[],
+                                    attributes=[],
+                                    decorators=[],
+                                    line_start=get_line(node),
+                                    line_end=node.end_point[0] + 1,
+                                    docstring=None,
+                                )
+                            )
 
             stack.extend(reversed(node.children))
 

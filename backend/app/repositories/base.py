@@ -13,8 +13,8 @@ from typing import Any, Generic, TypeVar
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.base import Base
 from app.core.logging import get_logger
+from app.database.base import Base
 
 ModelT = TypeVar("ModelT", bound=Base)
 
@@ -79,9 +79,7 @@ class BaseRepository(Generic[ModelT]):
         Returns:
             Total record count.
         """
-        result = await self.session.execute(
-            select(func.count()).select_from(self.model)
-        )
+        result = await self.session.execute(select(func.count()).select_from(self.model))
         return result.scalar_one()
 
     async def create(self, **kwargs: Any) -> ModelT:

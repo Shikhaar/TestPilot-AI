@@ -9,9 +9,8 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
 
-from pydantic import AnyHttpUrl, Field, PostgresDsn, RedisDsn, field_validator
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -33,7 +32,9 @@ class Settings(BaseSettings):
     # Application
     # --------------------------------------------------------------------------
     app_name: str = Field(default="TestPilot AI", description="Application name")
-    app_env: str = Field(default="development", description="Environment: development|staging|production")
+    app_env: str = Field(
+        default="development", description="Environment: development|staging|production"
+    )
     app_version: str = Field(default="0.1.0", description="Application version")
     debug: bool = Field(default=False, description="Enable debug mode")
     secret_key: str = Field(..., description="Secret key for signing tokens")
@@ -49,6 +50,7 @@ class Settings(BaseSettings):
         v = self.allowed_origins_str.strip()
         if v.startswith("["):
             import json
+
             try:
                 return json.loads(v)
             except Exception:
@@ -155,9 +157,21 @@ class Settings(BaseSettings):
     # Files/directories to ignore during indexing
     ignored_directories: list[str] = Field(
         default=[
-            "node_modules", "dist", "build", ".venv", "venv", ".git",
-            "target", "vendor", "__pycache__", ".pytest_cache", ".mypy_cache",
-            "coverage", "htmlcov", ".next", "out",
+            "node_modules",
+            "dist",
+            "build",
+            ".venv",
+            "venv",
+            ".git",
+            "target",
+            "vendor",
+            "__pycache__",
+            ".pytest_cache",
+            ".mypy_cache",
+            "coverage",
+            "htmlcov",
+            ".next",
+            "out",
         ]
     )
     ignored_extensions: list[str] = Field(

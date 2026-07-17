@@ -56,9 +56,13 @@ def impact_agent_node(state: AgentState) -> dict[str, Any]:
 
         # Categorize affected modules
         affected_services = [p for p in all_affected if "service" in p.lower()]
-        affected_apis = [p for p in all_affected if any(
-            k in p.lower() for k in ("api", "router", "route", "controller", "endpoint", "view")
-        )]
+        affected_apis = [
+            p
+            for p in all_affected
+            if any(
+                k in p.lower() for k in ("api", "router", "route", "controller", "endpoint", "view")
+            )
+        ]
 
         duration = time.monotonic() - start_time
         logger.info(

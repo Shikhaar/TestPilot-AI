@@ -195,10 +195,9 @@ class DependencyGraphBuilder:
             if not data.get("is_test"):
                 continue
             # Check if test file imports the source file
-            if self.graph.has_edge(node, file_path):
-                test_files.append(node)
-            # Check naming convention heuristic
-            elif self._matches_test_convention(node, file_path):
+            if self.graph.has_edge(node, file_path) or self._matches_test_convention(
+                node, file_path
+            ):
                 test_files.append(node)
 
         return test_files
@@ -233,15 +232,17 @@ class DependencyGraphBuilder:
         """
         records = []
         for source, target, data in self.graph.edges(data=True):
-            records.append({
-                "repository_id": repository_id,
-                "source_node": source,
-                "target_node": target,
-                "source_type": "file",
-                "target_type": "file",
-                "edge_type": data.get("edge_type", "imports"),
-                "metadata_json": json.dumps({"names": data.get("names", [])}),
-            })
+            records.append(
+                {
+                    "repository_id": repository_id,
+                    "source_node": source,
+                    "target_node": target,
+                    "source_type": "file",
+                    "target_type": "file",
+                    "edge_type": data.get("edge_type", "imports"),
+                    "metadata_json": json.dumps({"names": data.get("names", [])}),
+                }
+            )
         return records
 
     @classmethod
@@ -249,7 +250,7 @@ class DependencyGraphBuilder:
         cls,
         records: list[dict[str, Any]],
         repo_root: Path,
-    ) -> "DependencyGraphBuilder":
+    ) -> DependencyGraphBuilder:
         """Reconstruct the graph from database edge records.
 
         Args:

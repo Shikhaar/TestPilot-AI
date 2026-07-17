@@ -11,7 +11,6 @@ import time
 from typing import Any
 
 from pydantic import BaseModel, Field
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from app.agents.state import AgentState, PRReview, RiskScore
 from app.core.config import get_settings
@@ -23,12 +22,15 @@ settings = get_settings()
 
 class PRReviewOutput(BaseModel):
     """Structured PR review from LLM."""
+
     risk_level: str = Field(description="Overall risk: low|medium|high|critical")
     risk_score: float = Field(description="Numeric risk score 0.0-10.0", ge=0.0, le=10.0)
     summary: str = Field(description="2-3 sentence executive summary")
     risk_factors: list[dict[str, str]] = Field(description="List of risk factors with severity")
     action_items: list[str] = Field(description="Ordered list of recommended actions")
-    historical_warnings: list[str] = Field(description="Warnings from historical bug patterns", default_factory=list)
+    historical_warnings: list[str] = Field(
+        description="Warnings from historical bug patterns", default_factory=list
+    )
     markdown_review: str = Field(description="Complete Markdown-formatted review body for GitHub")
 
 
@@ -88,7 +90,9 @@ def review_agent_node(state: AgentState) -> dict[str, Any]:
         errors.append(f"review_agent: {e}")
         return {
             "errors": errors,
-            "risk_score": RiskScore(level="unknown", score=0.0, factors=[], historical_context=None),
+            "risk_score": RiskScore(
+                level="unknown", score=0.0, factors=[], historical_context=None
+            ),
             "review": PRReview(
                 risk_level="unknown",
                 risk_score=0.0,
@@ -106,6 +110,7 @@ def _generate_review(state: AgentState) -> PRReviewOutput:
     try:
         import instructor
         import litellm
+
         client = instructor.from_litellm(litellm.completion)
         return _llm_review(client, state)
     except Exception:
@@ -123,10 +128,10 @@ def _llm_review(client: Any, state: AgentState) -> PRReviewOutput:
     generated_tests = state.get("generated_tests", [])
     coverage_gaps = state.get("coverage_gaps", [])
 
-    failures_summary = "\n".join([
-        f"- {fa['test_name']}: {fa['root_cause']}"
-        for fa in failure_analyses[:5]
-    ]) or "No test failures."
+    failures_summary = (
+        "\n".join([f"- {fa['test_name']}: {fa['root_cause']}" for fa in failure_analyses[:5]])
+        or "No test failures."
+    )
 
     prompt = f"""You are a senior software engineer reviewing a Pull Request.
 Write a comprehensive, actionable code review based on the analysis below.
@@ -178,7 +183,6 @@ def _rule_based_review(state: AgentState) -> PRReviewOutput:
     """Generate a review using rule-based heuristics when LLM is unavailable."""
     changed_files = state.get("changed_files", [])
     exec_results = state.get("execution_results", {})
-    failure_analyses = state.get("failure_analyses", [])
     affected_modules = state.get("affected_modules", [])
 
     failed = exec_results.get("failed", 0)
@@ -199,7 +203,9 @@ def _rule_based_review(state: AgentState) -> PRReviewOutput:
 
     if coverage is not None and coverage < settings.coverage_threshold:
         risk_score += 1.5
-        risk_factors.append({"factor": f"Coverage below threshold ({coverage:.1f}%)", "severity": "medium"})
+        risk_factors.append(
+            {"factor": f"Coverage below threshold ({coverage:.1f}%)", "severity": "medium"}
+        )
 
     if any("auth" in m.lower() or "payment" in m.lower() for m in affected_modules):
         risk_score += 2.0
@@ -222,14 +228,16 @@ def _rule_based_review(state: AgentState) -> PRReviewOutput:
     if coverage is not None and coverage < settings.coverage_threshold:
         action_items.append(f"Improve test coverage to at least {settings.coverage_threshold}%")
 
-    markdown_review = _build_markdown_review(state, risk_level, risk_score, risk_factors, action_items)
+    markdown_review = _build_markdown_review(
+        state, risk_level, risk_score, risk_factors, action_items
+    )
 
     return PRReviewOutput(
         risk_level=risk_level,
         risk_score=round(risk_score, 1),
         summary=f"PR changes {len(changed_files)} files affecting {len(affected_modules)} modules. "
-                f"Risk level: {risk_level.upper()}. "
-                f"Tests: {exec_results.get('passed', 0)}/{total} passing.",
+        f"Risk level: {risk_level.upper()}. "
+        f"Tests: {exec_results.get('passed', 0)}/{total} passing.",
         risk_factors=risk_factors,
         action_items=action_items,
         historical_warnings=[],

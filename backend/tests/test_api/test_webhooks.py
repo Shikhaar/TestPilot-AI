@@ -76,24 +76,26 @@ async def test_webhook_missing_signature(client: AsyncClient) -> None:
 @pytest.mark.unit
 async def test_webhook_pr_opened_unregistered_repo(client: AsyncClient) -> None:
     """Test PR event for unregistered repository is accepted but does nothing."""
-    payload = json.dumps({
-        "action": "opened",
-        "pull_request": {
-            "id": 1,
-            "number": 1,
-            "title": "Test PR",
-            "state": "open",
-            "user": {"login": "dev"},
-            "base": {"ref": "main", "sha": "aaa"},
-            "head": {"ref": "feature", "sha": "bbb"},
-            "body": None,
-            "changed_files": 1,
-            "additions": 10,
-            "deletions": 2,
-        },
-        "repository": {"id": 99, "full_name": "unregistered/repo"},
-        "installation": {"id": 1},
-    }).encode()
+    payload = json.dumps(
+        {
+            "action": "opened",
+            "pull_request": {
+                "id": 1,
+                "number": 1,
+                "title": "Test PR",
+                "state": "open",
+                "user": {"login": "dev"},
+                "base": {"ref": "main", "sha": "aaa"},
+                "head": {"ref": "feature", "sha": "bbb"},
+                "body": None,
+                "changed_files": 1,
+                "additions": 10,
+                "deletions": 2,
+            },
+            "repository": {"id": 99, "full_name": "unregistered/repo"},
+            "installation": {"id": 1},
+        }
+    ).encode()
 
     signature = sign_payload(payload, WEBHOOK_SECRET)
 

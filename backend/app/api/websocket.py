@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
+from contextlib import suppress
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
@@ -37,7 +37,9 @@ async def websocket_pr_updates(websocket: WebSocket, pr_id: str) -> None:
 
     try:
         import redis.asyncio as aioredis
+
         from app.core.config import get_settings
+
         settings = get_settings()
 
         redis = aioredis.from_url(settings.redis_url)
@@ -45,11 +47,13 @@ async def websocket_pr_updates(websocket: WebSocket, pr_id: str) -> None:
         await pubsub.subscribe(f"pr_updates:{pr_id}")
 
         # Send initial connection confirmation
-        await websocket.send_json({
-            "event": "connected",
-            "pr_id": pr_id,
-            "message": "Subscribed to PR analysis updates",
-        })
+        await websocket.send_json(
+            {
+                "event": "connected",
+                "pr_id": pr_id,
+                "message": "Subscribed to PR analysis updates",
+            }
+        )
 
         # Listen for updates from Redis pub/sub
         async for message in pubsub.listen():
@@ -71,10 +75,8 @@ async def websocket_pr_updates(websocket: WebSocket, pr_id: str) -> None:
         logger.info("WebSocket client disconnected", pr_id=pr_id)
     except Exception as e:
         logger.exception("WebSocket error", pr_id=pr_id, error=str(e))
-        try:
+        with suppress(Exception):
             await websocket.send_json({"event": "error", "message": str(e)})
-        except Exception:
-            pass
     finally:
         logger.info("WebSocket connection closed", pr_id=pr_id)
 
@@ -94,17 +96,21 @@ async def websocket_indexing_progress(websocket: WebSocket, repo_id: str) -> Non
 
     try:
         import redis.asyncio as aioredis
+
         from app.core.config import get_settings
+
         settings = get_settings()
 
         redis = aioredis.from_url(settings.redis_url)
         pubsub = redis.pubsub()
         await pubsub.subscribe(f"indexing:{repo_id}")
 
-        await websocket.send_json({
-            "event": "connected",
-            "repo_id": repo_id,
-        })
+        await websocket.send_json(
+            {
+                "event": "connected",
+                "repo_id": repo_id,
+            }
+        )
 
         async for message in pubsub.listen():
             if message["type"] == "message":
