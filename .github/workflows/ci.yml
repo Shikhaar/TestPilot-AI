@@ -81,7 +81,7 @@ jobs:
       - name: Type Check with Mypy
         run: |
           cd backend
-          poetry run mypy app/
+          poetry run mypy app
 
       - name: Run Backend Tests
         env:
