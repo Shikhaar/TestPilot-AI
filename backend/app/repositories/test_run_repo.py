@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.test_run import TestRun
-from app.repositories.base import BaseRepository
+from app.repositories.base_repo import BaseRepository
 
 
 class TestRunRepository(BaseRepository[TestRun]):
