@@ -80,13 +80,13 @@ celery_app.conf.update(
 # ==============================================================================
 
 
-@setup_logging.connect
+@setup_logging.connect  # type: ignore[misc]
 def setup_celery_logging(**kwargs: object) -> None:
     """Configure structured logging for Celery workers."""
     configure_logging()
 
 
-@worker_ready.connect
+@worker_ready.connect  # type: ignore[misc]
 def on_worker_ready(sender: object, **kwargs: object) -> None:
     """Log when a Celery worker is ready to accept tasks."""
     logger.info("Celery worker ready", worker=str(sender))

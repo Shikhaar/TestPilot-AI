@@ -67,4 +67,4 @@ def get_diff(repo_path: Path, base_sha: str, head_sha: str) -> str:
         The text diff.
     """
     repo = git.Repo(repo_path)
-    return repo.git.diff(base_sha, head_sha)
+    return str(repo.git.diff(base_sha, head_sha))
