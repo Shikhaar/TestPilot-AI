@@ -15,14 +15,15 @@ import asyncio
 import json
 import shutil
 import time
+from datetime import UTC
 from pathlib import Path
 from typing import Any
 
 from celery import Task
 
-from app.workers.celery_app import celery_app
 from app.core.config import get_settings
 from app.core.logging import get_logger
+from app.workers.celery_app import celery_app
 
 logger = get_logger(__name__)
 settings = get_settings()
@@ -72,11 +73,13 @@ def index_repository(
 
         # Step 2: Parse all files with AST
         from app.services.ast_parser import ASTParser
+
         parser = ASTParser()
         parse_results = parser.parse_directory(repo_path)
 
         # Step 3: Build dependency graph
         from app.services.dependency_graph_builder import DependencyGraphBuilder
+
         builder = DependencyGraphBuilder(repo_path)
         builder.build(parse_results)
         edge_records = builder.to_edge_records(repository_id)
@@ -148,10 +151,11 @@ async def _persist_index_results(
     repo_path: Path,
 ) -> dict[str, int]:
     """Persist parsed AST results and dependency graph to PostgreSQL."""
-    from app.database.session import get_session
-    from app.models.repository_file import RepositoryFile
-    from app.models.dependency_graph import DependencyEdge
     from sqlalchemy import delete
+
+    from app.database.session import get_session
+    from app.models.dependency_graph import DependencyEdge
+    from app.models.repository_file import RepositoryFile
 
     total_functions = 0
     total_classes = 0
@@ -168,35 +172,42 @@ async def _persist_index_results(
         total_functions += len(result.functions)
         total_classes += len(result.classes)
 
-        file_records.append({
-            "repository_id": repository_id,
-            "path": rel_path,
-            "language": result.language,
-            "ast_hash": result.content_hash,
-            "line_count": result.line_count,
-            "functions": json.dumps([f.name for f in result.functions]),
-            "classes": json.dumps([c.name for c in result.classes]),
-            "imports": json.dumps([i.module for i in result.imports]),
-            "routes": json.dumps([{"path": r.path, "method": r.method} for r in result.routes]),
-            "is_test_file": any(
-                p in rel_path for p in ["test_", "_test.", ".test.", ".spec.", "/tests/", "/test/"]
-            ),
-        })
+        file_records.append(
+            {
+                "repository_id": repository_id,
+                "path": rel_path,
+                "language": result.language,
+                "ast_hash": result.content_hash,
+                "line_count": result.line_count,
+                "functions": json.dumps([f.name for f in result.functions]),
+                "classes": json.dumps([c.name for c in result.classes]),
+                "imports": json.dumps([i.module for i in result.imports]),
+                "routes": json.dumps([{"path": r.path, "method": r.method} for r in result.routes]),
+                "is_test_file": any(
+                    p in rel_path
+                    for p in ["test_", "_test.", ".test.", ".spec.", "/tests/", "/test/"]
+                ),
+            }
+        )
 
     async with get_session() as db:
         # Clear old records for this repository
-        await db.execute(delete(RepositoryFile).where(RepositoryFile.repository_id == repository_id))
-        await db.execute(delete(DependencyEdge).where(DependencyEdge.repository_id == repository_id))
+        await db.execute(
+            delete(RepositoryFile).where(RepositoryFile.repository_id == repository_id)
+        )
+        await db.execute(
+            delete(DependencyEdge).where(DependencyEdge.repository_id == repository_id)
+        )
 
         # Insert new records in batches
         batch_size = 100
         for i in range(0, len(file_records), batch_size):
-            batch = file_records[i:i + batch_size]
+            batch = file_records[i : i + batch_size]
             db.add_all([RepositoryFile(**r) for r in batch])
             await db.flush()
 
         for i in range(0, len(edge_records), batch_size):
-            batch = edge_records[i:i + batch_size]
+            batch = edge_records[i : i + batch_size]
             db.add_all([DependencyEdge(**r) for r in batch])
             await db.flush()
 
@@ -214,13 +225,15 @@ async def _generate_and_store_embeddings(
 ) -> None:
     """Generate embeddings for code chunks and store in Qdrant."""
     try:
-        from app.utils.qdrant_client import get_qdrant_client
         from app.core.config import get_settings
+        from app.utils.qdrant_client import get_qdrant_client
+
         settings = get_settings()
         qdrant = get_qdrant_client()
 
         # Use sentence transformers for local embeddings
         from sentence_transformers import SentenceTransformer
+
         model = SentenceTransformer(settings.sentence_transformer_model)
 
         points = []
@@ -239,18 +252,21 @@ async def _generate_and_store_embeddings(
                 embedding = model.encode(text).tolist()
 
                 import uuid
-                points.append({
-                    "id": str(uuid.uuid4()),
-                    "vector": embedding,
-                    "payload": {
-                        "repository_id": repository_id,
-                        "file_path": rel_path,
-                        "language": result.language,
-                        "function_name": fn.name,
-                        "content": text,
-                        "type": "function",
-                    },
-                })
+
+                points.append(
+                    {
+                        "id": str(uuid.uuid4()),
+                        "vector": embedding,
+                        "payload": {
+                            "repository_id": repository_id,
+                            "file_path": rel_path,
+                            "language": result.language,
+                            "function_name": fn.name,
+                            "content": text,
+                            "type": "function",
+                        },
+                    }
+                )
 
         if points:
             qdrant.upsert(
@@ -270,8 +286,10 @@ async def _update_repo_status(
     stats: dict[str, int] | None = None,
 ) -> None:
     """Update repository indexing status in the database."""
+    from datetime import datetime
+
     from sqlalchemy import update
-    from datetime import datetime, timezone
+
     from app.database.session import get_session
     from app.models.repository import Repository
 
@@ -281,12 +299,14 @@ async def _update_repo_status(
         "index_error": error,
     }
     if stats:
-        update_values.update({
-            "total_files": stats.get("files", 0),
-            "total_functions": stats.get("functions", 0),
-            "total_classes": stats.get("classes", 0),
-            "indexed_at": datetime.now(tz=timezone.utc).isoformat(),
-        })
+        update_values.update(
+            {
+                "total_files": stats.get("files", 0),
+                "total_functions": stats.get("functions", 0),
+                "total_classes": stats.get("classes", 0),
+                "indexed_at": datetime.now(tz=UTC).isoformat(),
+            }
+        )
 
     async with get_session() as db:
         await db.execute(

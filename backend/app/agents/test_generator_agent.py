@@ -40,6 +40,7 @@ settings = get_settings()
 
 class SingleTest(BaseModel):
     """A single generated test case."""
+
     function_name: str = Field(description="Name of the test function/method")
     test_type: str = Field(description="Type: unit|integration|edge_case|negative|boundary|mock")
     content: str = Field(description="Complete test code snippet")
@@ -48,6 +49,7 @@ class SingleTest(BaseModel):
 
 class GeneratedTestFile(BaseModel):
     """A generated test file with multiple test cases."""
+
     test_file_path: str = Field(description="Relative path where this test file should be written")
     imports: str = Field(description="Import statements needed")
     setup_code: str = Field(description="Fixtures, setUp, or test class setup code", default="")
@@ -58,6 +60,7 @@ class GeneratedTestFile(BaseModel):
 
 class GeneratedTestSuite(BaseModel):
     """Complete generated test suite for a PR."""
+
     test_files: list[GeneratedTestFile]
     coverage_rationale: str = Field(description="Explanation of what coverage is achieved")
 
@@ -152,20 +155,26 @@ def _generate_tests(
         return _generate_mock_tests(changed_nodes)
 
     # Build context for the prompt
-    existing_test_examples = "\n\n".join([
-        f"# Existing test: {t['path']}\n# Framework: {t['framework']}\n# Tests: {', '.join(t['test_names'][:5])}"
-        for t in existing_tests[:3]
-    ])
+    existing_test_examples = "\n\n".join(
+        [
+            f"# Existing test: {t['path']}\n# Framework: {t['framework']}\n# Tests: {', '.join(t['test_names'][:5])}"
+            for t in existing_tests[:3]
+        ]
+    )
 
-    code_context = "\n\n".join([
-        f"# File: {ctx.get('file_path', 'unknown')}\n{ctx.get('content', '')[:500]}"
-        for ctx in retrieved_context[:5]
-    ])
+    code_context = "\n\n".join(
+        [
+            f"# File: {ctx.get('file_path', 'unknown')}\n{ctx.get('content', '')[:500]}"
+            for ctx in retrieved_context[:5]
+        ]
+    )
 
-    changed_summary = "\n".join([
-        f"- {node['type'].upper()}: {node['name']} in {node['file_path']}"
-        for node in changed_nodes[:20]
-    ])
+    changed_summary = "\n".join(
+        [
+            f"- {node['type'].upper()}: {node['name']} in {node['file_path']}"
+            for node in changed_nodes[:20]
+        ]
+    )
 
     prompt = f"""You are an expert software engineer generating production-quality tests.
 
@@ -219,7 +228,11 @@ The following code was modified in this Pull Request:
                     )
                 )
 
-        logger.info("LLM test generation succeeded", count=len(generated), model=settings.litellm_default_model)
+        logger.info(
+            "LLM test generation succeeded",
+            count=len(generated),
+            model=settings.litellm_default_model,
+        )
         return generated
 
     except Exception as e:

@@ -44,7 +44,6 @@ celery_app.conf.update(
     result_serializer="json",
     timezone="UTC",
     enable_utc=True,
-
     # Task routing / queues
     task_queues=[
         Queue("pr_pipeline", routing_key="pr_pipeline"),
@@ -57,18 +56,15 @@ celery_app.conf.update(
         "app.tasks.indexing.*": {"queue": "indexing"},
         "app.tasks.notifications.*": {"queue": "notifications"},
     },
-
     # Retry / timeout settings
     task_acks_late=True,
     task_reject_on_worker_lost=True,
-    task_soft_time_limit=600,   # 10 min soft limit
-    task_time_limit=900,         # 15 min hard limit
+    task_soft_time_limit=600,  # 10 min soft limit
+    task_time_limit=900,  # 15 min hard limit
     worker_max_tasks_per_child=100,
     worker_prefetch_multiplier=1,
-
     # Result TTL
     result_expires=86400,  # 24 hours
-
     # Beat schedule (periodic tasks)
     beat_schedule={
         "cleanup-old-repos": {

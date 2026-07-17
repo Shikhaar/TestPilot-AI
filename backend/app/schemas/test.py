@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import Field
 
 from app.schemas.common import BaseSchema
 
 
-class TestFramework(str, Enum):
+class TestFramework(StrEnum):
     PYTEST = "pytest"
     JEST = "jest"
     JUNIT = "junit"
@@ -20,7 +20,7 @@ class TestFramework(str, Enum):
     RSPEC = "rspec"
 
 
-class TestType(str, Enum):
+class TestType(StrEnum):
     UNIT = "unit"
     INTEGRATION = "integration"
     EDGE_CASE = "edge_case"

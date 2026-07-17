@@ -35,8 +35,9 @@ def search_agent_node(state: AgentState) -> dict[str, Any]:
     logger.info("Search agent started", pr_id=state.get("pr_id"))
 
     try:
-        from app.utils.qdrant_client import get_qdrant_client
         from app.core.config import get_settings
+        from app.utils.qdrant_client import get_qdrant_client
+
         settings = get_settings()
 
         changed_nodes = state.get("changed_nodes", [])
@@ -60,15 +61,19 @@ def search_agent_node(state: AgentState) -> dict[str, Any]:
                         },
                     )
                     for result in results:
-                        retrieved_context.append({
-                            "score": result.score,
-                            "content": result.payload.get("content", ""),
-                            "file_path": result.payload.get("file_path", ""),
-                            "language": result.payload.get("language", ""),
-                            "function_name": result.payload.get("function_name"),
-                        })
+                        retrieved_context.append(
+                            {
+                                "score": result.score,
+                                "content": result.payload.get("content", ""),
+                                "file_path": result.payload.get("file_path", ""),
+                                "language": result.payload.get("language", ""),
+                                "function_name": result.payload.get("function_name"),
+                            }
+                        )
                 except Exception as search_err:
-                    logger.warning("Qdrant search failed for node", node=node["name"], error=str(search_err))
+                    logger.warning(
+                        "Qdrant search failed for node", node=node["name"], error=str(search_err)
+                    )
 
         duration = time.monotonic() - start_time
         logger.info(

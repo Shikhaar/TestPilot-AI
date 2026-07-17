@@ -3,23 +3,25 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import Field
 
 from app.schemas.common import BaseSchema
 
 
-class RiskLevel(str, Enum):
+class RiskLevel(StrEnum):
     """PR risk classification levels."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
 
 
-class AnalysisStatus(str, Enum):
+class AnalysisStatus(StrEnum):
     """PR analysis pipeline status."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"

@@ -14,7 +14,6 @@ class RepositoryRepository(BaseRepository[Repository]):
     """Data access layer for Repository records."""
 
     def __init__(self, session: object) -> None:
-        from sqlalchemy.ext.asyncio import AsyncSession
         super().__init__(session, Repository)  # type: ignore[arg-type]
 
     async def get_by_full_name(self, full_name: str) -> Repository | None:

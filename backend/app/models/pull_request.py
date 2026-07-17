@@ -11,11 +11,11 @@ from app.database.base_class import Base
 from app.models.base import TimestampMixin, UUIDMixin
 
 if TYPE_CHECKING:
-    from app.models.repository import Repository
-    from app.models.generated_test import GeneratedTest
-    from app.models.test_run import TestRun
-    from app.models.review_comment import ReviewComment
     from app.models.agent_run import AgentRun
+    from app.models.generated_test import GeneratedTest
+    from app.models.repository import Repository
+    from app.models.review_comment import ReviewComment
+    from app.models.test_run import TestRun
 
 
 class PullRequest(Base, UUIDMixin, TimestampMixin):
@@ -97,17 +97,17 @@ class PullRequest(Base, UUIDMixin, TimestampMixin):
     github_check_run_id: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     # Relationships
-    repository: Mapped["Repository"] = relationship("Repository", back_populates="pull_requests")
-    generated_tests: Mapped[list["GeneratedTest"]] = relationship(
+    repository: Mapped[Repository] = relationship("Repository", back_populates="pull_requests")
+    generated_tests: Mapped[list[GeneratedTest]] = relationship(
         "GeneratedTest", back_populates="pull_request", cascade="all, delete-orphan"
     )
-    test_runs: Mapped[list["TestRun"]] = relationship(
+    test_runs: Mapped[list[TestRun]] = relationship(
         "TestRun", back_populates="pull_request", cascade="all, delete-orphan"
     )
-    review_comments: Mapped[list["ReviewComment"]] = relationship(
+    review_comments: Mapped[list[ReviewComment]] = relationship(
         "ReviewComment", back_populates="pull_request", cascade="all, delete-orphan"
     )
-    agent_runs: Mapped[list["AgentRun"]] = relationship(
+    agent_runs: Mapped[list[AgentRun]] = relationship(
         "AgentRun", back_populates="pull_request", cascade="all, delete-orphan"
     )
 

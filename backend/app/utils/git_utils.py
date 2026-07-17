@@ -30,7 +30,11 @@ def clone_repository(clone_url: str, dest_path: Path, access_token: str | None =
     if access_token and "github.com" in clone_url:
         clone_url = clone_url.replace("https://", f"https://x-access-token:{access_token}@")
 
-    logger.info("Cloning Git repository", url=clone_url.replace(access_token or "", "***") if access_token else clone_url, dest=str(dest_path))
+    logger.info(
+        "Cloning Git repository",
+        url=clone_url.replace(access_token or "", "***") if access_token else clone_url,
+        dest=str(dest_path),
+    )
     dest_path.mkdir(parents=True, exist_ok=True)
     return git.Repo.clone_from(clone_url, dest_path, depth=50)
 

@@ -13,6 +13,7 @@ from typing import Any, TypedDict
 
 class ChangedFile(TypedDict):
     """A file changed in the PR diff."""
+
     path: str
     status: str  # 'added' | 'modified' | 'deleted' | 'renamed'
     additions: int
@@ -22,6 +23,7 @@ class ChangedFile(TypedDict):
 
 class CodeNode(TypedDict):
     """A code symbol (function, class, route) identified in the diff."""
+
     name: str
     type: str  # 'function' | 'class' | 'route' | 'model'
     file_path: str
@@ -32,6 +34,7 @@ class CodeNode(TypedDict):
 
 class TestFile(TypedDict):
     """An existing test file discovered in the repository."""
+
     path: str
     framework: str
     test_count: int
@@ -41,6 +44,7 @@ class TestFile(TypedDict):
 
 class GeneratedTest(TypedDict):
     """An AI-generated test case."""
+
     function_name: str
     class_name: str | None
     file_path: str
@@ -53,6 +57,7 @@ class GeneratedTest(TypedDict):
 
 class TestExecutionResult(TypedDict):
     """Result of running a test suite."""
+
     runner: str
     status: str
     total: int
@@ -67,6 +72,7 @@ class TestExecutionResult(TypedDict):
 
 class FailureAnalysis(TypedDict):
     """AI analysis of a test failure."""
+
     test_name: str
     failure_message: str
     root_cause: str
@@ -77,6 +83,7 @@ class FailureAnalysis(TypedDict):
 
 class RiskScore(TypedDict):
     """Risk assessment for the PR."""
+
     level: str  # 'low' | 'medium' | 'high' | 'critical'
     score: float  # 0.0 - 10.0
     factors: list[str]
@@ -85,6 +92,7 @@ class RiskScore(TypedDict):
 
 class PRReview(TypedDict):
     """The complete AI-generated PR review."""
+
     risk_level: str
     risk_score: float
     summary: str

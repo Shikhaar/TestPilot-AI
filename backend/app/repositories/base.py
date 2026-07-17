@@ -8,20 +8,20 @@ All model-specific repositories inherit from this base class.
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Any, Generic, TypeVar
+from typing import Any, TypeVar
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.base import Base
 from app.core.logging import get_logger
+from app.database.base import Base
 
 ModelT = TypeVar("ModelT", bound=Base)
 
 logger = get_logger(__name__)
 
 
-class BaseRepository(Generic[ModelT]):
+class BaseRepository[ModelT: Base]:
     """Generic async repository providing CRUD operations.
 
     Type Parameters:
@@ -79,9 +79,7 @@ class BaseRepository(Generic[ModelT]):
         Returns:
             Total record count.
         """
-        result = await self.session.execute(
-            select(func.count()).select_from(self.model)
-        )
+        result = await self.session.execute(select(func.count()).select_from(self.model))
         return result.scalar_one()
 
     async def create(self, **kwargs: Any) -> ModelT:

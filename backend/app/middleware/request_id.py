@@ -22,6 +22,7 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
 
         # Bind to structlog context for this request
         import structlog
+
         structlog.contextvars.bind_contextvars(request_id=request_id)
 
         # Store on request state for use in route handlers

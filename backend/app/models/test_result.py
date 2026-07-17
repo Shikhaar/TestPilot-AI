@@ -53,7 +53,7 @@ class TestResult(Base, UUIDMixin, TimestampMixin):
     confidence_score: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     # Relationships
-    test_run: Mapped["TestRun"] = relationship("TestRun", back_populates="results")  # type: ignore[name-defined]  # noqa: F821
+    test_run: Mapped[TestRun] = relationship("TestRun", back_populates="results")  # type: ignore[name-defined]  # noqa: F821
 
     def __repr__(self) -> str:
         return f"<TestResult id={self.id} test_name={self.test_name[:50]} status={self.status}>"

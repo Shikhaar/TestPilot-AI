@@ -7,8 +7,8 @@ when test runs complete, fail, or require review.
 
 from __future__ import annotations
 
-from app.workers.celery_app import celery_app
 from app.core.logging import get_logger
+from app.workers.celery_app import celery_app
 
 logger = get_logger(__name__)
 

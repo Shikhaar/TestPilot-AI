@@ -3,15 +3,16 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import Field
 
 from app.schemas.common import BaseSchema
 
 
-class UserRole(str, Enum):
+class UserRole(StrEnum):
     """User role enum."""
+
     ADMIN = "admin"
     MEMBER = "member"
     VIEWER = "viewer"

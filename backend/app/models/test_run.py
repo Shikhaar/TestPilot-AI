@@ -68,11 +68,11 @@ class TestRun(Base, UUIDMixin, TimestampMixin):
     failure_summary: Mapped[str | None] = mapped_column(Text, nullable=True)  # AI-generated
 
     # Relationships
-    pull_request: Mapped["PullRequest"] = relationship(  # type: ignore[name-defined]  # noqa: F821
+    pull_request: Mapped[PullRequest] = relationship(  # type: ignore[name-defined]  # noqa: F821
         "PullRequest",
         back_populates="test_runs",
     )
-    results: Mapped[list["TestResult"]] = relationship(
+    results: Mapped[list[TestResult]] = relationship(
         "TestResult",
         back_populates="test_run",
         cascade="all, delete-orphan",

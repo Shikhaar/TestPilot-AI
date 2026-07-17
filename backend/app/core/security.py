@@ -12,8 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
-import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from jose import JWTError, jwt
@@ -79,11 +78,8 @@ def create_access_token(
     Returns:
         Encoded JWT string.
     """
-    now = datetime.now(tz=timezone.utc)
-    expire = now + (
-        expires_delta
-        or timedelta(minutes=settings.jwt_access_token_expire_minutes)
-    )
+    now = datetime.now(tz=UTC)
+    expire = now + (expires_delta or timedelta(minutes=settings.jwt_access_token_expire_minutes))
 
     payload: dict[str, Any] = {
         "sub": str(subject),
@@ -106,7 +102,7 @@ def create_refresh_token(subject: str | int) -> str:
     Returns:
         Encoded JWT refresh token string.
     """
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     expire = now + timedelta(days=settings.jwt_refresh_token_expire_days)
 
     payload: dict[str, Any] = {

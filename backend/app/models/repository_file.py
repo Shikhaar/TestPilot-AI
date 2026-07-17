@@ -46,11 +46,11 @@ class RepositoryFile(Base, UUIDMixin, TimestampMixin):
     is_test_file: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
 
     # Extracted code symbols (stored as JSON strings)
-    functions: Mapped[str | None] = mapped_column(Text, nullable=True)   # JSON list[str]
-    classes: Mapped[str | None] = mapped_column(Text, nullable=True)      # JSON list[str]
-    imports: Mapped[str | None] = mapped_column(Text, nullable=True)      # JSON list[str]
-    exports: Mapped[str | None] = mapped_column(Text, nullable=True)      # JSON list[str]
-    routes: Mapped[str | None] = mapped_column(Text, nullable=True)       # JSON list[dict]
+    functions: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON list[str]
+    classes: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON list[str]
+    imports: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON list[str]
+    exports: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON list[str]
+    routes: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON list[dict]
     qdrant_chunk_ids: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON list[str]
 
     # Metrics
@@ -58,7 +58,7 @@ class RepositoryFile(Base, UUIDMixin, TimestampMixin):
     complexity_score: Mapped[float | None] = mapped_column(Integer, nullable=True)
 
     # Relationships
-    repository: Mapped["Repository"] = relationship(  # type: ignore[name-defined]  # noqa: F821
+    repository: Mapped[Repository] = relationship(  # type: ignore[name-defined]  # noqa: F821
         "Repository",
         back_populates="files",
     )

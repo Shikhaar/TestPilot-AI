@@ -7,9 +7,9 @@ from fastapi import APIRouter, HTTPException
 from app.api.deps import CurrentUser, DBSession
 from app.core.logging import get_logger
 from app.schemas.ai import (
+    ChatMessage,
     ChatRequest,
     ChatResponse,
-    ChatMessage,
     CodeSearchRequest,
     CodeSearchResponse,
     ImpactAnalysisRequest,
@@ -33,9 +33,11 @@ async def chat_with_codebase(
     in the actual repository code.
     """
     from sqlalchemy import select
+
+    from app.core.config import get_settings
     from app.models.repository import Repository
     from app.utils.qdrant_client import get_qdrant_client
-    from app.core.config import get_settings
+
     settings = get_settings()
 
     # Verify repository access
@@ -69,18 +71,21 @@ async def chat_with_codebase(
         )
         for r in results:
             sources.append(r.payload.get("file_path", ""))
-            context_text += f"\n\n# {r.payload.get('file_path')}\n{r.payload.get('content', '')[:500]}"
+            context_text += (
+                f"\n\n# {r.payload.get('file_path')}\n{r.payload.get('content', '')[:500]}"
+            )
     except Exception as e:
         logger.warning("Qdrant search failed in chat", error=str(e))
 
     # Generate response with LiteLLM
     try:
         import litellm
+
         messages = [
             {
                 "role": "system",
                 "content": f"You are a code assistant for the {repo.full_name} repository. "
-                          f"Answer questions based on the following code context:\n{context_text}",
+                f"Answer questions based on the following code context:\n{context_text}",
             }
         ] + [{"role": m.role, "content": m.content} for m in request.messages]
 
@@ -112,10 +117,12 @@ async def search_code(
 ) -> APIResponse[CodeSearchResponse]:
     """Semantic and structural code search."""
     from sqlalchemy import select
-    from app.models.repository import Repository
-    from app.utils.qdrant_client import get_qdrant_client
+
     from app.core.config import get_settings
+    from app.models.repository import Repository
     from app.schemas.ai import CodeSearchResult
+    from app.utils.qdrant_client import get_qdrant_client
+
     settings = get_settings()
 
     repo_result = await db.execute(
@@ -156,12 +163,14 @@ async def search_code(
     except Exception as e:
         logger.warning("Code search failed", error=str(e))
 
-    return APIResponse(data=CodeSearchResponse(
-        results=results,
-        total=len(results),
-        query=request.query,
-        search_type=request.search_type,
-    ))
+    return APIResponse(
+        data=CodeSearchResponse(
+            results=results,
+            total=len(results),
+            query=request.query,
+            search_type=request.search_type,
+        )
+    )
 
 
 @router.post("/impact-analysis", response_model=APIResponse[dict])
@@ -171,12 +180,15 @@ async def run_impact_analysis(
     current_user: CurrentUser,
 ) -> APIResponse[dict]:
     """Run manual impact analysis for a set of changed files."""
-    from sqlalchemy import select
-    from app.models.repository import Repository
-    from app.models.dependency_graph import DependencyEdge
-    from app.services.dependency_graph_builder import DependencyGraphBuilder
-    from app.core.config import get_settings
     from pathlib import Path
+
+    from sqlalchemy import select
+
+    from app.core.config import get_settings
+    from app.models.dependency_graph import DependencyEdge
+    from app.models.repository import Repository
+    from app.services.dependency_graph_builder import DependencyGraphBuilder
+
     settings = get_settings()
 
     repo_result = await db.execute(
@@ -189,12 +201,13 @@ async def run_impact_analysis(
         raise HTTPException(status_code=404, detail="Repository not found")
 
     edges_result = await db.execute(
-        select(DependencyEdge).where(
-            DependencyEdge.repository_id == request.repository_id
-        )
+        select(DependencyEdge).where(DependencyEdge.repository_id == request.repository_id)
     )
     edges = edges_result.scalars().all()
-    edge_records = [{"source_node": e.source_node, "target_node": e.target_node, "edge_type": e.edge_type} for e in edges]
+    edge_records = [
+        {"source_node": e.source_node, "target_node": e.target_node, "edge_type": e.edge_type}
+        for e in edges
+    ]
 
     repo_path = settings.repo_storage_path / request.repository_id
     builder = DependencyGraphBuilder.from_edge_records(edge_records, Path(repo_path))
@@ -204,12 +217,14 @@ async def run_impact_analysis(
     for deps in affected.values():
         all_affected.update(deps)
 
-    return APIResponse(data={
-        "changed_files": request.changed_files,
-        "affected_modules": list(all_affected),
-        "impact_radius": len(all_affected),
-        "per_file": {k: list(v) for k, v in affected.items()},
-    })
+    return APIResponse(
+        data={
+            "changed_files": request.changed_files,
+            "affected_modules": list(all_affected),
+            "impact_radius": len(all_affected),
+            "per_file": {k: list(v) for k, v in affected.items()},
+        }
+    )
 
 
 @router.post("/risk-score", response_model=APIResponse[dict])
@@ -219,19 +234,23 @@ async def get_risk_score(
     current_user: CurrentUser,
 ) -> APIResponse[dict]:
     """Get the risk score for a pull request."""
-    from sqlalchemy import select
-    from app.models.pull_request import PullRequest
     import json
+
+    from sqlalchemy import select
+
+    from app.models.pull_request import PullRequest
 
     result = await db.execute(select(PullRequest).where(PullRequest.id == request.pr_id))
     pr = result.scalar_one_or_none()
     if not pr:
         raise HTTPException(status_code=404, detail="PR not found")
 
-    return APIResponse(data={
-        "pr_id": pr.id,
-        "risk_level": pr.risk_level,
-        "risk_score": pr.risk_score,
-        "risk_factors": json.loads(pr.risk_factors or "[]"),
-        "analysis_status": pr.analysis_status,
-    })
+    return APIResponse(
+        data={
+            "pr_id": pr.id,
+            "risk_level": pr.risk_level,
+            "risk_score": pr.risk_score,
+            "risk_factors": json.loads(pr.risk_factors or "[]"),
+            "analysis_status": pr.analysis_status,
+        }
+    )
