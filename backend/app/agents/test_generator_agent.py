@@ -210,6 +210,7 @@ The following code was modified in this Pull Request:
             response_model=GeneratedTestSuite,
             max_tokens=settings.llm_max_tokens,
             temperature=settings.llm_temperature,
+            api_key=settings.gemini_api_key or settings.openai_api_key or None,
         )
 
         generated: list[GeneratedTest] = []

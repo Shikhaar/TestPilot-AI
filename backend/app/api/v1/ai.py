@@ -93,6 +93,7 @@ async def chat_with_codebase(
             model=settings.litellm_default_model,
             messages=messages,
             max_tokens=request.max_tokens,
+            api_key=settings.gemini_api_key or settings.openai_api_key or None,
         )
         answer = response.choices[0].message.content or ""
         tokens = response.usage.total_tokens if response.usage else 0
