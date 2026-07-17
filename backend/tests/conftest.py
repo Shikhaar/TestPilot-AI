@@ -4,21 +4,17 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import AsyncGenerator
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
-import pytest_asyncio
-from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
+from app.api.deps import get_db
 from app.core.config import Settings, get_settings
 from app.database.base import Base
 from app.main import app
-from app.api.deps import get_db
-
 
 # ==============================================================================
 # Test Settings Override
@@ -116,8 +112,9 @@ async def client(test_app) -> AsyncGenerator[AsyncClient, None]:
 @pytest.fixture
 async def test_user(db_session: AsyncSession):
     """Create a test user."""
-    from app.models.user import User
     import uuid
+
+    from app.models.user import User
 
     user = User(
         id=str(uuid.uuid4()),
@@ -135,8 +132,9 @@ async def test_user(db_session: AsyncSession):
 @pytest.fixture
 async def test_repository(db_session: AsyncSession, test_user):
     """Create a test repository."""
-    from app.models.repository import Repository
     import uuid
+
+    from app.models.repository import Repository
 
     repo = Repository(
         id=str(uuid.uuid4()),
@@ -158,8 +156,9 @@ async def test_repository(db_session: AsyncSession, test_user):
 @pytest.fixture
 async def test_pull_request(db_session: AsyncSession, test_repository):
     """Create a test pull request."""
-    from app.models.pull_request import PullRequest
     import uuid
+
+    from app.models.pull_request import PullRequest
 
     pr = PullRequest(
         id=str(uuid.uuid4()),
@@ -184,6 +183,7 @@ async def test_pull_request(db_session: AsyncSession, test_repository):
 def auth_headers(test_user) -> dict[str, str]:
     """Create JWT authentication headers for a test user."""
     from app.core.security import create_access_token
+
     token = create_access_token(test_user.id)
     return {"Authorization": f"Bearer {token}"}
 

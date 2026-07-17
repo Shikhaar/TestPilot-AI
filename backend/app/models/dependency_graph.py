@@ -43,12 +43,14 @@ class DependencyEdge(Base, UUIDMixin, TimestampMixin):
     target_node: Mapped[str] = mapped_column(Text, nullable=False, index=True)
     source_type: Mapped[str] = mapped_column(String(20), default="file", nullable=False)
     target_type: Mapped[str] = mapped_column(String(20), default="file", nullable=False)
-    edge_type: Mapped[str] = mapped_column(String(20), default="imports", nullable=False, index=True)
+    edge_type: Mapped[str] = mapped_column(
+        String(20), default="imports", nullable=False, index=True
+    )
     line_number: Mapped[int | None] = mapped_column(String(10), nullable=True)
     metadata_json: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON
 
     # Relationships
-    repository: Mapped["Repository"] = relationship(  # type: ignore[name-defined]  # noqa: F821
+    repository: Mapped[Repository] = relationship(  # type: ignore[name-defined]  # noqa: F821
         "Repository",
         back_populates="dependency_edges",
     )

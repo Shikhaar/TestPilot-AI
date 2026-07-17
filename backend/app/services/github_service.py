@@ -15,11 +15,10 @@ Uses PyGitHub with custom JWT auth for GitHub App authentication.
 
 from __future__ import annotations
 
-import time
 from typing import Any
 
 import httpx
-from github import Auth, Github, GithubException, GithubIntegration
+from github import Auth, Github, GithubIntegration
 from github.PullRequest import PullRequest as GithubPR
 from github.Repository import Repository as GithubRepo
 
@@ -86,7 +85,9 @@ class GitHubService:
                 "GitHub App integration not initialized. Configure GITHUB_APP_ID and PRIVATE_KEY."
             )
 
-        auth = self._integration.get_app_installation(int(installation_id)).get_github_for_installation()
+        auth = self._integration.get_app_installation(
+            int(installation_id)
+        ).get_github_for_installation()
         return auth
 
     def get_user_client(self, access_token: str) -> Github:
@@ -126,7 +127,9 @@ class GitHubService:
             data = response.json()
 
             if "error" in data:
-                raise ValueError(f"GitHub OAuth error: {data['error']}: {data.get('error_description')}")
+                raise ValueError(
+                    f"GitHub OAuth error: {data['error']}: {data.get('error_description')}"
+                )
 
             logger.info("GitHub OAuth code exchanged successfully")
             return data

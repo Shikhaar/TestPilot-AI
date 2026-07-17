@@ -11,11 +11,11 @@ from app.database.base_class import Base
 from app.models.base import TimestampMixin, UUIDMixin
 
 if TYPE_CHECKING:
-    from app.models.user import User
+    from app.models.bug_history import BugHistory
+    from app.models.dependency_graph import DependencyEdge
     from app.models.pull_request import PullRequest
     from app.models.repository_file import RepositoryFile
-    from app.models.dependency_graph import DependencyEdge
-    from app.models.bug_history import BugHistory
+    from app.models.user import User
 
 
 class Repository(Base, UUIDMixin, TimestampMixin):
@@ -82,17 +82,17 @@ class Repository(Base, UUIDMixin, TimestampMixin):
     github_app_installation_id: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     # Relationships
-    owner: Mapped["User"] = relationship("User", back_populates="repositories")
-    pull_requests: Mapped[list["PullRequest"]] = relationship(
+    owner: Mapped[User] = relationship("User", back_populates="repositories")
+    pull_requests: Mapped[list[PullRequest]] = relationship(
         "PullRequest", back_populates="repository", cascade="all, delete-orphan"
     )
-    files: Mapped[list["RepositoryFile"]] = relationship(
+    files: Mapped[list[RepositoryFile]] = relationship(
         "RepositoryFile", back_populates="repository", cascade="all, delete-orphan"
     )
-    dependency_edges: Mapped[list["DependencyEdge"]] = relationship(
+    dependency_edges: Mapped[list[DependencyEdge]] = relationship(
         "DependencyEdge", back_populates="repository", cascade="all, delete-orphan"
     )
-    bug_history: Mapped[list["BugHistory"]] = relationship(
+    bug_history: Mapped[list[BugHistory]] = relationship(
         "BugHistory", back_populates="repository", cascade="all, delete-orphan"
     )
 

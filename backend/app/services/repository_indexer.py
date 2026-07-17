@@ -96,7 +96,8 @@ class RepositoryIndexer:
                 imports=json.dumps([i.module for i in res.imports]),
                 routes=json.dumps([{"path": r.path, "method": r.method} for r in res.routes]),
                 is_test_file=any(
-                    p in rel_path for p in ["test_", "_test.", ".test.", ".spec.", "/tests/", "/test/"]
+                    p in rel_path
+                    for p in ["test_", "_test.", ".test.", ".spec.", "/tests/", "/test/"]
                 ),
             )
             self.db.add(db_file)
@@ -146,18 +147,21 @@ class RepositoryIndexer:
                     embedding = self.embedding_service.generate_embedding(chunk_text)
 
                     import uuid
-                    points.append({
-                        "id": str(uuid.uuid4()),
-                        "vector": embedding,
-                        "payload": {
-                            "repository_id": repository_id,
-                            "file_path": rel_path,
-                            "language": res.language,
-                            "function_name": fn.name,
-                            "content": chunk_text,
-                            "type": "function",
-                        },
-                    })
+
+                    points.append(
+                        {
+                            "id": str(uuid.uuid4()),
+                            "vector": embedding,
+                            "payload": {
+                                "repository_id": repository_id,
+                                "file_path": rel_path,
+                                "language": res.language,
+                                "function_name": fn.name,
+                                "content": chunk_text,
+                                "type": "function",
+                            },
+                        }
+                    )
 
             if points:
                 qdrant.upsert(

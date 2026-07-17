@@ -41,7 +41,7 @@ class User(Base, UUIDMixin, TimestampMixin):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     # Relationships
-    repositories: Mapped[list["Repository"]] = relationship(
+    repositories: Mapped[list[Repository]] = relationship(
         "Repository",
         back_populates="owner",
         cascade="all, delete-orphan",

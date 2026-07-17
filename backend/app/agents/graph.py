@@ -30,25 +30,26 @@ logger = get_logger(__name__)
 # Import all agent node functions
 # ==============================================================================
 
-from app.agents.diff_agent import diff_agent_node
 from app.agents.dependency_agent import dependency_agent_node
+from app.agents.diff_agent import diff_agent_node
+from app.agents.documentation_agent import documentation_agent_node
+from app.agents.execution_agent import execution_agent_node
+from app.agents.failure_analysis_agent import failure_analysis_agent_node
 from app.agents.impact_agent import impact_agent_node
+from app.agents.planner_agent import planner_agent_node
+from app.agents.review_agent import review_agent_node
 from app.agents.search_agent import search_agent_node
 from app.agents.test_discovery_agent import test_discovery_agent_node
 from app.agents.test_generator_agent import test_generator_agent_node
-from app.agents.execution_agent import execution_agent_node
-from app.agents.failure_analysis_agent import failure_analysis_agent_node
-from app.agents.review_agent import review_agent_node
-from app.agents.documentation_agent import documentation_agent_node
-from app.agents.planner_agent import planner_agent_node
-
 
 # ==============================================================================
 # Conditional routing functions
 # ==============================================================================
 
 
-def should_continue_after_diff(state: AgentState) -> Literal["dependency_agent", "review_agent", END]:
+def should_continue_after_diff(
+    state: AgentState,
+) -> Literal["dependency_agent", "review_agent", END]:
     """Route after diff agent: stop early if no supported files changed."""
     if state.get("should_stop"):
         logger.info("Pipeline stopping early after diff agent")

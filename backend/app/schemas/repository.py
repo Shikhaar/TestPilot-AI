@@ -3,15 +3,16 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 
-from pydantic import Field, HttpUrl
+from pydantic import Field
 
 from app.schemas.common import BaseSchema
 
 
-class IndexStatus(str, Enum):
+class IndexStatus(StrEnum):
     """Repository indexing status."""
+
     PENDING = "pending"
     INDEXING = "indexing"
     INDEXED = "indexed"

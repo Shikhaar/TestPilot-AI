@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.v1 import auth, repositories, pull_requests, tests, ai, dashboard, webhooks
+from app.api.v1 import ai, auth, dashboard, pull_requests, repositories, tests, webhooks
 
 api_router = APIRouter()
 

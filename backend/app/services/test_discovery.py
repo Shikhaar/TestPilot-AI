@@ -26,7 +26,7 @@ class TestDiscovery:
         """
         test_files = _discover_test_files(self.repo_path)
 
-        frameworks = list(set(tf["framework"] for tf in test_files))
+        frameworks = list({tf["framework"] for tf in test_files})
         total_tests = sum(tf["test_count"] for tf in test_files)
 
         return {

@@ -18,7 +18,6 @@ Output state keys:
 from __future__ import annotations
 
 import time
-from pathlib import Path
 from typing import Any
 
 from app.agents.state import AgentState, ChangedFile, CodeNode
@@ -127,6 +126,7 @@ def _identify_changed_nodes(
         List of CodeNode representing modified symbols.
     """
     from app.core.config import get_settings
+
     settings = get_settings()
 
     parser = ASTParser()

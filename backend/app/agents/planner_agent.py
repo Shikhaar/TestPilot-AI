@@ -6,7 +6,6 @@ validates pre-conditions before the main agent sequence begins.
 
 from __future__ import annotations
 
-import time
 from typing import Any
 
 from app.agents.state import AgentState
@@ -75,19 +74,18 @@ def documentation_agent_node(state: AgentState) -> dict[str, Any]:
     logger.info("Documentation agent started", pr_id=state.get("pr_id"))
 
     # Identify routes that changed
-    changed_routes = [
-        node for node in state.get("changed_nodes", [])
-        if node["type"] == "route"
-    ]
+    changed_routes = [node for node in state.get("changed_nodes", []) if node["type"] == "route"]
 
     doc_updates = []
     for route in changed_routes:
-        doc_updates.append({
-            "type": "api_route_change",
-            "route": route["name"],
-            "file": route["file_path"],
-            "suggestion": f"Update API documentation for {route['name']}",
-        })
+        doc_updates.append(
+            {
+                "type": "api_route_change",
+                "route": route["name"],
+                "file": route["file_path"],
+                "suggestion": f"Update API documentation for {route['name']}",
+            }
+        )
 
     completed = list(state.get("completed_agents", []))
     completed.append("documentation_agent")

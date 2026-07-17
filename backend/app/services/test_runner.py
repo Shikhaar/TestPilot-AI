@@ -44,14 +44,18 @@ class TestRunner:
 
         commands = {
             "pytest": [
-                "python", "-m", "pytest",
+                "python",
+                "-m",
+                "pytest",
                 "--json-report",
                 "--json-report-file=/tmp/testpilot_report.json",
                 "-v",
             ],
             "jest": [
-                "npx", "jest",
-                "--json", "--outputFile=/tmp/testpilot_jest.json",
+                "npx",
+                "jest",
+                "--json",
+                "--outputFile=/tmp/testpilot_jest.json",
             ],
             "go_test": ["go", "test", "./...", "-v"],
             "maven": ["mvn", "test", "-q"],
@@ -82,7 +86,9 @@ class TestRunner:
                 "skipped": 0,
                 "duration_seconds": round(duration, 2),
                 "coverage_percentage": 75.0,
-                "failed_tests": [] if passed else [{"name": "test_failed_stub", "message": "Assert error"}],
+                "failed_tests": []
+                if passed
+                else [{"name": "test_failed_stub", "message": "Assert error"}],
                 "logs": logs[-10000:],
             }
 

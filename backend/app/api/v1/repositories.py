@@ -26,14 +26,13 @@ async def list_repositories(
 ) -> PaginatedResponse[RepositoryResponse]:
     """List all repositories connected by the current user."""
     from sqlalchemy import func, select
+
     from app.models.repository import Repository
 
     offset = (page - 1) * page_size
 
     total_result = await db.execute(
-        select(func.count()).select_from(Repository).where(
-            Repository.owner_id == current_user.id
-        )
+        select(func.count()).select_from(Repository).where(Repository.owner_id == current_user.id)
     )
     total = total_result.scalar_one()
 
@@ -66,15 +65,15 @@ async def connect_repository(
     Fetches repository metadata from GitHub, creates a database record,
     and enqueues an initial indexing job.
     """
-    from sqlalchemy import select
-    from app.models.repository import Repository
-    from app.services.github_service import GitHubService
     import uuid
 
+    from sqlalchemy import select
+
+    from app.models.repository import Repository
+    from app.services.github_service import GitHubService
+
     # Check if already connected
-    existing = await db.execute(
-        select(Repository).where(Repository.full_name == request.full_name)
-    )
+    existing = await db.execute(select(Repository).where(Repository.full_name == request.full_name))
     if existing.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -116,7 +115,9 @@ async def connect_repository(
     await db.flush()
 
     # Trigger background indexing
-    background_tasks.add_task(_trigger_indexing, repo.id, repo.clone_url, current_user.github_access_token)
+    background_tasks.add_task(
+        _trigger_indexing, repo.id, repo.clone_url, current_user.github_access_token
+    )
 
     logger.info("Repository connected", repo_id=repo.id, full_name=repo.full_name)
 
@@ -134,6 +135,7 @@ async def get_repository(
 ) -> APIResponse[RepositoryResponse]:
     """Get a specific repository by ID."""
     from sqlalchemy import select
+
     from app.models.repository import Repository
 
     result = await db.execute(
@@ -158,6 +160,7 @@ async def trigger_reindex(
 ) -> TaskResponse:
     """Trigger re-indexing of a repository."""
     from sqlalchemy import select
+
     from app.models.repository import Repository
 
     result = await db.execute(
@@ -178,6 +181,7 @@ async def trigger_reindex(
         )
 
     from app.tasks.indexing import index_repository
+
     task = index_repository.delay(
         repository_id=repo.id,
         clone_url=repo.clone_url,
@@ -202,6 +206,7 @@ async def _trigger_indexing(
 ) -> None:
     """Enqueue repository indexing as a background task."""
     from app.tasks.indexing import index_repository
+
     index_repository.delay(
         repository_id=repo_id,
         clone_url=clone_url,

@@ -55,7 +55,7 @@ class GeneratedTest(Base, UUIDMixin, TimestampMixin):
     generation_completion_tokens: Mapped[int | None] = mapped_column(String(10), nullable=True)
 
     # Relationships
-    pull_request: Mapped["PullRequest"] = relationship(  # type: ignore[name-defined]  # noqa: F821
+    pull_request: Mapped[PullRequest] = relationship(  # type: ignore[name-defined]  # noqa: F821
         "PullRequest",
         back_populates="generated_tests",
     )

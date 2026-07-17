@@ -26,10 +26,13 @@ settings = get_settings()
 
 class FailureAnalysisResult(BaseModel):
     """Structured failure analysis from LLM."""
+
     root_cause: str = Field(description="The underlying root cause of the failure")
     affected_code_path: str | None = Field(description="The file/function that caused the failure")
     suggested_fix: str = Field(description="Concrete code suggestion to fix the failure")
-    is_pr_regression: bool = Field(description="Whether this failure was introduced by the PR changes")
+    is_pr_regression: bool = Field(
+        description="Whether this failure was introduced by the PR changes"
+    )
     confidence: float = Field(description="Confidence score 0.0-1.0", ge=0.0, le=1.0)
     explanation: str = Field(description="Human-readable explanation of the analysis")
 
@@ -104,10 +107,12 @@ def _analyze_failure(
         return _mock_analysis(failed_test)
 
     changed_files = "\n".join([f"- {f['path']}" for f in state.get("changed_files", [])[:10]])
-    changed_nodes = "\n".join([
-        f"- {n['type']}: {n['name']} in {n['file_path']}"
-        for n in state.get("changed_nodes", [])[:10]
-    ])
+    changed_nodes = "\n".join(
+        [
+            f"- {n['type']}: {n['name']} in {n['file_path']}"
+            for n in state.get("changed_nodes", [])[:10]
+        ]
+    )
 
     prompt = f"""You are an expert software engineer performing test failure root cause analysis.
 
