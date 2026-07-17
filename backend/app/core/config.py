@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     )
     app_version: str = Field(default="0.1.0", description="Application version")
     debug: bool = Field(default=False, description="Enable debug mode")
-    secret_key: str = Field(..., description="Secret key for signing tokens")
+    secret_key: str = Field(default="change-me-to-a-long-random-string", description="Secret key for signing tokens")
     allowed_origins_str: str = Field(
         default="http://localhost:3000",
         alias="ALLOWED_ORIGINS",
@@ -52,7 +52,9 @@ class Settings(BaseSettings):
             import json
 
             try:
-                return json.loads(v)
+                res = json.loads(v)
+                if isinstance(res, list):
+                    return [str(item) for item in res]
             except Exception:
                 pass
         return [o.strip() for o in v.split(",") if o.strip()]
