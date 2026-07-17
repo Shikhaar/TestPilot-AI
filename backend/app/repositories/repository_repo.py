@@ -7,7 +7,7 @@ from collections.abc import Sequence
 from sqlalchemy import select
 
 from app.models.repository import Repository
-from app.repositories.base import BaseRepository
+from app.repositories.base_repo import BaseRepository
 
 
 class RepositoryRepository(BaseRepository[Repository]):

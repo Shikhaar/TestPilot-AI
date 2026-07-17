@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.pull_request import PullRequest
-from app.repositories.base import BaseRepository
+from app.repositories.base_repo import BaseRepository
 
 
 class PullRequestRepository(BaseRepository[PullRequest]):
