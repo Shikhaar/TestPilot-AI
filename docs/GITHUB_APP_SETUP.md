@@ -64,7 +64,7 @@ GITHUB_WEBHOOK_SECRET=testpilot-webhook-secret-2026-7f4a91d3
 GITHUB_APP_PRIVATE_KEY_PATH=/app/private-key.pem
 ```
 
-*Note: Make sure your private key file (`testpilot-ai-shikhar.2026-07-14.private-key.pem`) is renamed or symlinked to `private-key.pem` inside the `secrets/` directory so the backend container can read it at `/app/private-key.pem`.*
+*Note: Make sure to copy the downloaded private key file (e.g., `testpilot-ai-shikhar.private-key.pem`) into the `backend/` folder on your host machine and name it exactly `private-key.pem` (so it sits at `backend/private-key.pem`). The updated Docker volumes will automatically map it to `/app/private-key.pem` inside the running containers.*
 
 ---
 
