@@ -81,7 +81,8 @@ jobs:
       - name: Type Check with Mypy
         run: |
           cd backend
-          poetry run mypy app
+          rm -rf .mypy_cache
+          poetry run mypy --no-incremental app
 
       - name: Run Backend Tests
         env:
