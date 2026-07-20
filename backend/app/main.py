@@ -18,6 +18,7 @@ import time
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
+import structlog
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -28,6 +29,8 @@ from starlette.responses import Response
 from app.core.config import get_settings
 from app.core.logging import configure_logging, get_logger
 from app.core.telemetry import configure_telemetry
+from app.middleware.rate_limit import RateLimitMiddleware
+from app.middleware.request_id import RequestIDMiddleware
 
 settings = get_settings()
 configure_logging()
@@ -125,10 +128,7 @@ def create_app() -> FastAPI:
     )
     app.add_middleware(GZipMiddleware, minimum_size=1000)
 
-    # Import and add custom middleware
-    from app.middleware.rate_limit import RateLimitMiddleware
-    from app.middleware.request_id import RequestIDMiddleware
-
+    # Add custom middleware
     app.add_middleware(RequestIDMiddleware)
     if settings.rate_limit_enabled:
         app.add_middleware(RateLimitMiddleware)  # type: ignore[arg-type]
@@ -140,7 +140,6 @@ def create_app() -> FastAPI:
     async def track_request_metrics(request: Request, call_next: object) -> Response:
         """Track request duration and count via Prometheus."""
         start = time.monotonic()
-        import structlog
 
         structlog.contextvars.clear_contextvars()
         structlog.contextvars.bind_contextvars(

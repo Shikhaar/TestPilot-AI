@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import litellm
 from fastapi import APIRouter, HTTPException
 
 from app.api.deps import CurrentUser, DBSession
@@ -79,8 +80,6 @@ async def chat_with_codebase(
 
     # Generate response with LiteLLM
     try:
-        import litellm
-
         messages = [
             {
                 "role": "system",

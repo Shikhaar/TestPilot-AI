@@ -10,6 +10,8 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Any
 
+import litellm
+
 from app.core.config import get_settings
 from app.core.logging import get_logger
 
@@ -49,8 +51,6 @@ class EmbeddingService:
             return vector
         else:
             try:
-                import litellm
-
                 response = litellm.embedding(
                     model=settings.litellm_default_model,  # e.g. text-embedding-3-small
                     input=[text],
@@ -81,8 +81,6 @@ class EmbeddingService:
             return vectors
         else:
             try:
-                import litellm
-
                 response = litellm.embedding(
                     model=settings.litellm_default_model,
                     input=texts,

@@ -7,6 +7,7 @@ All settings are loaded from the environment / .env file.
 
 from __future__ import annotations
 
+import json
 from functools import lru_cache
 from pathlib import Path
 
@@ -51,8 +52,6 @@ class Settings(BaseSettings):
         """Parse ALLOWED_ORIGINS into a list at access time."""
         v = self.allowed_origins_str.strip()
         if v.startswith("["):
-            import json
-
             try:
                 res = json.loads(v)
                 if isinstance(res, list):
