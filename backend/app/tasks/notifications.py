@@ -7,6 +7,8 @@ when test runs complete, fail, or require review.
 
 from __future__ import annotations
 
+from typing import Any
+
 from app.core.logging import get_logger
 from app.workers.celery_app import celery_app
 
@@ -20,12 +22,12 @@ logger = get_logger(__name__)
     default_retry_delay=30,
 )
 def send_pr_comment(
-    self,
+    self: Any,
     installation_id: int,
     repo_full_name: str,
     pr_number: int,
     comment_body: str,
-) -> dict:
+) -> dict[str, Any]:
     """Post a comment on a GitHub Pull Request.
 
     Args:
@@ -58,10 +60,10 @@ def send_pr_comment(
     default_retry_delay=30,
 )
 def send_test_summary(
-    self,
+    self: Any,
     pr_analysis_id: str,
     test_run_id: str,
-) -> dict:
+) -> dict[str, Any]:
     """Send a test run summary notification.
 
     Args:

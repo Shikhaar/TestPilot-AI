@@ -49,7 +49,7 @@ from app.agents.test_generator_agent import test_generator_agent_node
 
 def should_continue_after_diff(
     state: AgentState,
-) -> Literal["dependency_agent", "review_agent", END]:
+) -> Literal["dependency_agent", "review_agent", END]:  # type: ignore[valid-type]
     """Route after diff agent: stop early if no supported files changed."""
     if state.get("should_stop"):
         logger.info("Pipeline stopping early after diff agent")
@@ -82,7 +82,7 @@ def should_run_failure_analysis(
     return "review_agent"
 
 
-def handle_error(state: AgentState) -> Literal["review_agent", END]:
+def handle_error(state: AgentState) -> Literal["review_agent", END]:  # type: ignore[valid-type]
     """Route on error: generate a partial review or terminate."""
     errors = state.get("errors", [])
     if len(errors) > 5:

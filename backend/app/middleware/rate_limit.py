@@ -5,9 +5,12 @@ from __future__ import annotations
 import time
 from collections import defaultdict
 
+from typing import Any
+
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
+from starlette.types import ASGIApp
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
@@ -27,8 +30,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     EXEMPT_PATHS = {"/health", "/metrics", "/docs", "/redoc", "/openapi.json"}
 
-    def __init__(self, app: object, **kwargs: object) -> None:
-        super().__init__(app)
+    def __init__(self, app: ASGIApp, **kwargs: Any) -> None:
+        super().__init__(app)  # type: ignore[arg-type]
         # {ip: [(timestamp, count)]}
         self._requests: dict[str, list[float]] = defaultdict(list)
         self._limit = settings.rate_limit_requests_per_minute
