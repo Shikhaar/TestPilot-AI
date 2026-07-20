@@ -40,10 +40,9 @@ client.interceptors.response.use(
           return client(originalRequest);
         }
       } catch (refreshError) {
-        // Refresh token expired or invalid -> log out user
+        // Refresh token expired or invalid -> clear local storage token
         if (typeof window !== "undefined") {
           localStorage.removeItem("access_token");
-          window.location.href = "/login";
         }
         return Promise.reject(refreshError);
       }

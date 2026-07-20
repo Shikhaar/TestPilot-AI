@@ -28,7 +28,6 @@ export default function Login() {
         <div className="absolute top-[-50%] left-[-50%] w-[100%] h-[100%] rounded-full bg-purple-900/10 blur-[80px] pointer-events-none" />
         
         <div className="space-y-2">
-          <span className="text-3xl">✈️</span>
           <h2 className="text-2xl font-bold tracking-tight text-gray-100">Sign in to TestPilot AI</h2>
           <p className="text-sm text-gray-500">AI-Powered Regression Testing Platform</p>
         </div>

@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { authApi, User } from "@/lib/api/auth";
 
+import Logo from "@/components/Logo";
+
 export default function Sidebar() {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
@@ -75,16 +77,11 @@ export default function Sidebar() {
   const displayRole = user?.role || "member";
 
   return (
-    <aside className="w-64 border-r border-white/5 bg-[#080808] flex flex-col justify-between h-full select-none">
-      {/* Brand Logo */}
-      <div className="p-6">
-        <Link href="/" className="flex items-center space-x-2.5">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-purple-600 to-blue-500 flex items-center justify-center font-bold text-sm text-white shadow-lg shadow-purple-500/10">
-            T
-          </div>
-          <span className="font-bold text-base tracking-tight bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-            TestPilot AI
-          </span>
+    <aside className="w-64 border-r border-white/10 bg-[#06070a]/90 backdrop-blur-xl flex flex-col justify-between h-full select-none">
+      {/* Brand Logo Header */}
+      <div className="p-6 border-b border-white/5">
+        <Link href="/" className="inline-block transition-transform hover:scale-[1.02]">
+          <Logo variant="full" size="md" />
         </Link>
       </div>
 
