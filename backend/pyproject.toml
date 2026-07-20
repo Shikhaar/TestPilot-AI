@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{include = "app"}]
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.11"
 
 # Web Framework
 fastapi = "^0.115.6"
