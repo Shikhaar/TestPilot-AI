@@ -12,6 +12,7 @@ import contextlib
 import json
 import subprocess
 import time
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -95,9 +96,6 @@ def execution_agent_node(state: AgentState) -> dict[str, Any]:
                 logs=str(e),
             ),
         }
-
-
-from collections.abc import Mapping, Sequence
 
 def _write_generated_tests(
     repo_path: Path,

@@ -19,6 +19,7 @@ Generates:
 from __future__ import annotations
 
 import time
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -127,8 +128,6 @@ def test_generator_agent_node(state: AgentState) -> dict[str, Any]:
         errors.append(f"test_generator_agent: {e}")
         return {"errors": errors, "generated_tests": []}
 
-
-from collections.abc import Mapping, Sequence
 
 @retry(
     stop=stop_after_attempt(3),
