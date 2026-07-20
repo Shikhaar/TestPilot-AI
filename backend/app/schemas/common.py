@@ -7,7 +7,7 @@ used across all API endpoints.
 
 from __future__ import annotations
 
-from typing import TypeVar
+from typing import Generic, TypeVar
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -43,7 +43,7 @@ class PaginationParams(BaseModel):
         return (self.page - 1) * self.page_size
 
 
-class PaginatedResponse[T](BaseModel):
+class PaginatedResponse(BaseModel, Generic[T]):
     """Generic paginated response envelope."""
 
     items: list[T]
@@ -85,7 +85,7 @@ class PaginatedResponse[T](BaseModel):
         )
 
 
-class APIResponse[T](BaseModel):
+class APIResponse(BaseModel, Generic[T]):
     """Standard API response envelope."""
 
     success: bool = True
