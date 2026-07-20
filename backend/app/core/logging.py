@@ -113,4 +113,5 @@ def get_logger(name: str) -> structlog.BoundLogger:
         >>> logger.info("Repository indexed", repo_id="abc123", files=42)
     """
     import typing
+
     return typing.cast(structlog.BoundLogger, structlog.get_logger(name))

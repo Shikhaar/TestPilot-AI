@@ -97,6 +97,7 @@ def execution_agent_node(state: AgentState) -> dict[str, Any]:
             ),
         }
 
+
 def _write_generated_tests(
     repo_path: Path,
     generated_tests: Sequence[Mapping[str, Any]],
