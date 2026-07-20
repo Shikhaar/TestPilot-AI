@@ -24,8 +24,12 @@ htmlcov/
 .pytest_cache/
 coverage.xml
 
-# MyPy
+# MyPy & Caches
 .mypy_cache/
+.cache/
+.local/
+*/.cache/
+*/.local/
 
 # Node / Next.js
 node_modules/
