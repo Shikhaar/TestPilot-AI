@@ -60,7 +60,7 @@ jobs:
         id: cached-poetry-dependencies
         with:
           path: backend/.venv
-          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+          key: ${{ runner.os }}-poetry-v2-${{ hashFiles('**/poetry.lock') }}
 
       - name: Install Dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
@@ -82,6 +82,7 @@ jobs:
         run: |
           cd backend
           rm -rf .mypy_cache
+          find .venv -name "base.py" -path "*/repositories/*" -delete 2>/dev/null || true
           poetry run mypy --no-incremental app
 
       - name: Run Backend Tests
