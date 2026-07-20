@@ -37,7 +37,9 @@ class Settings(BaseSettings):
     )
     app_version: str = Field(default="0.1.0", description="Application version")
     debug: bool = Field(default=False, description="Enable debug mode")
-    secret_key: str = Field(default="change-me-to-a-long-random-string", description="Secret key for signing tokens")
+    secret_key: str = Field(
+        default="change-me-to-a-long-random-string", description="Secret key for signing tokens"
+    )
     allowed_origins_str: str = Field(
         default="http://localhost:3000",
         alias="ALLOWED_ORIGINS",
