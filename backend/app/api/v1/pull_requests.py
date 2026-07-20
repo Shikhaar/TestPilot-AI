@@ -172,7 +172,7 @@ async def post_github_review(
     review_result = await db.execute(
         select(ReviewComment).where(
             ReviewComment.pull_request_id == pr_id,
-            not ReviewComment.is_posted,
+            ReviewComment.is_posted.is_(False),
         )
     )
     review = review_result.scalar_one_or_none()

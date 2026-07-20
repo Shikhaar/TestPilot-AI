@@ -166,7 +166,7 @@ class RepositoryIndexer:
             if points:
                 qdrant.upsert(
                     collection_name=settings.qdrant_collection_repository_chunks,
-                    points=points,
+                    points=points,  # type: ignore[arg-type]
                 )
                 logger.info("Uploaded code embeddings to Qdrant", count=len(points))
 

@@ -97,9 +97,11 @@ def execution_agent_node(state: AgentState) -> dict[str, Any]:
         }
 
 
+from collections.abc import Mapping, Sequence
+
 def _write_generated_tests(
     repo_path: Path,
-    generated_tests: list[dict[str, Any]],
+    generated_tests: Sequence[Mapping[str, Any]],
 ) -> list[Path]:
     """Write generated tests to temporary files in the repository."""
     written = []

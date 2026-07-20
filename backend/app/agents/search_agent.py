@@ -50,7 +50,7 @@ def search_agent_node(state: AgentState) -> dict[str, Any]:
             for node in changed_nodes[:10]:  # Limit to top 10 nodes
                 query = f"{node['type']} {node['name']} in {node['file_path']}"
                 try:
-                    results = qdrant.search(
+                    results = qdrant.search(  # type: ignore[attr-defined]
                         collection_name=settings.qdrant_collection_repository_chunks,
                         query_text=query,
                         limit=3,

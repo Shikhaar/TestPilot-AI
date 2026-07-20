@@ -61,7 +61,7 @@ async def chat_with_codebase(
     context_text = ""
 
     try:
-        results = qdrant.search(
+        results = qdrant.search(  # type: ignore[attr-defined]
             collection_name=settings.qdrant_collection_repository_chunks,
             query_text=last_user_message,
             limit=5,
@@ -139,7 +139,7 @@ async def search_code(
     results = []
 
     try:
-        search_results = qdrant.search(
+        search_results = qdrant.search(  # type: ignore[attr-defined]
             collection_name=settings.qdrant_collection_repository_chunks,
             query_text=request.query,
             limit=request.limit,

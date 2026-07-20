@@ -128,6 +128,8 @@ def test_generator_agent_node(state: AgentState) -> dict[str, Any]:
         return {"errors": errors, "generated_tests": []}
 
 
+from collections.abc import Mapping, Sequence
+
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=2, max=10),
@@ -135,10 +137,10 @@ def test_generator_agent_node(state: AgentState) -> dict[str, Any]:
     reraise=True,
 )
 def _generate_tests(
-    changed_nodes: list[dict[str, Any]],
-    existing_tests: list[dict[str, Any]],
+    changed_nodes: Sequence[Mapping[str, Any]],
+    existing_tests: Sequence[Mapping[str, Any]],
     uncovered_modules: list[str],
-    retrieved_context: list[dict[str, Any]],
+    retrieved_context: Sequence[Mapping[str, Any]],
     state: AgentState,
 ) -> list[GeneratedTest]:
     """Generate tests using LiteLLM with Instructor structured output.
@@ -241,7 +243,7 @@ The following code was modified in this Pull Request:
         return _generate_mock_tests(changed_nodes)
 
 
-def _generate_mock_tests(changed_nodes: list[dict[str, Any]]) -> list[GeneratedTest]:
+def _generate_mock_tests(changed_nodes: Sequence[Mapping[str, Any]]) -> list[GeneratedTest]:
     """Generate placeholder tests when LLM is unavailable.
 
     These are stubs that pass validation but need human completion.
