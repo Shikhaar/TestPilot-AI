@@ -10,6 +10,8 @@ from __future__ import annotations
 import time
 from typing import Any
 
+import instructor
+import litellm
 from pydantic import BaseModel, Field
 
 from app.agents.state import AgentState, PRReview, RiskScore
@@ -108,9 +110,6 @@ def review_agent_node(state: AgentState) -> dict[str, Any]:
 def _generate_review(state: AgentState) -> PRReviewOutput:
     """Generate the PR review using LiteLLM or rule-based fallback."""
     try:
-        import instructor
-        import litellm
-
         client = instructor.from_litellm(litellm.completion)
         return _llm_review(client, state)
     except Exception:

@@ -23,6 +23,8 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
+import instructor
+import litellm
 from pydantic import BaseModel, Field
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
@@ -147,9 +149,6 @@ def _generate_tests(
     Uses retry logic with exponential backoff for API failures.
     """
     try:
-        import instructor
-        import litellm
-
         client = instructor.from_litellm(litellm.completion)
     except ImportError as e:
         logger.error("instructor or litellm not available", error=str(e))

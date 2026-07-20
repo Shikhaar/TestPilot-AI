@@ -13,6 +13,8 @@ from __future__ import annotations
 import time
 from typing import Any
 
+import instructor
+import litellm
 from pydantic import BaseModel, Field
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
@@ -99,9 +101,6 @@ def _analyze_failure(
 ) -> FailureAnalysis | None:
     """Use LiteLLM to analyze a single test failure."""
     try:
-        import instructor
-        import litellm
-
         client = instructor.from_litellm(litellm.completion)
     except ImportError:
         return _mock_analysis(failed_test)
