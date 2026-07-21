@@ -24,7 +24,7 @@ class EmbeddingService:
 
     def __init__(self) -> None:
         self.use_local = settings.use_local_embeddings
-        self._local_model = None
+        self._local_model: Any | None = None
 
     def _get_local_model(self) -> Any:
         """Lazy-load the SentenceTransformer model to save memory on start."""

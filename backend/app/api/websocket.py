@@ -69,7 +69,7 @@ async def websocket_pr_updates(websocket: WebSocket, pr_id: str) -> None:
                     pass
 
         await pubsub.unsubscribe(f"pr_updates:{pr_id}")
-        await redis.aclose()
+        await redis.aclose()  # type: ignore[attr-defined]
 
     except WebSocketDisconnect:
         logger.info("WebSocket client disconnected", pr_id=pr_id)
@@ -123,7 +123,7 @@ async def websocket_indexing_progress(websocket: WebSocket, repo_id: str) -> Non
                     pass
 
         await pubsub.unsubscribe(f"indexing:{repo_id}")
-        await redis.aclose()
+        await redis.aclose()  # type: ignore[attr-defined]
 
     except WebSocketDisconnect:
         logger.info("Indexing WebSocket client disconnected", repo_id=repo_id)
