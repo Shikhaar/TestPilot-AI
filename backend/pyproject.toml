@@ -144,6 +144,7 @@ ignore = [
     "ARG002", # unused method argument
     "E402",   # Module level import not at top of file (dynamic/graph imports)
     "B904",   # Within an except clause, raise exceptions with raise ... from
+    "UP046",  # Allow Generic[T] instead of Python 3.12 type parameters
 ]
 
 [tool.ruff.lint.isort]
