@@ -60,12 +60,13 @@ jobs:
         id: cached-poetry-dependencies
         with:
           path: backend/.venv
-          key: ${{ runner.os }}-poetry-v3-${{ hashFiles('**/poetry.lock') }}
+          key: ${{ runner.os }}-poetry-v4-${{ hashFiles('backend/poetry.lock', 'backend/pyproject.toml') }}
 
       - name: Install Dependencies
         run: |
           cd backend
           poetry install --no-interaction --no-root
+          poetry run pip install aiosqlite
 
       - name: Lint with Ruff
         run: |
