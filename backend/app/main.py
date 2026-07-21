@@ -275,7 +275,7 @@ async def _check_services() -> dict[str, str]:
 
         r = aioredis.from_url(settings.redis_url)
         await r.ping()
-        await r.aclose()  # type: ignore[attr-defined]
+        await r.close()
         services["redis"] = "healthy"
     except Exception:
         services["redis"] = "unhealthy"

@@ -32,7 +32,7 @@ class EmbeddingService:
             try:
                 from sentence_transformers import SentenceTransformer
 
-                self._local_model = SentenceTransformer(settings.sentence_transformer_model)
+                self._local_model = SentenceTransformer(settings.sentence_transformer_model)  # type: ignore[assignment]
                 logger.info(
                     "SentenceTransformer model loaded", model=settings.sentence_transformer_model
                 )
