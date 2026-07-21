@@ -92,6 +92,7 @@ pytest-mock = "^3.14.0"
 httpx = {extras = ["http2"], version = "^0.28.1"}
 factory-boy = "^3.3.1"
 faker = "^33.3.1"
+aiosqlite = "^0.20.0"
 black = "^24.10.0"
 ruff = "^0.9.1"
 mypy = "^1.14.1"
