@@ -60,10 +60,9 @@ jobs:
         id: cached-poetry-dependencies
         with:
           path: backend/.venv
-          key: ${{ runner.os }}-poetry-v2-${{ hashFiles('**/poetry.lock') }}
+          key: ${{ runner.os }}-poetry-v3-${{ hashFiles('**/poetry.lock') }}
 
       - name: Install Dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: |
           cd backend
           poetry install --no-interaction --no-root
