@@ -55,13 +55,6 @@ jobs:
           virtualenvs-create: true
           virtualenvs-in-project: true
 
-      - name: Cache Poetry Virtualenv
-        uses: actions/cache@v4
-        id: cached-poetry-dependencies
-        with:
-          path: backend/.venv
-          key: ${{ runner.os }}-poetry-v4-${{ hashFiles('backend/poetry.lock', 'backend/pyproject.toml') }}
-
       - name: Install Dependencies
         run: |
           cd backend
