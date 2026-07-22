@@ -13,7 +13,11 @@ export default function Login() {
     try {
       const data = await authApi.getLoginUrl();
       if (data && data.url) {
-        window.location.href = data.url;
+        const callbackUrl = `${window.location.origin}/auth/callback`;
+        const redirectUrl = data.url.includes("redirect_uri")
+          ? data.url
+          : `${data.url}&redirect_uri=${encodeURIComponent(callbackUrl)}`;
+        window.location.href = redirectUrl;
       } else {
         throw new Error("Invalid response from server");
       }
