@@ -14,10 +14,12 @@ export default function Sidebar() {
   useEffect(() => {
     async function fetchUser() {
       try {
-        const profile = await authApi.getMe();
-        setUser(profile);
-      } catch (err) {
-        console.error("Failed to load user profile", err);
+        const profile = await authApi.getMe().catch(() => null);
+        if (profile) {
+          setUser(profile);
+        }
+      } catch {
+        // Silent fallback for guest/offline preview
       }
     }
     fetchUser();
