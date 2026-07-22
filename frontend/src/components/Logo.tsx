@@ -10,10 +10,10 @@ interface LogoProps {
 
 export default function Logo({ variant = "full", size = "md", className = "" }: LogoProps) {
   const sizeMap = {
-    sm: { icon: "w-6 h-6", text: "text-sm", gap: "space-x-2" },
-    md: { icon: "w-8 h-8", text: "text-base", gap: "space-x-2.5" },
-    lg: { icon: "w-10 h-10", text: "text-xl", gap: "space-x-3" },
-    xl: { icon: "w-12 h-12", text: "text-2xl", gap: "space-x-3.5" },
+    sm: { icon: "w-6 h-6", text: "text-sm", badge: "text-[9px] px-1 py-0.2", gap: "space-x-2" },
+    md: { icon: "w-8 h-8", text: "text-base", badge: "text-[10px] px-1.5 py-0.5", gap: "space-x-2" },
+    lg: { icon: "w-10 h-10", text: "text-xl", badge: "text-xs px-2 py-0.5", gap: "space-x-2.5" },
+    xl: { icon: "w-12 h-12", text: "text-2xl", badge: "text-sm px-2.5 py-1", gap: "space-x-3" },
   };
 
   const currentSize = sizeMap[size] || sizeMap.md;
@@ -22,81 +22,58 @@ export default function Logo({ variant = "full", size = "md", className = "" }: 
     <div className={`inline-flex items-center ${currentSize.gap} ${className}`}>
       {/* Brand Icon SVG */}
       <div className={`relative flex items-center justify-center ${currentSize.icon}`}>
-        {/* Ambient Glow */}
-        <div className="absolute inset-0 rounded-xl bg-gradient-to-tr from-purple-600 to-cyan-500 opacity-40 blur-sm transform scale-110" />
-        
-        {/* SVG Wings Symbol */}
         <svg
-          viewBox="0 0 40 40"
+          viewBox="0 0 100 100"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className="relative w-full h-full drop-shadow-md"
+          className="w-full h-full drop-shadow-md"
         >
-          <defs>
-            <linearGradient id="tp-grad-primary" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#9333EA" />
-              <stop offset="50%" stopColor="#6366F1" />
-              <stop offset="100%" stopColor="#06B6D4" />
-            </linearGradient>
-            <linearGradient id="tp-grad-accent" x1="100%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#38BDF8" />
-              <stop offset="100%" stopColor="#A855F7" />
-            </linearGradient>
-            <linearGradient id="tp-grad-wing" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.9" />
-              <stop offset="100%" stopColor="#C084FC" stopOpacity="0.7" />
-            </linearGradient>
-          </defs>
+          {/* Left Speed Lines */}
+          <path d="M 10 38 H 28" stroke="#2563EB" strokeWidth="5" strokeLinecap="round" />
+          <path d="M 4 52 H 28" stroke="#2563EB" strokeWidth="5" strokeLinecap="round" />
+          <path d="M 12 66 H 28" stroke="#2563EB" strokeWidth="5" strokeLinecap="round" />
 
-          {/* Hexagonal Base Frame */}
-          <rect
-            x="2"
-            y="2"
-            width="36"
-            height="36"
-            rx="10"
-            fill="#0B0C10"
-            stroke="url(#tp-grad-primary)"
-            strokeWidth="1.5"
-            strokeOpacity="0.6"
-          />
+          {/* Blue 'T' Top Bar & Diagonal Stem */}
+          <path d="M 32 26 H 76" stroke="#2563EB" strokeWidth="11" strokeLinecap="round" />
+          <circle cx="46" cy="38" r="4.5" fill="#2563EB" />
+          <path d="M 58 26 L 44 84" stroke="#2563EB" strokeWidth="11" strokeLinecap="round" />
 
-          {/* Supersonic Pilot Wing Left */}
+          {/* Dark Charcoal/Navy 'P' Loop & Leg */}
           <path
-            d="M 10 27 L 20 9 L 20 22 Z"
-            fill="url(#tp-grad-primary)"
-          />
-
-          {/* Supersonic Pilot Wing Right */}
-          <path
-            d="M 30 27 L 20 9 L 20 22 Z"
-            fill="url(#tp-grad-accent)"
-          />
-
-          {/* Center Flight Trajectory Line */}
-          <path
-            d="M 20 9 L 20 31"
-            stroke="url(#tp-grad-wing)"
-            strokeWidth="2.5"
+            d="M 54 26 H 74 C 90 26 90 60 74 60 H 54"
+            stroke="#334155"
+            strokeWidth="11"
+            fill="none"
             strokeLinecap="round"
+            strokeLinejoin="round"
           />
+          <path d="M 58 60 L 50 86" stroke="#334155" strokeWidth="11" strokeLinecap="round" />
 
-          {/* AI Neural Node Circles */}
-          <circle cx="20" cy="9" r="2.5" fill="#FFFFFF" />
-          <circle cx="10" cy="27" r="2" fill="#38BDF8" />
-          <circle cx="30" cy="27" r="2" fill="#A855F7" />
-          <circle cx="20" cy="31" r="1.5" fill="#FFFFFF" />
+          {/* Checkmark inside 'P' loop */}
+          <path
+            d="M 62 44 L 70 52 L 83 36"
+            stroke="#2563EB"
+            strokeWidth="5.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="none"
+          />
         </svg>
       </div>
 
       {/* Brand Text */}
       {variant === "full" && (
         <div className="flex flex-col leading-none">
-          <span className={`font-extrabold tracking-tight bg-gradient-to-r from-white via-gray-100 to-purple-300 bg-clip-text text-transparent ${currentSize.text}`}>
-            TestPilot <span className="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">AI</span>
-          </span>
-          <span className="text-[9px] uppercase tracking-widest text-gray-500 font-semibold mt-0.5">
-            Regression Engine
+          <div className="flex items-center space-x-1.5">
+            <span className={`font-extrabold tracking-tight text-white ${currentSize.text}`}>
+              Test<span className="text-blue-500">Pilot</span>
+            </span>
+            <span className={`font-bold text-blue-400 border border-blue-500/40 rounded-md bg-blue-500/10 ${currentSize.badge}`}>
+              AI
+            </span>
+          </div>
+          <span className="text-[8px] uppercase tracking-widest text-gray-400 font-medium mt-1">
+            SMART TESTING. BETTER SOFTWARE.
           </span>
         </div>
       )}
