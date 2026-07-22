@@ -15,10 +15,14 @@ export default function Repositories() {
   useEffect(() => {
     async function loadData() {
       try {
-        const res = await repositoriesApi.list();
-        setRepos(res.items);
-      } catch (err) {
-        console.error("Failed to load repositories, using mock fallback", err);
+        const res = await repositoriesApi.list().catch(() => null);
+        if (res && res.items) {
+          setRepos(res.items);
+        } else {
+          throw new Error("Backend offline - using mock repositories");
+        }
+      } catch {
+        // Fallback mock repositories for preview mode
         setRepos([
           {
             id: "repo-1",

@@ -19,11 +19,15 @@ export default function PullRequestsPage() {
       setLoading(true);
       try {
         // Fetch all PRs from API
-        const data = await pullRequestsApi.list(undefined, filterState || undefined, page, pageSize);
-        setPrs(data.items || []);
-        setTotal(data.total || 0);
-      } catch (err) {
-        console.error("Failed to load pull requests, using fallback mock", err);
+        const data = await pullRequestsApi.list(undefined, filterState || undefined, page, pageSize).catch(() => null);
+        if (data && data.items) {
+          setPrs(data.items || []);
+          setTotal(data.total || 0);
+        } else {
+          throw new Error("Backend offline - using mock PRs");
+        }
+      } catch {
+        // Fallback mock data for preview mode
         // Fallback mock data
         const mockPRs: PullRequest[] = [
           {
