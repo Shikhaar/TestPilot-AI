@@ -11,15 +11,16 @@ export default function Login() {
     setLoading(true);
     setError("");
     try {
-      const data = await authApi.getLoginUrl().catch(() => null);
+      const data = await authApi.getLoginUrl();
       if (data && data.url) {
-        // Redirect browser to GitHub OAuth authorize page
         window.location.href = data.url;
       } else {
-        throw new Error("Backend offline");
+        throw new Error("Invalid response from server");
       }
-    } catch {
-      setError("Backend API is currently offline (http://localhost:8000). Start FastAPI backend to enable GitHub OAuth.");
+    } catch (err: any) {
+      console.error("GitHub Login error:", err);
+      const msg = err.response?.data?.detail || err.message || "Network error connecting to backend";
+      setError(`GitHub OAuth Error: ${msg}`);
       setLoading(false);
     }
   };
