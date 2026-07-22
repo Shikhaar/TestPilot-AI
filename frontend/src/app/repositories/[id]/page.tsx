@@ -160,7 +160,7 @@ export default function RepositoryDetail({ params }: { params: Promise<{ id: str
                   <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-4">AI Summary</h3>
                   <div className="space-y-4">
                     <p className="text-xs text-gray-400 leading-relaxed">
-                      💡 TestPilot AI parsed this codebase. The API layers are verified via tests. 
+                      TestPilot AI parsed this codebase. The API layers are verified via tests. 
                       However, there is a coverage gap of 15% in the secondary billing service which 
                       poses regression risks on subsequent changes.
                     </p>
