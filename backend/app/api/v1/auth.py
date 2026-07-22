@@ -183,3 +183,49 @@ async def refresh_token(
 async def get_current_user_profile(current_user: CurrentUser) -> APIResponse[UserResponse]:
     """Get the current authenticated user's profile."""
     return APIResponse(data=UserResponse.model_validate(current_user))
+
+
+@router.post("/dev-login", response_model=TokenResponse)
+async def dev_login(db: DBSession, response: Response) -> TokenResponse:
+    """Instant Developer Login for local testing without OAuth configuration."""
+    import uuid
+    from sqlalchemy import select
+    from app.models.user import User
+    from app.core.config import get_settings
+
+    result = await db.execute(select(User).where(User.username == "shikhar-dev"))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        user = User(
+            id=str(uuid.uuid4()),
+            github_id="999999",
+            username="shikhar-dev",
+            email="shikhar@testpilot.ai",
+            name="Shikhar Srivastava",
+            avatar_url="https://avatars.githubusercontent.com/u/999999?v=4",
+            role="admin",
+        )
+        db.add(user)
+        await db.flush()
+
+    jwt_access = create_access_token(user.id)
+    jwt_refresh = create_refresh_token(user.id)
+    settings = get_settings()
+
+    response.set_cookie(
+        key="refresh_token",
+        value=jwt_refresh,
+        httponly=True,
+        secure=False,
+        samesite="lax",
+        max_age=settings.jwt_refresh_token_expire_days * 86400,
+        path="/api/v1/auth",
+    )
+
+    return TokenResponse(
+        access_token=jwt_access,
+        refresh_token=None,
+        expires_in=settings.jwt_access_token_expire_minutes * 60,
+        user=UserResponse.model_validate(user),
+    )
