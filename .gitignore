@@ -15,9 +15,6 @@ build/
 venv/
 *.pyc
 
-# Poetry
-poetry.lock
-
 # Coverage
 .coverage
 htmlcov/
