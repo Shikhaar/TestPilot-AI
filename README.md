@@ -7,6 +7,8 @@
 
 > **AI-Powered Regression Testing Platform for Modern Software Engineering Teams**
 
+![TestPilot AI Platform Overview](docs/images/dashboard.png)
+
 TestPilot AI is a production-grade AI platform that automatically analyzes GitHub Pull Requests, maps codebase impact trees, discovers existing test structures, writes missing tests using LLMs, and posts code reviews back to GitHub.
 
 ---
