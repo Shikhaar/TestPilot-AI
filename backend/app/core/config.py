@@ -58,13 +58,7 @@ class Settings(BaseSettings):
                     return [str(item) for item in res]
             except Exception:
                 pass
-        origins = [o.strip() for o in v.split(",") if o.strip()]
-        if self.app_env == "development":
-          for p in ["3000", "3001", "3002", "3003", "3004", "3005"]:
-            dev_origin = f"http://localhost:{p}"
-            if dev_origin not in origins:
-              origins.append(dev_origin)
-        return origins
+        return [o.strip() for o in v.split(",") if o.strip()]
 
     # --------------------------------------------------------------------------
     # Database
