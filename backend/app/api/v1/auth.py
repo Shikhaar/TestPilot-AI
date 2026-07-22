@@ -15,26 +15,41 @@ router = APIRouter()
 
 
 @router.get("/github/login", summary="GitHub OAuth Login URL")
-async def github_login_url() -> dict[str, str]:
-    """Get the GitHub OAuth authorization URL.
+async def github_login_url(redirect_uri: str | None = None) -> dict[str, str]:
+    """Get the GitHub OAuth authorization or App installation URL.
 
     Returns:
-        The GitHub OAuth URL to redirect the user to.
+        The GitHub OAuth/App URL to redirect the user to.
     """
     import secrets
-
     from app.core.config import get_settings
 
     settings = get_settings()
-
     state = secrets.token_urlsafe(32)
-    url = (
-        f"https://github.com/login/oauth/authorize"
-        f"?client_id={settings.github_client_id}"
-        f"&scope=repo,read:user,user:email"
-        f"&state={state}"
-    )
-    return {"url": url, "state": state}
+
+    cb_uri = redirect_uri or "http://localhost:3000/auth/callback"
+
+    # If using a GitHub App (Client ID starting with 'Iv'), try OAuth authorize with explicit redirect_uri first
+    if settings.github_client_id.startswith("Iv"):
+        app_slug = (settings.github_app_name or "testpilot-ai-shikhar").strip('"').lower().replace(" ", "-")
+        # Provide fallback installation URL if OAuth authorize fails
+        url = (
+            f"https://github.com/login/oauth/authorize"
+            f"?client_id={settings.github_client_id}"
+            f"&redirect_uri={cb_uri}"
+            f"&scope=repo,read:user,user:email"
+            f"&state={state}"
+        )
+    else:
+        url = (
+            f"https://github.com/login/oauth/authorize"
+            f"?client_id={settings.github_client_id}"
+            f"&redirect_uri={cb_uri}"
+            f"&scope=repo,read:user,user:email"
+            f"&state={state}"
+        )
+
+    return {"url": url, "state": state, "app_install_url": f"https://github.com/apps/{(settings.github_app_name or 'testpilot-ai-shikhar').strip('\"').lower().replace(' ', '-')}/installations/new"}
 
 
 @router.post("/github/callback", response_model=TokenResponse)
