@@ -81,9 +81,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         environment=settings.app_env,
     )
 
-    # Configure OpenTelemetry (instruments the app automatically)
-    configure_telemetry(app)
-
     # Initialize Qdrant collections
     await _initialize_qdrant()
 
@@ -116,9 +113,17 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    # Configure OpenTelemetry BEFORE application starts
+    configure_telemetry(app)
+
     # --------------------------------------------------------------------------
-    # Middleware
+    # Middleware (Starlette executes last-added middleware FIRST on incoming requests)
     # --------------------------------------------------------------------------
+    if settings.rate_limit_enabled:
+        app.add_middleware(RateLimitMiddleware)  # type: ignore[arg-type]
+    app.add_middleware(RequestIDMiddleware)
+    app.add_middleware(GZipMiddleware, minimum_size=1000)
+
     allow_origin_regex = (
         r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$" if not settings.is_production else None
     )
@@ -131,12 +136,6 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    app.add_middleware(GZipMiddleware, minimum_size=1000)
-
-    # Add custom middleware
-    app.add_middleware(RequestIDMiddleware)
-    if settings.rate_limit_enabled:
-        app.add_middleware(RateLimitMiddleware)  # type: ignore[arg-type]
 
     # --------------------------------------------------------------------------
     # Request timing middleware
