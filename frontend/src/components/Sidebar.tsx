@@ -74,9 +74,9 @@ export default function Sidebar() {
   ];
 
   // Derive display initials and details
-  const displayInitial = user?.name ? user.name.charAt(0).toUpperCase() : (user?.username ? user.username.charAt(0).toUpperCase() : "U");
-  const displayName = user?.name || user?.username || "Software Engineer";
-  const displayRole = user?.role || "member";
+  const displayInitial = user?.name ? user.name.charAt(0).toUpperCase() : (user?.username ? user.username.charAt(0).toUpperCase() : "S");
+  const displayName = user?.name || user?.username || "Shikhar Srivastava";
+  const displayRole = user?.role || "Lead Engineer";
 
   return (
     <aside className="w-64 border-r border-white/10 bg-[#06070a]/90 backdrop-blur-xl flex flex-col justify-between h-full select-none">
