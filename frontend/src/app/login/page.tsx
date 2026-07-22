@@ -11,12 +11,15 @@ export default function Login() {
     setLoading(true);
     setError("");
     try {
-      const data = await authApi.getLoginUrl();
-      // Redirect browser to GitHub OAuth authorize page
-      window.location.href = data.url;
-    } catch (err) {
-      console.error(err);
-      setError("Failed to initialize GitHub OAuth flow");
+      const data = await authApi.getLoginUrl().catch(() => null);
+      if (data && data.url) {
+        // Redirect browser to GitHub OAuth authorize page
+        window.location.href = data.url;
+      } else {
+        throw new Error("Backend offline");
+      }
+    } catch {
+      setError("Backend API is currently offline (http://localhost:8000). Start FastAPI backend to enable GitHub OAuth.");
       setLoading(false);
     }
   };
