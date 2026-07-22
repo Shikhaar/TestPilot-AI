@@ -58,6 +58,7 @@ jobs:
       - name: Install Dependencies
         run: |
           cd backend
+          poetry lock
           poetry install --with dev --no-interaction --no-root
 
       - name: Lint with Ruff
