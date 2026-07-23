@@ -55,7 +55,7 @@ async def github_webhook(
         logger.warning(
             "GitHub webhook signature verification failed",
             delivery_id=x_github_delivery,
-            event=x_github_event,
+            github_event=x_github_event,
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -72,7 +72,7 @@ async def github_webhook(
 
     logger.info(
         "GitHub webhook received",
-        event=x_github_event,
+        github_event=x_github_event,
         delivery_id=x_github_delivery,
         repo=payload.get("repository", {}).get("full_name"),
     )

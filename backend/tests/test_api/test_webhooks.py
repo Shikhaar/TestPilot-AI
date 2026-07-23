@@ -16,7 +16,9 @@ def sign_payload(payload: bytes, secret: str) -> str:
     return f"sha256={sig}"
 
 
-WEBHOOK_SECRET = "test-webhook-secret"
+from app.core.config import get_settings
+
+WEBHOOK_SECRET = get_settings().github_webhook_secret
 
 
 @pytest.mark.asyncio
