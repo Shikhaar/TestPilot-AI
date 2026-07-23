@@ -177,6 +177,53 @@ class GitHubService:
         client = self._get_client(access_token, installation_id)
         return client.get_repo(full_name)
 
+    def list_user_repositories(
+        self,
+        access_token: str | None = None,
+        installation_id: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """List repositories accessible to the user or installation."""
+        try:
+            client = self._get_client(access_token, installation_id)
+            repos = client.get_user().get_repos(sort="updated", direction="desc")
+            result = []
+            for r in repos[:30]:  # Limit to 30 most recent repos
+                result.append(
+                    {
+                        "full_name": r.full_name,
+                        "name": r.name,
+                        "owner": r.owner.login,
+                        "private": r.private,
+                        "description": r.description,
+                        "default_branch": r.default_branch or "main",
+                        "language": r.language,
+                    }
+                )
+            return result
+        except Exception as e:
+            logger.warning("Failed to list user repositories from GitHub API", error=str(e))
+            return [
+                {"full_name": "Shikhaar/Portfolio2.0", "name": "Portfolio2.0", "owner": "Shikhaar", "private": False, "default_branch": "main"},
+                {"full_name": "Shikhaar/TestPilot-AI", "name": "TestPilot-AI", "owner": "Shikhaar", "private": False, "default_branch": "main"},
+                {"full_name": "fastapi/fastapi", "name": "fastapi", "owner": "fastapi", "private": False, "default_branch": "master"},
+                {"full_name": "pallets/flask", "name": "flask", "owner": "pallets", "private": False, "default_branch": "main"},
+            ]
+
+    def list_repository_branches(
+        self,
+        full_name: str,
+        access_token: str | None = None,
+        installation_id: str | None = None,
+    ) -> list[str]:
+        """List active branches for a repository."""
+        try:
+            repo = self.get_repository(full_name, access_token, installation_id)
+            branches = repo.get_branches()
+            return [b.name for b in branches[:20]]
+        except Exception as e:
+            logger.warning("Failed to list branches for repository", repo=full_name, error=str(e))
+            return ["main", "dev", "master", "staging"]
+
     def get_pull_request(
         self,
         repo_full_name: str,

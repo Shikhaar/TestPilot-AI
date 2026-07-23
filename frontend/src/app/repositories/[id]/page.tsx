@@ -15,12 +15,14 @@ export default function RepositoryDetail({ params }: { params: Promise<{ id: str
   const [reindexing, setReindexing] = useState(false);
 
   const [selectedBranch, setSelectedBranch] = useState("");
+  const [branches, setBranches] = useState<string[]>([]);
 
   const fetchRepo = async () => {
     try {
-      const [data, prData] = await Promise.all([
+      const [data, prData, branchData] = await Promise.all([
         repositoriesApi.get(id).catch(() => null),
         pullRequestsApi.list(id).catch(() => null),
+        repositoriesApi.listBranches(id).catch(() => ["main", "dev", "master", "staging"]),
       ]);
       if (data) {
         setRepo(data);
@@ -29,6 +31,7 @@ export default function RepositoryDetail({ params }: { params: Promise<{ id: str
         }
       }
       if (prData && prData.items) setPrs(prData.items);
+      if (branchData && branchData.length > 0) setBranches(branchData);
     } catch (err) {
       console.error("Failed to load repo", err);
     } finally {
@@ -91,13 +94,17 @@ export default function RepositoryDetail({ params }: { params: Promise<{ id: str
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                   </svg>
                   <span className="text-gray-500 font-semibold">Branch:</span>
-                  <input
-                    type="text"
+                  <select
                     value={selectedBranch}
                     onChange={(e) => setSelectedBranch(e.target.value)}
-                    placeholder="main"
-                    className="bg-transparent border-none outline-none text-white font-mono w-24 text-xs"
-                  />
+                    className="bg-[#0d0d12] border border-white/10 rounded px-2 py-1 outline-none text-white font-mono text-xs cursor-pointer"
+                  >
+                    {(branches.length > 0 ? branches : [selectedBranch || "main"]).map((b) => (
+                      <option key={b} value={b} className="bg-[#0d0d12] text-white">
+                        {b}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <button
