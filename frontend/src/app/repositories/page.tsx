@@ -5,19 +5,11 @@ import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
 import { repositoriesApi, Repository } from "@/lib/api/repositories";
 
-const SHIKHAAR_TOP_REPOS = [
-  { full_name: "Shikhaar/TestPilot-AI", name: "TestPilot-AI" },
-  { full_name: "Shikhaar/Portfolio2.0", name: "Portfolio2.0" },
-  { full_name: "Shikhaar/Portfolio", name: "Portfolio" },
-  { full_name: "Shikhaar/Idea", name: "Idea" },
-  { full_name: "Shikhaar/passop", name: "passop" },
-];
-
 export default function Repositories() {
   const [repos, setRepos] = useState<Repository[]>([]);
-  const [userGitHubRepos, setUserGitHubRepos] = useState<Array<{ full_name: string; name: string }>>(SHIKHAAR_TOP_REPOS);
+  const [userGitHubRepos, setUserGitHubRepos] = useState<Array<{ full_name: string; name: string }>>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedRepo, setSelectedRepo] = useState(SHIKHAAR_TOP_REPOS[0].full_name);
+  const [selectedRepo, setSelectedRepo] = useState("");
   const [customRepo, setCustomRepo] = useState("");
   const [isCustom, setIsCustom] = useState(false);
   const [connecting, setConnecting] = useState(false);
@@ -34,13 +26,16 @@ export default function Repositories() {
           setRepos(res.items);
         }
         if (ghRepos && ghRepos.length > 0) {
-          // Take top 5 most recent repositories
+          // Take top 5 most recent repositories for whichever user is authenticated
           const top5 = ghRepos.slice(0, 5);
           setUserGitHubRepos(top5);
           setSelectedRepo(top5[0].full_name);
+        } else {
+          setIsCustom(true);
         }
       } catch (e) {
         console.error("Failed to load repositories data", e);
+        setIsCustom(true);
       } finally {
         setLoading(false);
       }
