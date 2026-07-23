@@ -72,19 +72,24 @@ async def connect_repository(
     from app.models.repository import Repository
     from app.services.github_service import GitHubService
 
+    full_name = request.full_name.strip()
+    if "/" not in full_name:
+        owner = current_user.github_login or "Shikhaar"
+        full_name = f"{owner}/{full_name}"
+
     # Check if already connected
-    existing = await db.execute(select(Repository).where(Repository.full_name == request.full_name))
+    existing = await db.execute(select(Repository).where(Repository.full_name == full_name))
     if existing.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Repository '{request.full_name}' is already connected",
+            detail=f"Repository '{full_name}' is already connected",
         )
 
     # Fetch repository metadata from GitHub
     github = GitHubService()
     try:
         gh_repo = github.get_repository(
-            request.full_name,
+            full_name,
             access_token=current_user.github_access_token,
             installation_id=request.github_app_installation_id,
         )
