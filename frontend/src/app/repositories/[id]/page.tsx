@@ -5,16 +5,23 @@ import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
 import { repositoriesApi, Repository } from "@/lib/api/repositories";
 
+import { pullRequestsApi, PullRequest } from "@/lib/api/pullRequests";
+
 export default function RepositoryDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [repo, setRepo] = useState<Repository | null>(null);
+  const [prs, setPrs] = useState<PullRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [reindexing, setReindexing] = useState(false);
 
   const fetchRepo = async () => {
     try {
-      const data = await repositoriesApi.get(id);
-      setRepo(data);
+      const [data, prData] = await Promise.all([
+        repositoriesApi.get(id).catch(() => null),
+        pullRequestsApi.list(id).catch(() => null),
+      ]);
+      if (data) setRepo(data);
+      if (prData && prData.items) setPrs(prData.items);
     } catch (err) {
       console.error("Failed to load repo", err);
     } finally {
@@ -169,16 +176,25 @@ export default function RepositoryDetail({ params }: { params: Promise<{ id: str
                 <div className="glass-panel p-6">
                   <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-4">Recent PRs</h3>
                   <div className="space-y-3">
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="font-mono text-gray-400">#142</span>
-                      <span className="text-gray-200 font-medium truncate max-w-[120px]">feat: add secure-cookie</span>
-                      <span className="text-yellow-400">medium risk</span>
-                    </div>
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="font-mono text-gray-400">#141</span>
-                      <span className="text-gray-200 font-medium truncate max-w-[120px]">fix: queue races</span>
-                      <span className="text-red-400">critical risk</span>
-                    </div>
+                    {prs.length > 0 ? (
+                      prs.slice(0, 5).map((pr) => (
+                        <div key={pr.id} className="flex justify-between items-center text-xs">
+                          <span className="font-mono text-gray-400">#{pr.pr_number}</span>
+                          <span className="text-gray-200 font-medium truncate max-w-[120px]">{pr.title}</span>
+                          <span className={`font-semibold capitalize ${
+                            pr.risk_level === "critical" || pr.risk_level === "high"
+                              ? "text-red-400"
+                              : pr.risk_level === "medium"
+                              ? "text-yellow-400"
+                              : "text-emerald-400"
+                          }`}>
+                            {pr.risk_level || "low"} risk
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs text-gray-500 italic">No pull requests analyzed yet. Open a PR on GitHub to trigger AI analysis.</p>
+                    )}
                   </div>
                 </div>
               </div>
