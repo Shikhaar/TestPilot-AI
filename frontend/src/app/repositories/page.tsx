@@ -5,11 +5,20 @@ import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
 import { repositoriesApi, Repository } from "@/lib/api/repositories";
 
+const DEFAULT_REPOS = [
+  { full_name: "Shikhaar/Portfolio2.0", name: "Portfolio2.0" },
+  { full_name: "Shikhaar/TestPilot-AI", name: "TestPilot-AI" },
+  { full_name: "fastapi/fastapi", name: "fastapi" },
+  { full_name: "pallets/flask", name: "flask" },
+];
+
 export default function Repositories() {
   const [repos, setRepos] = useState<Repository[]>([]);
-  const [userGitHubRepos, setUserGitHubRepos] = useState<Array<{ full_name: string; name: string }>>([]);
+  const [userGitHubRepos, setUserGitHubRepos] = useState<Array<{ full_name: string; name: string }>>(DEFAULT_REPOS);
   const [loading, setLoading] = useState(true);
-  const [fullName, setFullName] = useState("");
+  const [selectedRepo, setSelectedRepo] = useState(DEFAULT_REPOS[0].full_name);
+  const [customRepo, setCustomRepo] = useState("");
+  const [isCustom, setIsCustom] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState("");
 
@@ -24,8 +33,15 @@ export default function Repositories() {
           setRepos(res.items);
         }
         if (ghRepos && ghRepos.length > 0) {
-          setUserGitHubRepos(ghRepos);
-          setFullName(ghRepos[0].full_name);
+          // Merge unique repositories
+          const merged = [...ghRepos];
+          DEFAULT_REPOS.forEach((d) => {
+            if (!merged.some((m) => m.full_name.toLowerCase() === d.full_name.toLowerCase())) {
+              merged.push(d);
+            }
+          });
+          setUserGitHubRepos(merged);
+          setSelectedRepo(merged[0].full_name);
         }
       } catch (e) {
         console.error("Failed to load repositories data", e);
@@ -38,14 +54,17 @@ export default function Repositories() {
 
   const handleConnect = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName) return;
+    const targetRepo = isCustom ? customRepo.trim() : selectedRepo;
+    if (!targetRepo) return;
+
     setConnecting(true);
     setError("");
 
     try {
-      const newRepo = await repositoriesApi.connect(fullName);
+      const newRepo = await repositoriesApi.connect(targetRepo);
       setRepos([newRepo.data, ...repos]);
-      setFullName("");
+      setCustomRepo("");
+      setIsCustom(false);
     } catch (err: any) {
       const msg = err?.response?.data?.detail || err?.response?.data?.message || err.message || "Failed to connect repository";
       setError(msg);
@@ -70,25 +89,35 @@ export default function Repositories() {
         {/* Connect Repo Form */}
         <section className="glass-panel p-6 mb-8">
           <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-4">Connect new repository</h2>
-          <form onSubmit={handleConnect} className="flex gap-4 items-center">
-            <div className="flex-1 relative">
-              {userGitHubRepos.length > 0 ? (
-                <select
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full px-4 py-2.5 glass-input text-sm bg-[#0d0d12] text-white border border-white/10 rounded-lg outline-none cursor-pointer"
-                >
-                  {userGitHubRepos.map((r) => (
-                    <option key={r.full_name} value={r.full_name} className="bg-[#0d0d12] text-white">
-                      {r.full_name}
-                    </option>
-                  ))}
-                </select>
-              ) : (
+          <form onSubmit={handleConnect} className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+            <div className="flex-1 space-y-2">
+              <select
+                value={isCustom ? "custom" : selectedRepo}
+                onChange={(e) => {
+                  if (e.target.value === "custom") {
+                    setIsCustom(true);
+                  } else {
+                    setIsCustom(false);
+                    setSelectedRepo(e.target.value);
+                  }
+                }}
+                className="w-full px-4 py-2.5 glass-input text-sm bg-[#0d0d12] text-white border border-white/10 rounded-lg outline-none cursor-pointer"
+              >
+                {userGitHubRepos.map((r) => (
+                  <option key={r.full_name} value={r.full_name} className="bg-[#0d0d12] text-white">
+                    {r.full_name}
+                  </option>
+                ))}
+                <option value="custom" className="bg-[#0d0d12] text-purple-400 font-semibold">
+                  + Enter Custom Repository...
+                </option>
+              </select>
+
+              {isCustom && (
                 <input
                   type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
+                  value={customRepo}
+                  onChange={(e) => setCustomRepo(e.target.value)}
                   placeholder="e.g. owner/repository"
                   className="w-full px-4 py-2.5 glass-input text-sm"
                   required
@@ -98,7 +127,7 @@ export default function Repositories() {
             <button
               type="submit"
               disabled={connecting}
-              className="px-6 py-2.5 bg-blue-700 hover:bg-blue-800 disabled:bg-gray-800 text-white rounded-lg text-sm font-semibold shadow-lg shadow-blue-900/30 transition"
+              className="px-6 py-2.5 bg-blue-700 hover:bg-blue-800 disabled:bg-gray-800 text-white rounded-lg text-sm font-semibold shadow-lg shadow-blue-900/30 transition self-start sm:self-auto"
             >
               {connecting ? "Connecting..." : "Connect Repository"}
             </button>
