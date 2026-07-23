@@ -5,6 +5,7 @@ import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
 import Logo from "@/components/Logo";
 import { dashboardApi, DashboardMetrics, DetailedMetrics } from "@/lib/api/dashboard";
+import { repositoriesApi } from "@/lib/api/repositories";
 
 export default function Dashboard() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
@@ -18,8 +19,8 @@ export default function Dashboard() {
     setTestRunning(true);
     setTestNotification(null);
     try {
-      const { repositoriesApi } = await import("@/lib/api/repositories");
-      const repos = await repositoriesApi.list().catch(() => []);
+      const res = await repositoriesApi.list().catch(() => null);
+      const repos = res?.items || [];
       
       if (repos && repos.length > 0) {
         const totalFiles = repos.reduce((acc, r) => acc + (r.total_files || 0), 0);
