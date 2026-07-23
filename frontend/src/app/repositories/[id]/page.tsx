@@ -25,6 +25,8 @@ export default function RepositoryDetail({ params }: { params: any }) {
   const [copied, setCopied] = useState(false);
   const [prCreating, setPrCreating] = useState(false);
   const [prCreated, setPrCreated] = useState(false);
+  const [prUrl, setPrUrl] = useState<string | null>(null);
+  const [prBranch, setPrBranch] = useState<string | null>(null);
 
   const handleGenerateTests = async () => {
     setGenerating(true);
@@ -390,10 +392,23 @@ async def test_health_score_calculation():
 
                       <button
                         onClick={async () => {
+                          if (!repo || !generatedCode) return;
                           setPrCreating(true);
-                          await new Promise((r) => setTimeout(r, 1800));
-                          setPrCreating(false);
-                          setPrCreated(true);
+                          try {
+                            const targetPath = repo.language?.toLowerCase().includes("typescript")
+                              ? "test/component.test.tsx"
+                              : "tests/test_indexing.py";
+                            const res = await repositoriesApi.createPR(repo.id, targetPath, generatedCode);
+                            if (res.data) {
+                              setPrUrl(res.data.pr_url);
+                              setPrBranch(res.data.branch);
+                              setPrCreated(true);
+                            }
+                          } catch (err: any) {
+                            alert(err?.response?.data?.detail || err?.message || "Failed to create PR on GitHub");
+                          } finally {
+                            setPrCreating(false);
+                          }
                         }}
                         disabled={prCreating || prCreated}
                         className="px-3 py-1 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-950/60 text-xs font-semibold text-white rounded-lg shadow-lg shadow-purple-900/30 transition flex items-center space-x-1"
@@ -414,14 +429,17 @@ async def test_health_score_calculation():
 
                   {prCreated && (
                     <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 flex items-center justify-between">
-                      <span>Pull Request created on GitHub branch <strong className="font-mono">testpilot/ai-unit-tests</strong>!</span>
+                      <span>Pull Request created on GitHub branch <strong className="font-mono">{prBranch || "testpilot/ai-unit-tests"}</strong>!</span>
                       <a
-                        href={`https://github.com/${repo?.full_name}`}
+                        href={prUrl || `https://github.com/${repo?.full_name}/pulls`}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-emerald-400 underline font-semibold"
+                        className="text-emerald-400 underline font-semibold flex items-center gap-1"
                       >
-                        View PR →
+                        <span>View PR on GitHub</span>
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
                       </a>
                     </div>
                   )}
