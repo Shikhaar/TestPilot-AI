@@ -11,6 +11,7 @@ from app.core.logging import get_logger
 from app.schemas.common import APIResponse, PaginatedResponse, TaskResponse
 from app.schemas.repository import (
     RepositoryConnectRequest,
+    RepositoryDetailResponse,
     RepositoryIndexRequest,
     RepositoryResponse,
 )
