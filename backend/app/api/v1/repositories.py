@@ -120,7 +120,8 @@ async def connect_repository(
         index_status="pending",
     )
     db.add(repo)
-    await db.flush()
+    await db.commit()
+    await db.refresh(repo)
 
     # Trigger background indexing
     background_tasks.add_task(
@@ -256,7 +257,7 @@ async def trigger_reindex(
 
     repo.index_status = "indexing"
     repo.index_error = None
-    await db.flush()
+    await db.commit()
 
     from app.tasks.indexing import index_repository
 
