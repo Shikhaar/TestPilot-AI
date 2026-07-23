@@ -50,72 +50,65 @@ def index_repository(
     Clones (or pulls) the repository, parses all source files with
     Tree-sitter, builds the dependency graph, generates embeddings,
     and stores everything in PostgreSQL and Qdrant.
-
-    Args:
-        repository_id: Internal repository UUID.
-        clone_url: HTTPS clone URL.
-        access_token: Optional GitHub OAuth token for private repos.
-        force_reindex: If True, re-index even if already indexed.
-
-    Returns:
-        Dictionary with indexing results summary.
     """
-    logger.info("Starting repository indexing", repository_id=repository_id, clone_url=clone_url)
+    async def _async_run() -> dict[str, Any]:
+        logger.info("Starting repository indexing", repository_id=repository_id, clone_url=clone_url)
+        await _update_repo_status(repository_id, "indexing")
 
-    asyncio.run(_update_repo_status(repository_id, "indexing"))
+        try:
+            start_time = time.monotonic()
+            repo_path = settings.repo_storage_path / repository_id
+
+            # Step 1: Clone or update repository
+            await asyncio.to_thread(_clone_or_pull, clone_url, repo_path, access_token)
+
+            # Step 2: Parse all files with AST
+            from app.services.ast_parser import ASTParser
+
+            parser = ASTParser()
+            parse_results = await asyncio.to_thread(parser.parse_directory, repo_path)
+
+            # Step 3: Build dependency graph
+            from app.services.dependency_graph_builder import DependencyGraphBuilder
+
+            builder = DependencyGraphBuilder(repo_path)
+            await asyncio.to_thread(builder.build, parse_results)
+            edge_records = builder.to_edge_records(repository_id)
+
+            # Step 4: Store everything in PostgreSQL
+            stats = await _persist_index_results(repository_id, parse_results, edge_records, repo_path)
+
+            # Step 5: Generate and store embeddings in Qdrant
+            await _generate_and_store_embeddings(repository_id, parse_results, repo_path)
+
+            duration = time.monotonic() - start_time
+            logger.info(
+                "Repository indexing completed",
+                repository_id=repository_id,
+                files=stats["files"],
+                functions=stats["functions"],
+                classes=stats["classes"],
+                edges=len(edge_records),
+                duration_s=round(duration, 1),
+            )
+
+            await _update_repo_status(repository_id, "indexed", stats=stats)
+
+            return {
+                "repository_id": repository_id,
+                "status": "indexed",
+                **stats,
+                "duration_seconds": round(duration, 1),
+            }
+
+        except Exception as exc:
+            logger.exception("Repository indexing failed", repository_id=repository_id, error=str(exc))
+            await _update_repo_status(repository_id, "failed", error=str(exc))
+            raise exc
 
     try:
-        start_time = time.monotonic()
-        repo_path = settings.repo_storage_path / repository_id
-
-        # Step 1: Clone or update repository
-        _clone_or_pull(clone_url, repo_path, access_token)
-
-        # Step 2: Parse all files with AST
-        from app.services.ast_parser import ASTParser
-
-        parser = ASTParser()
-        parse_results = parser.parse_directory(repo_path)
-
-        # Step 3: Build dependency graph
-        from app.services.dependency_graph_builder import DependencyGraphBuilder
-
-        builder = DependencyGraphBuilder(repo_path)
-        builder.build(parse_results)
-        edge_records = builder.to_edge_records(repository_id)
-
-        # Step 4: Store everything in PostgreSQL
-        stats = asyncio.run(
-            _persist_index_results(repository_id, parse_results, edge_records, repo_path)
-        )
-
-        # Step 5: Generate and store embeddings in Qdrant
-        asyncio.run(_generate_and_store_embeddings(repository_id, parse_results, repo_path))
-
-        duration = time.monotonic() - start_time
-        logger.info(
-            "Repository indexing completed",
-            repository_id=repository_id,
-            files=stats["files"],
-            functions=stats["functions"],
-            classes=stats["classes"],
-            edges=len(edge_records),
-            duration_s=round(duration, 1),
-        )
-
-        asyncio.run(_update_repo_status(repository_id, "indexed", stats=stats))
-
-        return {
-            "repository_id": repository_id,
-            "status": "indexed",
-            **stats,
-            "duration_seconds": round(duration, 1),
-        }
-
+        return asyncio.run(_async_run())
     except Exception as exc:
-        logger.exception("Repository indexing failed", repository_id=repository_id, error=str(exc))
-        asyncio.run(_update_repo_status(repository_id, "failed", error=str(exc)))
-
         try:
             raise self.retry(exc=exc, countdown=120)
         except self.MaxRetriesExceededError:
