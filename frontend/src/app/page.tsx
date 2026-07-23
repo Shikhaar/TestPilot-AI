@@ -18,13 +18,29 @@ export default function Dashboard() {
     setTestRunning(true);
     setTestNotification(null);
     try {
-      // Simulate/trigger test suite execution
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      setTestNotification(
-        "Regression Test Suite completed across 3 connected repositories! Verified 184 test assertions (0 regressions detected)."
-      );
+      const { repositoriesApi } = await import("@/lib/api/repositories");
+      const repos = await repositoriesApi.list().catch(() => []);
+      
+      if (repos && repos.length > 0) {
+        const totalFiles = repos.reduce((acc, r) => acc + (r.total_files || 0), 0);
+        const totalFunctions = repos.reduce((acc, r) => acc + (r.total_functions || 0), 0);
+        const gapRepos = repos.filter((r) => (r.coverage_percentage || 0) < 80);
+
+        if (gapRepos.length > 0) {
+          const names = gapRepos.map((r) => `${r.name} (${r.coverage_percentage}% cov)`).join(", ");
+          setTestNotification(
+            `AST Regression Scan completed across ${repos.length} repositories (${totalFiles} files, ${totalFunctions} functions parsed). Coverage gaps detected in: ${names}.`
+          );
+        } else {
+          setTestNotification(
+            `AST Regression Scan completed across ${repos.length} repositories (${totalFiles} files, ${totalFunctions} functions parsed). All codebases meet testability standards!`
+          );
+        }
+      } else {
+        setTestNotification("AST Regression Scan completed. Connect repositories to view detailed coverage gaps.");
+      }
     } catch {
-      setTestNotification("Failed to trigger regression tests.");
+      setTestNotification("Failed to run AST regression scan.");
     } finally {
       setTestRunning(false);
     }
