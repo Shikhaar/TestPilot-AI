@@ -185,6 +185,10 @@ async def trigger_reindex(
             message="Repository is already being indexed",
         )
 
+    repo.index_status = "indexing"
+    repo.index_error = None
+    await db.flush()
+
     from app.tasks.indexing import index_repository
 
     task = index_repository.delay(

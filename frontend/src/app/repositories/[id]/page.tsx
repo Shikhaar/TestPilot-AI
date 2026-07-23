@@ -11,44 +11,34 @@ export default function RepositoryDetail({ params }: { params: Promise<{ id: str
   const [loading, setLoading] = useState(true);
   const [reindexing, setReindexing] = useState(false);
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const data = await repositoriesApi.get(id);
-        setRepo(data);
-      } catch (err) {
-        console.error("Failed to load repo, using mock fallback", err);
-        // Fallback mock matching suggestion #4 criteria
-        setRepo({
-          id,
-          full_name: "modern-corp/payment-gateway",
-          name: "payment-gateway",
-          owner_login: "modern-corp",
-          description: "Core async payment integration endpoints and ledger billing engines.",
-          clone_url: "https://github.com/modern-corp/payment-gateway.git",
-          default_branch: "main",
-          language: "Python",
-          is_private: true,
-          is_indexed: true,
-          indexed_at: new Date().toISOString(),
-          index_status: "indexed",
-          total_files: 142,
-          total_functions: 1042,
-          total_classes: 248,
-          health_score: 92.5,
-          coverage_percentage: 84.6,
-          created_at: new Date().toISOString(),
-        });
-      } finally {
-        setLoading(false);
-      }
+  const fetchRepo = async () => {
+    try {
+      const data = await repositoriesApi.get(id);
+      setRepo(data);
+    } catch (err) {
+      console.error("Failed to load repo", err);
+    } finally {
+      setLoading(false);
     }
-    loadData();
+  };
+
+  useEffect(() => {
+    fetchRepo();
   }, [id]);
+
+  // Poll repository status every 3s while indexing is in progress
+  useEffect(() => {
+    if (repo?.index_status !== "indexing") return;
+    const interval = setInterval(() => {
+      fetchRepo();
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [repo?.index_status, id]);
 
   const handleReindex = async () => {
     if (!repo) return;
     setReindexing(true);
+    setRepo((prev) => (prev ? { ...prev, index_status: "indexing" } : null));
     try {
       await repositoriesApi.triggerReindex(repo.id, true);
     } catch (err) {
