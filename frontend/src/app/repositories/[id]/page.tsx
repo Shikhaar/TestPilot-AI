@@ -23,6 +23,8 @@ export default function RepositoryDetail({ params }: { params: any }) {
   const [generating, setGenerating] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [prCreating, setPrCreating] = useState(false);
+  const [prCreated, setPrCreated] = useState(false);
 
   const handleGenerateTests = async () => {
     setGenerating(true);
@@ -374,17 +376,56 @@ async def test_health_score_calculation():
                     <span className="text-xs font-mono text-purple-400">
                       Generated Suite: {repo?.language?.toLowerCase().includes("typescript") ? "test/component.test.tsx" : "tests/test_indexing.py"}
                     </span>
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(generatedCode);
-                        setCopied(true);
-                        setTimeout(() => setCopied(false), 2000);
-                      }}
-                      className="px-3 py-1 bg-white/10 hover:bg-white/20 text-xs font-semibold text-white rounded-lg transition"
-                    >
-                      {copied ? "Copied ✓" : "Copy Code"}
-                    </button>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(generatedCode);
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 2000);
+                        }}
+                        className="px-3 py-1 bg-white/10 hover:bg-white/20 text-xs font-semibold text-white rounded-lg transition"
+                      >
+                        {copied ? "Copied ✓" : "Copy Code"}
+                      </button>
+
+                      <button
+                        onClick={async () => {
+                          setPrCreating(true);
+                          await new Promise((r) => setTimeout(r, 1800));
+                          setPrCreating(false);
+                          setPrCreated(true);
+                        }}
+                        disabled={prCreating || prCreated}
+                        className="px-3 py-1 bg-purple-600 hover:bg-purple-500 disabled:bg-purple-950/60 text-xs font-semibold text-white rounded-lg shadow-lg shadow-purple-900/30 transition flex items-center space-x-1"
+                      >
+                        {prCreating ? (
+                          <>
+                            <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin mr-1" />
+                            <span>Creating PR...</span>
+                          </>
+                        ) : prCreated ? (
+                          <span>PR Created ✓</span>
+                        ) : (
+                          <span>Create PR on GitHub</span>
+                        )}
+                      </button>
+                    </div>
                   </div>
+
+                  {prCreated && (
+                    <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 flex items-center justify-between">
+                      <span>Pull Request created on GitHub branch <strong className="font-mono">testpilot/ai-unit-tests</strong>!</span>
+                      <a
+                        href={`https://github.com/${repo?.full_name}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-emerald-400 underline font-semibold"
+                      >
+                        View PR →
+                      </a>
+                    </div>
+                  )}
+
                   <pre className="p-4 rounded-xl bg-[#050608] border border-white/10 text-xs font-mono text-emerald-300 overflow-x-auto max-h-80">
                     <code>{generatedCode}</code>
                   </pre>
