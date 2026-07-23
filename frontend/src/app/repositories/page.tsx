@@ -5,18 +5,16 @@ import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
 import { repositoriesApi, Repository } from "@/lib/api/repositories";
 
-const DEFAULT_REPOS = [
+const REAL_USER_REPOS = [
   { full_name: "Shikhaar/Portfolio2.0", name: "Portfolio2.0" },
   { full_name: "Shikhaar/TestPilot-AI", name: "TestPilot-AI" },
-  { full_name: "fastapi/fastapi", name: "fastapi" },
-  { full_name: "pallets/flask", name: "flask" },
 ];
 
 export default function Repositories() {
   const [repos, setRepos] = useState<Repository[]>([]);
-  const [userGitHubRepos, setUserGitHubRepos] = useState<Array<{ full_name: string; name: string }>>(DEFAULT_REPOS);
+  const [userGitHubRepos, setUserGitHubRepos] = useState<Array<{ full_name: string; name: string }>>(REAL_USER_REPOS);
   const [loading, setLoading] = useState(true);
-  const [selectedRepo, setSelectedRepo] = useState(DEFAULT_REPOS[0].full_name);
+  const [selectedRepo, setSelectedRepo] = useState(REAL_USER_REPOS[0].full_name);
   const [customRepo, setCustomRepo] = useState("");
   const [isCustom, setIsCustom] = useState(false);
   const [connecting, setConnecting] = useState(false);
@@ -33,15 +31,8 @@ export default function Repositories() {
           setRepos(res.items);
         }
         if (ghRepos && ghRepos.length > 0) {
-          // Merge unique repositories
-          const merged = [...ghRepos];
-          DEFAULT_REPOS.forEach((d) => {
-            if (!merged.some((m) => m.full_name.toLowerCase() === d.full_name.toLowerCase())) {
-              merged.push(d);
-            }
-          });
-          setUserGitHubRepos(merged);
-          setSelectedRepo(merged[0].full_name);
+          setUserGitHubRepos(ghRepos);
+          setSelectedRepo(ghRepos[0].full_name);
         }
       } catch (e) {
         console.error("Failed to load repositories data", e);

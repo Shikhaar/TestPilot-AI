@@ -217,7 +217,10 @@ async def list_github_user_repositories(
     from app.services.github_service import GitHubService
 
     github = GitHubService()
-    repos = github.list_user_repositories(access_token=current_user.github_access_token)
+    repos = await github.list_user_repositories(
+        access_token=current_user.github_access_token,
+        github_username=current_user.github_username,
+    )
     return APIResponse(data=repos)
 
 
