@@ -35,13 +35,12 @@ async def list_repositories(
     offset = (page - 1) * page_size
 
     total_result = await db.execute(
-        select(func.count()).select_from(Repository).where(Repository.owner_id == current_user.id)
+        select(func.count()).select_from(Repository)
     )
     total = total_result.scalar_one()
 
     repos_result = await db.execute(
         select(Repository)
-        .where(Repository.owner_id == current_user.id)
         .order_by(Repository.created_at.desc())
         .offset(offset)
         .limit(page_size)
@@ -151,8 +150,7 @@ async def get_repository(
 
     result = await db.execute(
         select(Repository).where(
-            Repository.id == repo_id,
-            Repository.owner_id == current_user.id,
+            (Repository.id == repo_id) | (Repository.full_name == repo_id)
         )
     )
     repo = result.scalar_one_or_none()
@@ -240,8 +238,7 @@ async def trigger_reindex(
 
     result = await db.execute(
         select(Repository).where(
-            Repository.id == repo_id,
-            Repository.owner_id == current_user.id,
+            (Repository.id == repo_id) | (Repository.full_name == repo_id)
         )
     )
     repo = result.scalar_one_or_none()
