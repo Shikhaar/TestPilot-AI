@@ -351,3 +351,132 @@ async def _trigger_indexing(
         clone_url=clone_url,
         access_token=access_token,
     )
+
+
+from pydantic import BaseModel
+
+
+class CreateTestPRRequest(BaseModel):
+    file_path: str
+    content: str
+
+
+@router.post("/{repo_id:path}/create-pr", response_model=APIResponse[dict[str, Any]])
+async def create_test_pr(
+    repo_id: str,
+    payload: CreateTestPRRequest,
+    db: DBSession,
+    current_user: CurrentUser,
+) -> APIResponse[dict[str, Any]]:
+    """Create a real branch and Pull Request on GitHub with the AI-generated unit test suite."""
+    import base64
+    import random
+    import httpx
+    from sqlalchemy import select
+    from app.core.config import get_settings
+    from app.models.repository import Repository
+
+    settings = get_settings()
+
+    result = await db.execute(
+        select(Repository).where(
+            (Repository.id == repo_id) | (Repository.full_name == repo_id)
+        )
+    )
+    repo = result.scalar_one_or_none()
+    if not repo:
+        raise HTTPException(status_code=404, detail="Repository not found")
+
+    token = current_user.github_access_token or settings.github_oauth_token
+    if not token:
+        raise HTTPException(
+            status_code=400,
+            detail="GitHub authentication token required. Please reconnect your GitHub account.",
+        )
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github.v3+json",
+        "User-Agent": "TestPilot-AI",
+    }
+
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        # 1. Fetch default branch head SHA
+        default_branch = repo.default_branch or "main"
+        ref_resp = await client.get(
+            f"https://api.github.com/repos/{repo.full_name}/git/ref/heads/{default_branch}",
+            headers=headers,
+        )
+        if ref_resp.status_code != 200:
+            raise HTTPException(
+                status_code=ref_resp.status_code,
+                detail=f"Failed to fetch branch {default_branch} from GitHub: {ref_resp.text}",
+            )
+        base_sha = ref_resp.json()["object"]["sha"]
+
+        # 2. Create a new git branch
+        branch_name = f"testpilot/ai-unit-tests-{random.randint(100, 999)}"
+        create_branch_resp = await client.post(
+            f"https://api.github.com/repos/{repo.full_name}/git/refs",
+            headers=headers,
+            json={
+                "ref": f"refs/heads/{branch_name}",
+                "sha": base_sha,
+            },
+        )
+        if create_branch_resp.status_code not in (200, 201):
+            logger.warning("Branch creation log", resp=create_branch_resp.text)
+
+        # 3. Create or update test file in the new branch
+        content_b64 = base64.b64encode(payload.content.encode("utf-8")).decode("utf-8")
+        put_resp = await client.put(
+            f"https://api.github.com/repos/{repo.full_name}/contents/{payload.file_path}",
+            headers=headers,
+            json={
+                "message": f"test(ai): add generated unit test suite ({payload.file_path})",
+                "content": content_b64,
+                "branch": branch_name,
+            },
+        )
+        if put_resp.status_code not in (200, 201):
+            raise HTTPException(
+                status_code=put_resp.status_code,
+                detail=f"Failed to commit test file to GitHub: {put_resp.text}",
+            )
+
+        # 4. Open Pull Request on GitHub
+        pr_resp = await client.post(
+            f"https://api.github.com/repos/{repo.full_name}/pulls",
+            headers=headers,
+            json={
+                "title": f"test(ai): add unit test suite for {repo.name}",
+                "head": branch_name,
+                "base": default_branch,
+                "body": (
+                    "## 🤖 TestPilot AI — Generated Unit Test Suite\n\n"
+                    f"This Pull Request adds automated unit tests generated for `{repo.full_name}`.\n\n"
+                    "### 📊 Test Suite Details\n"
+                    f"- **Target Test File**: `{payload.file_path}`\n"
+                    f"- **Language / Framework**: `{repo.language or 'Automated Test Suite'}`\n"
+                    "- **Engine**: Tree-Sitter AST & Gemini LLM\n\n"
+                    "Generated automatically by [TestPilot AI](https://github.com/Shikhaar/TestPilot-AI)."
+                ),
+            },
+        )
+        if pr_resp.status_code not in (200, 201):
+            raise HTTPException(
+                status_code=pr_resp.status_code,
+                detail=f"Failed to open Pull Request on GitHub: {pr_resp.text}",
+            )
+
+        pr_data = pr_resp.json()
+        logger.info("GitHub Pull Request created", url=pr_data.get("html_url"))
+
+        return APIResponse(
+            data={
+                "pr_number": pr_data.get("number"),
+                "pr_url": pr_data.get("html_url"),
+                "branch": branch_name,
+            },
+            message="Pull Request created successfully on GitHub!",
+        )

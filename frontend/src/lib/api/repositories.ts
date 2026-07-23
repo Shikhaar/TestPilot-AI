@@ -74,4 +74,13 @@ export const repositoriesApi = {
     const res = await client.get<{ success: boolean; data: string[] }>(`/repositories/${encodedId}/branches`);
     return res.data.data;
   },
+
+  createPR: async (repoId: string, filePath: string, content: string) => {
+    const encodedId = encodeURIComponent(repoId);
+    const res = await client.post<{ success: boolean; data: { pr_number: number; pr_url: string; branch: string }; message: string }>(
+      `/repositories/${encodedId}/create-pr`,
+      { file_path: filePath, content }
+    );
+    return res.data;
+  },
 };
