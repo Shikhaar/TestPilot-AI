@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, status
-from sqlalchemy import update
+from sqlalchemy import select, update
 
 from app.api.deps import CurrentUser, DBSession
 from app.core.logging import get_logger
@@ -19,7 +19,7 @@ def _mask_api_key(key: str) -> str:
     """Return a masked version of the API key for safe display."""
     if len(key) <= 10:
         return "••••••••••"
-    return key[:6] + "•" * (len(key) - 10) + key[-4:]
+    return f"{key[:6]}••••••••{key[-4:]}"
 
 
 def _build_settings_response(user: User) -> UserSettingsResponse:
@@ -68,31 +68,23 @@ async def update_user_settings(
     update_values: dict = {}
 
     if "gemini_api_key" in payload.model_fields_set:
-        api_key = payload.gemini_api_key
+        api_key = payload.gemini_api_key.strip() if payload.gemini_api_key else None
 
-        # Validate the key format (very basic)
-        if api_key is not None and not api_key.startswith("AIza"):
+        # Basic key validation
+        if api_key is not None and len(api_key) < 10:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Invalid Gemini API key format. Key must start with 'AIza'.",
+                detail="Invalid Gemini API key length. Key must be at least 10 characters.",
             )
 
-        update_values["gemini_api_key"] = api_key
+        current_user.gemini_api_key = api_key
         logger.info(
             "User updated Gemini API key",
             username=current_user.username,
             action="set" if api_key else "cleared",
         )
 
-    if not update_values:
-        return APIResponse(data=_build_settings_response(current_user))
-
-    await db.execute(
-        update(User).where(User.id == current_user.id).values(**update_values)
-    )
-    await db.flush()
-
-    # Refresh user object
+    await db.commit()
     await db.refresh(current_user)
 
     return APIResponse(
@@ -111,10 +103,8 @@ async def clear_gemini_api_key(
     db: DBSession,
 ) -> APIResponse[UserSettingsResponse]:
     """Clears the stored Gemini API key for the current user."""
-    await db.execute(
-        update(User).where(User.id == current_user.id).values(gemini_api_key=None)
-    )
-    await db.flush()
+    current_user.gemini_api_key = None
+    await db.commit()
     await db.refresh(current_user)
 
     logger.info("User cleared Gemini API key", username=current_user.username)
