@@ -209,6 +209,47 @@ async def trigger_reindex(
     )
 
 
+@router.get("/github-user-repos", response_model=APIResponse[list[dict[str, Any]]])
+async def list_github_user_repositories(
+    current_user: CurrentUser,
+) -> APIResponse[list[dict[str, Any]]]:
+    """Fetch GitHub repositories accessible to the current authenticated user."""
+    from app.services.github_service import GitHubService
+
+    github = GitHubService()
+    repos = github.list_user_repositories(access_token=current_user.github_access_token)
+    return APIResponse(data=repos)
+
+
+@router.get("/{repo_id}/branches", response_model=APIResponse[list[str]])
+async def list_repository_branches(
+    repo_id: str,
+    db: DBSession,
+    current_user: CurrentUser,
+) -> APIResponse[list[str]]:
+    """Fetch active git branches for a specific connected repository."""
+    from sqlalchemy import select
+
+    from app.models.repository import Repository
+    from app.services.github_service import GitHubService
+
+    result = await db.execute(
+        select(Repository).where(
+            Repository.id == repo_id,
+            Repository.owner_id == current_user.id,
+        )
+    )
+    repo = result.scalar_one_or_none()
+    if not repo:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Repository not found")
+
+    github = GitHubService()
+    branches = github.list_repository_branches(
+        repo.full_name, access_token=current_user.github_access_token
+    )
+    return APIResponse(data=branches)
+
+
 async def _trigger_indexing(
     repo_id: str,
     clone_url: str,

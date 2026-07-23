@@ -49,4 +49,14 @@ export const repositoriesApi = {
     );
     return res.data;
   },
+
+  listUserGitHubRepos: async () => {
+    const res = await client.get<{ success: boolean; data: Array<{ full_name: string; name: string; default_branch: string }> }>("/repositories/github-user-repos");
+    return res.data.data;
+  },
+
+  listBranches: async (repoId: string) => {
+    const res = await client.get<{ success: boolean; data: string[] }>(`/repositories/${repoId}/branches`);
+    return res.data.data;
+  },
 };
