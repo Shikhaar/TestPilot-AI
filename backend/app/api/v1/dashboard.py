@@ -24,45 +24,29 @@ async def get_dashboard(
     from app.models.pull_request import PullRequest
     from app.models.repository import Repository
 
-    # Repository stats
+    # Repository stats across workspace
     repo_count = (
-        await db.execute(
-            select(func.count())
-            .select_from(Repository)
-            .where(Repository.owner_id == current_user.id)
-        )
+        await db.execute(select(func.count()).select_from(Repository))
     ).scalar_one()
 
     indexed_count = (
         await db.execute(
             select(func.count())
             .select_from(Repository)
-            .where(
-                Repository.owner_id == current_user.id,
-                Repository.is_indexed.is_(True),
-            )
+            .where(Repository.is_indexed.is_(True))
         )
     ).scalar_one()
 
     # PR stats
     total_prs = (
-        await db.execute(
-            select(func.count())
-            .select_from(PullRequest)
-            .join(Repository)
-            .where(Repository.owner_id == current_user.id)
-        )
+        await db.execute(select(func.count()).select_from(PullRequest))
     ).scalar_one()
 
     critical_prs = (
         await db.execute(
             select(func.count())
             .select_from(PullRequest)
-            .join(Repository)
-            .where(
-                Repository.owner_id == current_user.id,
-                PullRequest.risk_level == "critical",
-            )
+            .where(PullRequest.risk_level.in_(["critical", "high"]))
         )
     ).scalar_one()
 
@@ -70,11 +54,7 @@ async def get_dashboard(
         await db.execute(
             select(func.count())
             .select_from(PullRequest)
-            .join(Repository)
-            .where(
-                Repository.owner_id == current_user.id,
-                PullRequest.analysis_status.in_(["pending", "running"]),
-            )
+            .where(PullRequest.analysis_status.in_(["pending", "running"]))
         )
     ).scalar_one()
 
@@ -82,11 +62,7 @@ async def get_dashboard(
         await db.execute(
             select(func.count())
             .select_from(PullRequest)
-            .join(Repository)
-            .where(
-                Repository.owner_id == current_user.id,
-                PullRequest.analysis_status == "completed",
-            )
+            .where(PullRequest.analysis_status == "completed")
         )
     ).scalar_one()
 
@@ -94,11 +70,7 @@ async def get_dashboard(
         await db.execute(
             select(func.count())
             .select_from(PullRequest)
-            .join(Repository)
-            .where(
-                Repository.owner_id == current_user.id,
-                PullRequest.analysis_status == "failed",
-            )
+            .where(PullRequest.analysis_status == "failed")
         )
     ).scalar_one()
 
@@ -107,19 +79,12 @@ async def get_dashboard(
 
     # Generated tests
     total_generated = (
-        await db.execute(
-            select(func.count())
-            .select_from(GeneratedTest)
-            .join(Repository, GeneratedTest.repository_id == Repository.id)
-            .where(Repository.owner_id == current_user.id)
-        )
+        await db.execute(select(func.count()).select_from(GeneratedTest))
     ).scalar_one()
 
     # Recent PRs
     recent_prs_result = await db.execute(
         select(PullRequest)
-        .join(Repository)
-        .where(Repository.owner_id == current_user.id)
         .order_by(PullRequest.created_at.desc())
         .limit(5)
     )
@@ -130,7 +95,7 @@ async def get_dashboard(
             "repositories": {
                 "total": repo_count,
                 "indexed": indexed_count,
-                "pending": repo_count - indexed_count,
+                "pending": max(0, repo_count - indexed_count),
             },
             "pull_requests": {
                 "total": total_prs,
