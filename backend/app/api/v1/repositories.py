@@ -196,6 +196,7 @@ async def trigger_reindex(
         clone_url=repo.clone_url,
         access_token=current_user.github_access_token,
         force_reindex=request.force_reindex,
+        branch=request.branch,
     )
 
     logger.info("Repository re-index triggered", repo_id=repo_id, task_id=task.id)

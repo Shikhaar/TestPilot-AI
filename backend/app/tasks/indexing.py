@@ -44,6 +44,7 @@ def index_repository(
     clone_url: str,
     access_token: str | None = None,
     force_reindex: bool = False,
+    branch: str | None = None,
 ) -> dict[str, Any]:
     """Full repository indexing pipeline.
 
@@ -52,15 +53,20 @@ def index_repository(
     and stores everything in PostgreSQL and Qdrant.
     """
     async def _async_run() -> dict[str, Any]:
-        logger.info("Starting repository indexing", repository_id=repository_id, clone_url=clone_url)
+        logger.info(
+            "Starting repository indexing",
+            repository_id=repository_id,
+            clone_url=clone_url,
+            branch=branch,
+        )
         await _update_repo_status(repository_id, "indexing")
 
         try:
             start_time = time.monotonic()
             repo_path = settings.repo_storage_path / repository_id
 
-            # Step 1: Clone or update repository
-            await asyncio.to_thread(_clone_or_pull, clone_url, repo_path, access_token)
+            # Step 1: Clone or update repository with specific branch
+            await asyncio.to_thread(_clone_or_pull, clone_url, repo_path, access_token, branch)
 
             # Step 2: Parse all files with AST
             from app.services.ast_parser import ASTParser
@@ -85,6 +91,7 @@ def index_repository(
             logger.info(
                 "Repository indexing completed",
                 repository_id=repository_id,
+                branch=branch,
                 files=stats["files"],
                 functions=stats["functions"],
                 classes=stats["classes"],
@@ -97,6 +104,7 @@ def index_repository(
             return {
                 "repository_id": repository_id,
                 "status": "indexed",
+                "branch": branch,
                 **stats,
                 "duration_seconds": round(duration, 1),
             }
@@ -115,8 +123,10 @@ def index_repository(
             return {"repository_id": repository_id, "status": "failed", "error": str(exc)}
 
 
-def _clone_or_pull(clone_url: str, repo_path: Path, access_token: str | None) -> None:
-    """Clone a repository or pull latest if already cloned."""
+def _clone_or_pull(
+    clone_url: str, repo_path: Path, access_token: str | None, branch: str | None = None
+) -> None:
+    """Clone a repository or pull latest if already cloned, checking out target branch."""
     import git
 
     # Inject access token into URL for private repos
@@ -124,17 +134,21 @@ def _clone_or_pull(clone_url: str, repo_path: Path, access_token: str | None) ->
         clone_url = clone_url.replace("https://", f"https://x-access-token:{access_token}@")
 
     if repo_path.exists() and (repo_path / ".git").exists():
-        logger.info("Pulling repository updates", path=str(repo_path))
+        logger.info("Pulling repository updates", path=str(repo_path), branch=branch)
         repo = git.Repo(repo_path)
-        repo.remotes.origin.pull()
+        repo.remotes.origin.fetch()
+        if branch:
+            repo.git.checkout(branch)
+            repo.remotes.origin.pull(branch)
+        else:
+            repo.remotes.origin.pull()
     else:
-        logger.info("Cloning repository", url=clone_url, path=str(repo_path))
+        logger.info("Cloning repository", url=clone_url, path=str(repo_path), branch=branch)
         repo_path.mkdir(parents=True, exist_ok=True)
-        git.Repo.clone_from(
-            clone_url,
-            repo_path,
-            depth=50,  # Shallow clone for performance
-        )
+        kwargs = {"depth": 50}
+        if branch:
+            kwargs["branch"] = branch
+        git.Repo.clone_from(clone_url, repo_path, **kwargs)
 
 
 async def _persist_index_results(

@@ -40,6 +40,10 @@ class RepositoryIndexRequest(BaseSchema):
         default=False,
         description="Force re-indexing even if already indexed",
     )
+    branch: str | None = Field(
+        default=None,
+        description="Specific git branch to clone and index (defaults to repo default_branch)",
+    )
 
 
 class RepositoryResponse(BaseSchema):
