@@ -177,37 +177,66 @@ class GitHubService:
         client = self._get_client(access_token, installation_id)
         return client.get_repo(full_name)
 
-    def list_user_repositories(
+    async def list_user_repositories(
         self,
         access_token: str | None = None,
-        installation_id: str | None = None,
+        github_username: str | None = None,
     ) -> list[dict[str, Any]]:
-        """List repositories accessible to the user or installation."""
+        """List repositories accessible to the user or public repositories for the username."""
+        headers = {"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"}
+        if access_token:
+            headers["Authorization"] = f"Bearer {access_token}"
+
+        url = "https://api.github.com/user/repos?sort=updated&per_page=30" if access_token else (
+            f"https://api.github.com/users/{github_username or 'Shikhaar'}/repos?sort=updated&per_page=30"
+        )
+
         try:
-            client = self._get_client(access_token, installation_id)
-            repos = client.get_user().get_repos(sort="updated", direction="desc")
-            result = []
-            for r in repos[:30]:  # Limit to 30 most recent repos
-                result.append(
-                    {
-                        "full_name": r.full_name,
-                        "name": r.name,
-                        "owner": r.owner.login,
-                        "private": r.private,
-                        "description": r.description,
-                        "default_branch": r.default_branch or "main",
-                        "language": r.language,
-                    }
-                )
-            return result
+            async with httpx.AsyncClient() as client:
+                response = await client.get(url, headers=headers, timeout=10.0)
+                if response.status_code == 200:
+                    data = response.json()
+                    return [
+                        {
+                            "full_name": r["full_name"],
+                            "name": r["name"],
+                            "owner": r["owner"]["login"],
+                            "private": r.get("private", False),
+                            "description": r.get("description"),
+                            "default_branch": r.get("default_branch", "main"),
+                            "language": r.get("language"),
+                        }
+                        for r in data
+                    ]
         except Exception as e:
             logger.warning("Failed to list user repositories from GitHub API", error=str(e))
-            return [
-                {"full_name": "Shikhaar/Portfolio2.0", "name": "Portfolio2.0", "owner": "Shikhaar", "private": False, "default_branch": "main"},
-                {"full_name": "Shikhaar/TestPilot-AI", "name": "TestPilot-AI", "owner": "Shikhaar", "private": False, "default_branch": "main"},
-                {"full_name": "fastapi/fastapi", "name": "fastapi", "owner": "fastapi", "private": False, "default_branch": "master"},
-                {"full_name": "pallets/flask", "name": "flask", "owner": "pallets", "private": False, "default_branch": "main"},
-            ]
+
+        # Secondary fallback using username if token request failed
+        if access_token and github_username:
+            try:
+                async with httpx.AsyncClient() as client:
+                    resp = await client.get(
+                        f"https://api.github.com/users/{github_username}/repos?sort=updated&per_page=30",
+                        headers={"Accept": "application/vnd.github+json"},
+                        timeout=10.0,
+                    )
+                    if resp.status_code == 200:
+                        return [
+                            {
+                                "full_name": r["full_name"],
+                                "name": r["name"],
+                                "owner": r["owner"]["login"],
+                                "private": r.get("private", False),
+                                "description": r.get("description"),
+                                "default_branch": r.get("default_branch", "main"),
+                                "language": r.get("language"),
+                            }
+                            for r in resp.json()
+                        ]
+            except Exception as ex:
+                logger.warning("Fallback username repo list failed", error=str(ex))
+
+        return []
 
     def list_repository_branches(
         self,
