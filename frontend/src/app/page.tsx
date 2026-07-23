@@ -21,7 +21,7 @@ export default function Dashboard() {
       // Simulate/trigger test suite execution
       await new Promise((resolve) => setTimeout(resolve, 2000));
       setTestNotification(
-        "⚡ Regression Test Suite completed across 3 connected repositories! Verified 184 test assertions (0 regressions detected)."
+        "Regression Test Suite completed across 3 connected repositories! Verified 184 test assertions (0 regressions detected)."
       );
     } catch {
       setTestNotification("Failed to trigger regression tests.");
