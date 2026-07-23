@@ -154,16 +154,16 @@ async def test_health_score_calculation():
                 </p>
               </div>
 
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-gray-300">
-                  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="flex flex-wrap items-center gap-3 shrink-0">
+                <div className="flex items-center space-x-2 bg-white/5 border border-white/10 rounded-xl px-3.5 py-2 text-xs text-gray-300 whitespace-nowrap">
+                  <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                   </svg>
-                  <span className="text-gray-500 font-semibold">Branch:</span>
+                  <span className="text-gray-400 font-semibold whitespace-nowrap">Branch:</span>
                   <select
                     value={selectedBranch}
                     onChange={(e) => setSelectedBranch(e.target.value)}
-                    className="bg-[#0d0d12] border border-white/10 rounded px-2 py-1 outline-none text-white font-mono text-xs cursor-pointer"
+                    className="bg-[#0d0d12] border border-white/10 rounded-lg px-2.5 py-1 outline-none text-white font-mono text-xs cursor-pointer"
                   >
                     {(branches.length > 0 ? branches : [selectedBranch || "main"]).map((b) => (
                       <option key={b} value={b} className="bg-[#0d0d12] text-white">
@@ -175,20 +175,20 @@ async def test_health_score_calculation():
 
                 <button
                   onClick={() => setShowGenerateModal(true)}
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-semibold shadow-lg shadow-purple-900/30 transition flex items-center space-x-1.5"
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-purple-900/30 transition flex items-center space-x-1.5 whitespace-nowrap shrink-0"
                 >
-                  <svg className="w-4 h-4 text-purple-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-4 h-4 text-purple-200 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
-                  <span>Generate AI Tests</span>
+                  <span className="whitespace-nowrap">Generate AI Tests</span>
                 </button>
 
                 <button
                   onClick={handleReindex}
                   disabled={reindexing}
-                  className="px-4 py-2 bg-blue-700 hover:bg-blue-800 disabled:bg-gray-800 text-white rounded-lg text-xs font-semibold shadow-lg shadow-blue-900/30 transition"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-800 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-900/30 transition whitespace-nowrap shrink-0"
                 >
-                  {reindexing ? "Queueing Index..." : "Force Re-Index"}
+                  <span className="whitespace-nowrap">{reindexing ? "Queueing Index..." : "Force Re-Index"}</span>
                 </button>
               </div>
             </header>
