@@ -17,7 +17,7 @@ export default function Repositories() {
   const [repos, setRepos] = useState<Repository[]>([]);
   const [userGitHubRepos, setUserGitHubRepos] = useState<Array<{ full_name: string; name: string }>>(DEFAULT_USER_REPOS);
   const [loading, setLoading] = useState(true);
-  const [selectedRepo, setSelectedRepo] = useState(DEFAULT_USER_REPOS[0].full_name);
+  const [selectedRepo, setSelectedRepo] = useState("");
   const [customRepo, setCustomRepo] = useState("");
   const [isCustom, setIsCustom] = useState(false);
   const [connecting, setConnecting] = useState(false);
@@ -36,7 +36,6 @@ export default function Repositories() {
         if (ghRepos && ghRepos.length > 0) {
           const top5 = ghRepos.slice(0, 5);
           setUserGitHubRepos(top5);
-          setSelectedRepo(top5[0].full_name);
         }
       } catch (e) {
         console.error("Failed to load repositories data", e);
@@ -50,7 +49,10 @@ export default function Repositories() {
   const handleConnect = async (e: React.FormEvent) => {
     e.preventDefault();
     let targetRepo = isCustom ? customRepo.trim() : selectedRepo;
-    if (!targetRepo) return;
+    if (!targetRepo) {
+      setError("Please select a repository from the list or enter a custom repository name.");
+      return;
+    }
 
     // Support full GitHub URL parsing (e.g. https://github.com/Shikhaar/DSA.git -> Shikhaar/DSA)
     if (targetRepo.includes("github.com/")) {
@@ -67,6 +69,7 @@ export default function Repositories() {
       const newRepo = await repositoriesApi.connect(targetRepo);
       setRepos([newRepo.data, ...repos]);
       setCustomRepo("");
+      setSelectedRepo("");
       setIsCustom(false);
     } catch (err: any) {
       const msg = err?.response?.data?.detail || err?.response?.data?.message || err.message || "Failed to connect repository";
@@ -106,6 +109,9 @@ export default function Repositories() {
                   }}
                   className="w-full px-4 py-2.5 glass-input text-sm bg-[#0d0d12] text-white border border-white/10 rounded-lg outline-none cursor-pointer"
                 >
+                  <option value="" disabled hidden className="bg-[#0d0d12] text-gray-500">
+                    Select a repository...
+                  </option>
                   {userGitHubRepos.slice(0, 5).map((r) => (
                     <option key={r.full_name} value={r.full_name} className="bg-[#0d0d12] text-white">
                       {r.full_name}
