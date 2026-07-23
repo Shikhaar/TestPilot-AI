@@ -62,6 +62,18 @@ The core engine uses a state-of-the-art **multi-agent orchestration workflow** p
 
 ---
 
+## 📊 Observability & Task Telemetry
+
+TestPilot AI comes out-of-the-box with production-grade monitoring dashboards for system metrics, HTTP request latencies, and distributed background worker queues.
+
+### Grafana Telemetry Dashboard (`http://localhost:3001`)
+![Grafana Platform Telemetry](docs/images/grafana.png)
+
+### Celery Flower Worker Dashboard (`http://localhost:5555`)
+![Celery Flower Task Monitor](docs/images/flower.png)
+
+---
+
 ##  Getting Started
 
 ### Prerequisites
