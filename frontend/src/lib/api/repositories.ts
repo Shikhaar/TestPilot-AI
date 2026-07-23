@@ -42,10 +42,10 @@ export const repositoriesApi = {
     return res.data.data;
   },
 
-  triggerReindex: async (id: string, force = false) => {
+  triggerReindex: async (id: string, force = false, branch?: string) => {
     const res = await client.post<{ task_id: string; status: string; message: string }>(
       `/repositories/${id}/index`,
-      { force_reindex: force }
+      { force_reindex: force, branch }
     );
     return res.data;
   },

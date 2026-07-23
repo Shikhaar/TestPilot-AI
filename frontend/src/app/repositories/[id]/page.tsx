@@ -14,13 +14,20 @@ export default function RepositoryDetail({ params }: { params: Promise<{ id: str
   const [loading, setLoading] = useState(true);
   const [reindexing, setReindexing] = useState(false);
 
+  const [selectedBranch, setSelectedBranch] = useState("");
+
   const fetchRepo = async () => {
     try {
       const [data, prData] = await Promise.all([
         repositoriesApi.get(id).catch(() => null),
         pullRequestsApi.list(id).catch(() => null),
       ]);
-      if (data) setRepo(data);
+      if (data) {
+        setRepo(data);
+        if (!selectedBranch) {
+          setSelectedBranch(data.default_branch || "main");
+        }
+      }
       if (prData && prData.items) setPrs(prData.items);
     } catch (err) {
       console.error("Failed to load repo", err);
@@ -47,7 +54,7 @@ export default function RepositoryDetail({ params }: { params: Promise<{ id: str
     setReindexing(true);
     setRepo((prev) => (prev ? { ...prev, index_status: "indexing" } : null));
     try {
-      await repositoriesApi.triggerReindex(repo.id, true);
+      await repositoriesApi.triggerReindex(repo.id, true, selectedBranch || undefined);
     } catch (err) {
       console.error(err);
     } finally {
@@ -62,28 +69,45 @@ export default function RepositoryDetail({ params }: { params: Promise<{ id: str
       <main className="flex-1 overflow-y-auto px-10 py-8">
         {loading ? (
           <div className="flex justify-center py-24">
-            <div className="w-10 h-10 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-10 h-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
           <div className="space-y-8">
             {/* Header */}
-            <header className="flex justify-between items-start">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
                 <div className="flex items-center space-x-3 mb-2">
                   <h1 className="text-2xl font-bold tracking-tight">{repo?.full_name}</h1>
-                  <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded border border-purple-500/20 bg-purple-500/5 text-purple-300`}>
+                  <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded border border-blue-500/20 bg-blue-500/5 text-blue-400`}>
                     {repo?.index_status}
                   </span>
                 </div>
                 <p className="text-gray-500 text-sm max-w-2xl">{repo?.description || "No description provided."}</p>
               </div>
-              <button
-                onClick={handleReindex}
-                disabled={reindexing}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 text-white rounded-lg text-xs font-semibold transition"
-              >
-                {reindexing ? "Queueing Index..." : "Force Re-Index"}
-              </button>
+
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-gray-300">
+                  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                  </svg>
+                  <span className="text-gray-500 font-semibold">Branch:</span>
+                  <input
+                    type="text"
+                    value={selectedBranch}
+                    onChange={(e) => setSelectedBranch(e.target.value)}
+                    placeholder="main"
+                    className="bg-transparent border-none outline-none text-white font-mono w-24 text-xs"
+                  />
+                </div>
+
+                <button
+                  onClick={handleReindex}
+                  disabled={reindexing}
+                  className="px-4 py-2 bg-blue-700 hover:bg-blue-800 disabled:bg-gray-800 text-white rounded-lg text-xs font-semibold shadow-lg shadow-blue-900/30 transition"
+                >
+                  {reindexing ? "Queueing Index..." : "Force Re-Index"}
+                </button>
+              </div>
             </header>
 
             {/* Insights Layout (Suggestion #4) */}
