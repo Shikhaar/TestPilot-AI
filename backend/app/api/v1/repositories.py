@@ -439,6 +439,15 @@ async def create_test_pr(
             },
         )
         if put_resp.status_code not in (200, 201):
+            if put_resp.status_code == 403:
+                raise HTTPException(
+                    status_code=403,
+                    detail=(
+                        "GitHub permission error (403): Your GitHub App or token lacks write permission to commit files. "
+                        "To fix this, go to GitHub Settings -> Developer Settings -> GitHub Apps -> Permissions & Events, "
+                        "and set 'Contents' permission to 'Read & write'."
+                    ),
+                )
             raise HTTPException(
                 status_code=put_resp.status_code,
                 detail=f"Failed to commit test file to GitHub: {put_resp.text}",
