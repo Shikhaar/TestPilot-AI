@@ -27,12 +27,17 @@ export interface Repository {
   test_framework?: string;
 }
 
-export const repositoriesApi = {
-  list: async (page = 1, pageSize = 20) => {
-    const res = await client.get<{ items: Repository[]; total: number }>("/repositories", {
+  list: async (page = 1, pageSize = 20): Promise<{ items: Repository[]; total: number }> => {
+    const res = await client.get<any>("/repositories", {
       params: { page, page_size: pageSize },
     });
-    return res.data;
+    if (res.data?.data?.items) {
+      return res.data.data;
+    }
+    if (res.data?.items) {
+      return res.data;
+    }
+    return { items: Array.isArray(res.data) ? res.data : [], total: 0 };
   },
 
   connect: async (fullName: string, githubAppInstallationId?: string) => {
