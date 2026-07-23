@@ -54,8 +54,12 @@ async def get_current_user(
         if user and user.is_active:
             return user
 
-    # Fallback to the latest logged-in active user in database
-    result = await db.execute(select(User).where(User.is_active == True).order_by(User.created_at.desc()))
+    # Fallback to the main GitHub user account (Shikhaar) or active user
+    result = await db.execute(
+        select(User)
+        .where(User.is_active == True)
+        .order_by((User.username == "Shikhaar").desc(), User.created_at.asc())
+    )
     fallback_user = result.scalars().first()
     if fallback_user:
         return fallback_user
