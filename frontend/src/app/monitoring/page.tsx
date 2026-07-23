@@ -102,11 +102,15 @@ export default function Monitoring() {
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-400">Total Tokens Consumed</span>
-                    <span className="font-mono text-gray-200">450.2k</span>
+                    <span className="font-mono text-gray-200">
+                      {detailed?.ai_usage?.total_tokens ? `${(detailed.ai_usage.total_tokens / 1000).toFixed(1)}k` : "0"}
+                    </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-400">Estimated Cost</span>
-                    <span className="font-mono text-purple-400 font-semibold">${detailed?.ai_usage.estimated_cost_usd.toFixed(2)}</span>
+                    <span className="font-mono text-purple-400 font-semibold">
+                      ${(detailed?.ai_usage?.estimated_cost_usd || 0).toFixed(2)} USD
+                    </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-400">Agent Retries</span>
