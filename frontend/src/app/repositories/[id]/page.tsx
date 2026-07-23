@@ -141,9 +141,7 @@ export default function RepositoryDetail({ params }: { params: Promise<{ id: str
                 <div className="glass-panel p-6">
                   <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-4">Architecture Summary</h3>
                   <p className="text-sm text-gray-300 leading-relaxed mb-4">
-                    The codebase is organized in a layered Clean Architecture structure. 
-                    The entry routes route payloads to the core service layer, which triggers database operations 
-                    using the Repository repository structures.
+                    {repo?.architecture_summary || `The ${repo?.name || "codebase"} is organized in a layered Clean Architecture structure. TestPilot AI parsed ${repo?.total_files || 0} files containing ${repo?.total_functions || 0} functions and ${repo?.total_classes || 0} classes.`}
                   </p>
                   <div className="flex gap-4 text-xs font-mono text-gray-500">
                     <div>Functions: <span className="text-gray-300">{repo?.total_functions || 0}</span></div>
@@ -161,21 +159,27 @@ export default function RepositoryDetail({ params }: { params: Promise<{ id: str
                   <div className="flex justify-around items-center h-28 border border-white/5 rounded-lg bg-black/40">
                     <div className="flex flex-col items-center">
                       <span className="text-[10px] uppercase tracking-wider text-purple-400 font-bold">Routes</span>
-                      <div className="w-16 h-8 rounded border border-white/10 bg-white/5 flex items-center justify-center text-xs mt-2 font-mono">14 nodes</div>
+                      <div className="w-20 h-8 rounded border border-white/10 bg-white/5 flex items-center justify-center text-xs mt-2 font-mono">
+                        {repo?.routes_nodes ?? Math.max(1, Math.floor((repo?.total_files || 0) * 0.25))} nodes
+                      </div>
                     </div>
                     <svg className="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                     <div className="flex flex-col items-center">
                       <span className="text-[10px] uppercase tracking-wider text-purple-400 font-bold">Services</span>
-                      <div className="w-16 h-8 rounded border border-white/10 bg-white/5 flex items-center justify-center text-xs mt-2 font-mono">24 nodes</div>
+                      <div className="w-20 h-8 rounded border border-white/10 bg-white/5 flex items-center justify-center text-xs mt-2 font-mono">
+                        {repo?.services_nodes ?? Math.max(1, Math.floor((repo?.total_files || 0) * 0.50))} nodes
+                      </div>
                     </div>
                     <svg className="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                     <div className="flex flex-col items-center">
                       <span className="text-[10px] uppercase tracking-wider text-purple-400 font-bold">Repositories</span>
-                      <div className="w-16 h-8 rounded border border-white/10 bg-white/5 flex items-center justify-center text-xs mt-2 font-mono">12 nodes</div>
+                      <div className="w-20 h-8 rounded border border-white/10 bg-white/5 flex items-center justify-center text-xs mt-2 font-mono">
+                        {repo?.repositories_nodes ?? Math.max(1, Math.floor((repo?.total_files || 0) * 0.25))} nodes
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -188,17 +192,17 @@ export default function RepositoryDetail({ params }: { params: Promise<{ id: str
                   <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-4">AI Summary</h3>
                   <div className="space-y-4">
                     <p className="text-xs text-gray-400 leading-relaxed">
-                      TestPilot AI parsed this codebase. The API layers are verified via tests. 
-                      However, there is a coverage gap of 15% in the secondary billing service which 
-                      poses regression risks on subsequent changes.
+                      {repo?.ai_summary || `TestPilot AI parsed ${repo?.full_name}. Health score is rated at ${repo?.health_score?.toFixed(1) || "85.0"}/100.`}
                     </p>
                     <div className="border-t border-white/5 pt-4">
                       <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Primary Language</span>
-                      <span className="text-sm font-semibold text-gray-200">{repo?.language || "Python"}</span>
+                      <span className="text-sm font-semibold text-gray-200">{repo?.language || "Unknown"}</span>
                     </div>
                     <div>
                       <span className="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Test Framework</span>
-                      <span className="text-sm font-semibold text-purple-400">pytest</span>
+                      <span className="text-sm font-semibold text-purple-400">
+                        {repo?.test_framework || (repo?.language?.toLowerCase().includes("typescript") ? "Jest / Vitest" : "pytest")}
+                      </span>
                     </div>
                   </div>
                 </div>
