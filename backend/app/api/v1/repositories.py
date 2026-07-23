@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 
 from app.api.deps import CurrentUser, DBSession
