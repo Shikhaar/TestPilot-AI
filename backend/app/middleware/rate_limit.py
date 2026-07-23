@@ -37,7 +37,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self._window = 60.0  # seconds
 
     async def dispatch(self, request: Request, call_next: object) -> Response:
-        if request.url.path in self.EXEMPT_PATHS:
+        if request.url.path in self.EXEMPT_PATHS or request.method == "OPTIONS":
             return await call_next(request)  # type: ignore[operator]
 
         client_ip = self._get_client_ip(request)
