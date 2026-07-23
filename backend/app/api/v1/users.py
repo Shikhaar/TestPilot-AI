@@ -77,15 +77,19 @@ async def update_user_settings(
                 detail="Invalid Gemini API key length. Key must be at least 10 characters.",
             )
 
-        current_user.gemini_api_key = api_key
+        await db.execute(
+            update(User).where(User.id == current_user.id).values(gemini_api_key=api_key)
+        )
+        await db.commit()
+
+        result = await db.execute(select(User).where(User.id == current_user.id))
+        current_user = result.scalar_one()
+
         logger.info(
             "User updated Gemini API key",
             username=current_user.username,
             action="set" if api_key else "cleared",
         )
-
-    await db.commit()
-    await db.refresh(current_user)
 
     return APIResponse(
         data=_build_settings_response(current_user),
@@ -103,9 +107,13 @@ async def clear_gemini_api_key(
     db: DBSession,
 ) -> APIResponse[UserSettingsResponse]:
     """Clears the stored Gemini API key for the current user."""
-    current_user.gemini_api_key = None
+    await db.execute(
+        update(User).where(User.id == current_user.id).values(gemini_api_key=None)
+    )
     await db.commit()
-    await db.refresh(current_user)
+
+    result = await db.execute(select(User).where(User.id == current_user.id))
+    current_user = result.scalar_one()
 
     logger.info("User cleared Gemini API key", username=current_user.username)
 
