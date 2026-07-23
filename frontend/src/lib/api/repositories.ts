@@ -19,6 +19,12 @@ export interface Repository {
   health_score: number;
   coverage_percentage: number | null;
   created_at: string;
+  routes_nodes?: number;
+  services_nodes?: number;
+  repositories_nodes?: number;
+  architecture_summary?: string;
+  ai_summary?: string;
+  test_framework?: string;
 }
 
 export const repositoriesApi = {

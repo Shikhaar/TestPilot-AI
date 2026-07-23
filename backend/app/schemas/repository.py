@@ -70,12 +70,19 @@ class RepositoryResponse(BaseSchema):
 
 
 class RepositoryDetailResponse(RepositoryResponse):
-    """Detailed repository response including metrics."""
+    """Detailed repository response including real AST metrics and architecture summary."""
 
     total_pull_requests: int = 0
     open_pull_requests: int = 0
     recent_risk_scores: list[float] = Field(default_factory=list)
     top_risk_modules: list[str] = Field(default_factory=list)
+
+    routes_nodes: int = 0
+    services_nodes: int = 0
+    repositories_nodes: int = 0
+    architecture_summary: str = ""
+    ai_summary: str = ""
+    test_framework: str = "pytest"
 
 
 class RepositoryHealthResponse(BaseSchema):
