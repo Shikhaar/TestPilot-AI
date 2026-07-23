@@ -44,13 +44,15 @@ export const repositoriesApi = {
   },
 
   get: async (id: string) => {
-    const res = await client.get<{ success: boolean; data: Repository }>(`/repositories/${id}`);
+    const encodedId = encodeURIComponent(id);
+    const res = await client.get<{ success: boolean; data: Repository }>(`/repositories/${encodedId}`);
     return res.data.data;
   },
 
   triggerReindex: async (id: string, force = false, branch?: string) => {
+    const encodedId = encodeURIComponent(id);
     const res = await client.post<{ task_id: string; status: string; message: string }>(
-      `/repositories/${id}/index`,
+      `/repositories/${encodedId}/index`,
       { force_reindex: force, branch }
     );
     return res.data;
@@ -62,7 +64,8 @@ export const repositoriesApi = {
   },
 
   listBranches: async (repoId: string) => {
-    const res = await client.get<{ success: boolean; data: string[] }>(`/repositories/${repoId}/branches`);
+    const encodedId = encodeURIComponent(repoId);
+    const res = await client.get<{ success: boolean; data: string[] }>(`/repositories/${encodedId}/branches`);
     return res.data.data;
   },
 };

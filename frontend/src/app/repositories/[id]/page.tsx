@@ -7,8 +7,10 @@ import { repositoriesApi, Repository } from "@/lib/api/repositories";
 
 import { pullRequestsApi, PullRequest } from "@/lib/api/pullRequests";
 
-export default function RepositoryDetail({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function RepositoryDetail({ params }: { params: any }) {
+  const resolvedParams = params && typeof params.then === "function" ? use(params) : params;
+  const rawId = (resolvedParams?.id || "").toString();
+  const id = decodeURIComponent(rawId);
   const [repo, setRepo] = useState<Repository | null>(null);
   const [prs, setPrs] = useState<PullRequest[]>([]);
   const [loading, setLoading] = useState(true);
