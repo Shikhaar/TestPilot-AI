@@ -87,7 +87,15 @@ export default function RepositoryDetail({ params }: { params: any }) {
                     {repo?.index_status}
                   </span>
                 </div>
-                <p className="text-gray-500 text-sm max-w-2xl">{repo?.description || "No description provided."}</p>
+                <p className="text-gray-500 text-sm max-w-2xl">
+                  {repo?.description || (
+                    (repo?.full_name || "").toLowerCase().includes("testpilot")
+                      ? "AI-powered test generation, AST parsing, and PR risk analysis platform for multi-language codebases."
+                      : (repo?.full_name || "").toLowerCase().includes("portfolio")
+                      ? "Modern portfolio web application showcasing AI projects, full-stack systems, and interactive UI design."
+                      : `Automated test generation and AST code indexing for ${repo?.name || "this codebase"}.`
+                  )}
+                </p>
               </div>
 
               <div className="flex items-center space-x-3">

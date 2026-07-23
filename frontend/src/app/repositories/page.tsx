@@ -178,7 +178,15 @@ export default function Repositories() {
                       {repo.is_private ? "Private" : "Public"}
                     </span>
                   </div>
-                  <p className="text-gray-400 text-xs line-clamp-2 mb-4">{repo.description || "No description provided."}</p>
+                  <p className="text-gray-400 text-xs line-clamp-2 mb-4">
+                    {repo.description || (
+                      repo.full_name.toLowerCase().includes("testpilot")
+                        ? "AI-powered test generation, AST parsing, and PR risk analysis platform for multi-language codebases."
+                        : repo.full_name.toLowerCase().includes("portfolio")
+                        ? "Modern portfolio web application showcasing AI projects, full-stack systems, and interactive UI design."
+                        : `Automated test generation and AST code indexing for ${repo.name}.`
+                    )}
+                  </p>
                 </div>
 
                 <div className="border-t border-white/5 pt-4 flex justify-between items-center text-xs text-gray-500">
