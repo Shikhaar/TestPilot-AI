@@ -88,4 +88,5 @@ jobs:
           USE_LOCAL_EMBEDDINGS: "True"
         run: |
           cd backend
+          poetry run alembic upgrade head
           poetry run pytest tests/ -v -m "unit"
