@@ -22,6 +22,7 @@ async def github_login_url(redirect_uri: str | None = None) -> dict[str, str]:
         The GitHub OAuth/App URL to redirect the user to.
     """
     import secrets
+
     from app.core.config import get_settings
 
     settings = get_settings()
@@ -31,7 +32,6 @@ async def github_login_url(redirect_uri: str | None = None) -> dict[str, str]:
 
     # If using a GitHub App (Client ID starting with 'Iv'), try OAuth authorize with explicit redirect_uri first
     if settings.github_client_id.startswith("Iv"):
-        app_slug = (settings.github_app_name or "testpilot-ai-shikhar").strip('"').lower().replace(" ", "-")
         # Provide fallback installation URL if OAuth authorize fails
         url = (
             f"https://github.com/login/oauth/authorize"
@@ -49,8 +49,14 @@ async def github_login_url(redirect_uri: str | None = None) -> dict[str, str]:
             f"&state={state}"
         )
 
-    app_name_slug = (settings.github_app_name or "testpilot-ai-shikhar").strip('"').lower().replace(' ', '-')
-    return {"url": url, "state": state, "app_install_url": f"https://github.com/apps/{app_name_slug}/installations/new"}
+    app_name_slug = (
+        (settings.github_app_name or "testpilot-ai-shikhar").strip('"').lower().replace(" ", "-")
+    )
+    return {
+        "url": url,
+        "state": state,
+        "app_install_url": f"https://github.com/apps/{app_name_slug}/installations/new",
+    }
 
 
 @router.post("/github/callback", response_model=TokenResponse)
@@ -205,9 +211,11 @@ async def get_current_user_profile(current_user: CurrentUser) -> APIResponse[Use
 async def dev_login(db: DBSession, response: Response) -> TokenResponse:
     """Instant Developer Login for local testing without OAuth configuration."""
     import uuid
+
     from sqlalchemy import select
-    from app.models.user import User
+
     from app.core.config import get_settings
+    from app.models.user import User
 
     result = await db.execute(select(User).where(User.username == "shikhar-dev"))
     user = result.scalar_one_or_none()
