@@ -5,16 +5,19 @@ import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
 import { repositoriesApi, Repository } from "@/lib/api/repositories";
 
-const REAL_USER_REPOS = [
-  { full_name: "Shikhaar/Portfolio2.0", name: "Portfolio2.0" },
+const SHIKHAAR_TOP_REPOS = [
   { full_name: "Shikhaar/TestPilot-AI", name: "TestPilot-AI" },
+  { full_name: "Shikhaar/Portfolio2.0", name: "Portfolio2.0" },
+  { full_name: "Shikhaar/Portfolio", name: "Portfolio" },
+  { full_name: "Shikhaar/Idea", name: "Idea" },
+  { full_name: "Shikhaar/passop", name: "passop" },
 ];
 
 export default function Repositories() {
   const [repos, setRepos] = useState<Repository[]>([]);
-  const [userGitHubRepos, setUserGitHubRepos] = useState<Array<{ full_name: string; name: string }>>(REAL_USER_REPOS);
+  const [userGitHubRepos, setUserGitHubRepos] = useState<Array<{ full_name: string; name: string }>>(SHIKHAAR_TOP_REPOS);
   const [loading, setLoading] = useState(true);
-  const [selectedRepo, setSelectedRepo] = useState(REAL_USER_REPOS[0].full_name);
+  const [selectedRepo, setSelectedRepo] = useState(SHIKHAAR_TOP_REPOS[0].full_name);
   const [customRepo, setCustomRepo] = useState("");
   const [isCustom, setIsCustom] = useState(false);
   const [connecting, setConnecting] = useState(false);
@@ -31,8 +34,10 @@ export default function Repositories() {
           setRepos(res.items);
         }
         if (ghRepos && ghRepos.length > 0) {
-          setUserGitHubRepos(ghRepos);
-          setSelectedRepo(ghRepos[0].full_name);
+          // Take top 5 most recent repositories
+          const top5 = ghRepos.slice(0, 5);
+          setUserGitHubRepos(top5);
+          setSelectedRepo(top5[0].full_name);
         }
       } catch (e) {
         console.error("Failed to load repositories data", e);
@@ -45,8 +50,16 @@ export default function Repositories() {
 
   const handleConnect = async (e: React.FormEvent) => {
     e.preventDefault();
-    const targetRepo = isCustom ? customRepo.trim() : selectedRepo;
+    let targetRepo = isCustom ? customRepo.trim() : selectedRepo;
     if (!targetRepo) return;
+
+    // Support full GitHub URL parsing (e.g. https://github.com/Shikhaar/DSA.git -> Shikhaar/DSA)
+    if (targetRepo.includes("github.com/")) {
+      const parts = targetRepo.split("github.com/")[1].replace(/\.git$/, "").split("/");
+      if (parts.length >= 2) {
+        targetRepo = `${parts[0]}/${parts[1]}`;
+      }
+    }
 
     setConnecting(true);
     setError("");
@@ -94,13 +107,13 @@ export default function Repositories() {
                 }}
                 className="w-full px-4 py-2.5 glass-input text-sm bg-[#0d0d12] text-white border border-white/10 rounded-lg outline-none cursor-pointer"
               >
-                {userGitHubRepos.map((r) => (
+                {userGitHubRepos.slice(0, 5).map((r) => (
                   <option key={r.full_name} value={r.full_name} className="bg-[#0d0d12] text-white">
                     {r.full_name}
                   </option>
                 ))}
                 <option value="custom" className="bg-[#0d0d12] text-purple-400 font-semibold">
-                  + Enter Custom Repository...
+                  + Enter Custom Repository Name or URL...
                 </option>
               </select>
 
@@ -109,8 +122,8 @@ export default function Repositories() {
                   type="text"
                   value={customRepo}
                   onChange={(e) => setCustomRepo(e.target.value)}
-                  placeholder="e.g. owner/repository"
-                  className="w-full px-4 py-2.5 glass-input text-sm"
+                  placeholder="e.g. Shikhaar/DSA or https://github.com/Shikhaar/DSA"
+                  className="w-full px-4 py-2.5 glass-input text-sm text-white"
                   required
                 />
               )}
