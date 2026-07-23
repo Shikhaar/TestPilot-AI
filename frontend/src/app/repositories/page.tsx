@@ -74,12 +74,15 @@ export default function Repositories() {
 
   const handleConnect = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName) return;
+    let repoName = fullName.trim();
+    if (repoName && !repoName.includes("/")) {
+      repoName = `Shikhaar/${repoName}`;
+    }
 
     setConnecting(true);
     setError("");
     try {
-      const res = await repositoriesApi.connect(fullName);
+      const res = await repositoriesApi.connect(repoName);
       setRepos((prev) => [res.data, ...prev]);
       setFullName("");
     } catch (err: any) {
