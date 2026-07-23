@@ -27,6 +27,7 @@ export interface Repository {
   test_framework?: string;
 }
 
+export const repositoriesApi = {
   list: async (page = 1, pageSize = 20): Promise<{ items: Repository[]; total: number }> => {
     const res = await client.get<any>("/repositories", {
       params: { page, page_size: pageSize },
