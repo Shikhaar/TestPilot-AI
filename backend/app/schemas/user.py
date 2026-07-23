@@ -53,3 +53,24 @@ class RefreshTokenRequest(BaseSchema):
     """Request to refresh an access token."""
 
     refresh_token: str
+
+
+class UserSettingsResponse(BaseSchema):
+    """User profile + settings (including BYOK key status)."""
+
+    id: str
+    username: str
+    email: str | None
+    name: str | None
+    avatar_url: str | None
+    role: str
+    is_active: bool
+    created_at: datetime
+    has_gemini_api_key: bool
+    gemini_api_key_preview: str | None  # Masked version e.g. "AIzaSy••••••••3a9B"
+
+
+class UserSettingsUpdate(BaseSchema):
+    """Request body to update user settings."""
+
+    gemini_api_key: str | None = None

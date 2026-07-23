@@ -24,6 +24,7 @@ class User(Base, UUIDMixin, TimestampMixin):
         name: GitHub display name.
         avatar_url: URL to the user's GitHub avatar.
         github_access_token: OAuth access token for GitHub API calls.
+        gemini_api_key: User's personal Gemini API key (BYOK).
         role: User role: 'admin' | 'member' | 'viewer'.
         is_active: Whether the account is active.
         repositories: Repositories connected by this user.
@@ -37,6 +38,7 @@ class User(Base, UUIDMixin, TimestampMixin):
     name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     avatar_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     github_access_token: Mapped[str | None] = mapped_column(Text, nullable=True)
+    gemini_api_key: Mapped[str | None] = mapped_column(Text, nullable=True)
     role: Mapped[str] = mapped_column(String(20), default="member", nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
