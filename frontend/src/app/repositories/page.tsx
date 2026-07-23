@@ -5,11 +5,19 @@ import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
 import { repositoriesApi, Repository } from "@/lib/api/repositories";
 
+const DEFAULT_USER_REPOS = [
+  { full_name: "Shikhaar/TestPilot-AI", name: "TestPilot-AI" },
+  { full_name: "Shikhaar/Portfolio2.0", name: "Portfolio2.0" },
+  { full_name: "Shikhaar/Portfolio", name: "Portfolio" },
+  { full_name: "Shikhaar/Idea", name: "Idea" },
+  { full_name: "Shikhaar/passop", name: "passop" },
+];
+
 export default function Repositories() {
   const [repos, setRepos] = useState<Repository[]>([]);
-  const [userGitHubRepos, setUserGitHubRepos] = useState<Array<{ full_name: string; name: string }>>([]);
+  const [userGitHubRepos, setUserGitHubRepos] = useState<Array<{ full_name: string; name: string }>>(DEFAULT_USER_REPOS);
   const [loading, setLoading] = useState(true);
-  const [selectedRepo, setSelectedRepo] = useState("");
+  const [selectedRepo, setSelectedRepo] = useState(DEFAULT_USER_REPOS[0].full_name);
   const [customRepo, setCustomRepo] = useState("");
   const [isCustom, setIsCustom] = useState(false);
   const [connecting, setConnecting] = useState(false);
@@ -26,16 +34,12 @@ export default function Repositories() {
           setRepos(res.items);
         }
         if (ghRepos && ghRepos.length > 0) {
-          // Take top 5 most recent repositories for whichever user is authenticated
           const top5 = ghRepos.slice(0, 5);
           setUserGitHubRepos(top5);
           setSelectedRepo(top5[0].full_name);
-        } else {
-          setIsCustom(true);
         }
       } catch (e) {
         console.error("Failed to load repositories data", e);
-        setIsCustom(true);
       } finally {
         setLoading(false);
       }
@@ -89,38 +93,50 @@ export default function Repositories() {
         <section className="glass-panel p-6 mb-8">
           <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-4">Connect new repository</h2>
           <form onSubmit={handleConnect} className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
-            <div className="flex-1 space-y-2">
-              <select
-                value={isCustom ? "custom" : selectedRepo}
-                onChange={(e) => {
-                  if (e.target.value === "custom") {
-                    setIsCustom(true);
-                  } else {
-                    setIsCustom(false);
-                    setSelectedRepo(e.target.value);
-                  }
-                }}
-                className="w-full px-4 py-2.5 glass-input text-sm bg-[#0d0d12] text-white border border-white/10 rounded-lg outline-none cursor-pointer"
-              >
-                {userGitHubRepos.slice(0, 5).map((r) => (
-                  <option key={r.full_name} value={r.full_name} className="bg-[#0d0d12] text-white">
-                    {r.full_name}
+            <div className="flex-1">
+              {!isCustom ? (
+                <select
+                  value={selectedRepo}
+                  onChange={(e) => {
+                    if (e.target.value === "custom") {
+                      setIsCustom(true);
+                    } else {
+                      setSelectedRepo(e.target.value);
+                    }
+                  }}
+                  className="w-full px-4 py-2.5 glass-input text-sm bg-[#0d0d12] text-white border border-white/10 rounded-lg outline-none cursor-pointer"
+                >
+                  {userGitHubRepos.slice(0, 5).map((r) => (
+                    <option key={r.full_name} value={r.full_name} className="bg-[#0d0d12] text-white">
+                      {r.full_name}
+                    </option>
+                  ))}
+                  <option value="custom" className="bg-[#0d0d12] text-purple-400 font-semibold">
+                    + Enter Custom Repository Name or URL...
                   </option>
-                ))}
-                <option value="custom" className="bg-[#0d0d12] text-purple-400 font-semibold">
-                  + Enter Custom Repository Name or URL...
-                </option>
-              </select>
-
-              {isCustom && (
-                <input
-                  type="text"
-                  value={customRepo}
-                  onChange={(e) => setCustomRepo(e.target.value)}
-                  placeholder="e.g. Shikhaar/DSA or https://github.com/Shikhaar/DSA"
-                  className="w-full px-4 py-2.5 glass-input text-sm text-white"
-                  required
-                />
+                </select>
+              ) : (
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center text-xs mb-1">
+                    <span className="text-gray-400">Custom Repo Name or URL</span>
+                    <button
+                      type="button"
+                      onClick={() => setIsCustom(false)}
+                      className="text-purple-400 hover:text-purple-300 font-medium"
+                    >
+                      ← Back to Repositories Dropdown
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={customRepo}
+                    onChange={(e) => setCustomRepo(e.target.value)}
+                    placeholder="e.g. Shikhaar/DSA or https://github.com/Shikhaar/DSA"
+                    className="w-full px-4 py-2.5 glass-input text-sm text-white"
+                    autoFocus
+                    required
+                  />
+                </div>
               )}
             </div>
             <button
