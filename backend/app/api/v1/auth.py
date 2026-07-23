@@ -49,7 +49,8 @@ async def github_login_url(redirect_uri: str | None = None) -> dict[str, str]:
             f"&state={state}"
         )
 
-    return {"url": url, "state": state, "app_install_url": f"https://github.com/apps/{(settings.github_app_name or 'testpilot-ai-shikhar').strip('\"').lower().replace(' ', '-')}/installations/new"}
+    app_name_slug = (settings.github_app_name or "testpilot-ai-shikhar").strip('"').lower().replace(' ', '-')
+    return {"url": url, "state": state, "app_install_url": f"https://github.com/apps/{app_name_slug}/installations/new"}
 
 
 @router.post("/github/callback", response_model=TokenResponse)
