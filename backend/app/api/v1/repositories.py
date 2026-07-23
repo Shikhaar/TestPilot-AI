@@ -135,7 +135,7 @@ async def connect_repository(
     )
 
 
-@router.get("/{repo_id}", response_model=APIResponse[RepositoryDetailResponse])
+@router.get("/{repo_id:path}", response_model=APIResponse[RepositoryDetailResponse])
 async def get_repository(
     repo_id: str,
     db: DBSession,
@@ -159,7 +159,7 @@ async def get_repository(
 
     # Fetch parsed AST file records to calculate dynamic layer nodes
     files_res = await db.execute(
-        select(RepositoryFile).where(RepositoryFile.repository_id == repo_id)
+        select(RepositoryFile).where(RepositoryFile.repository_id == repo.id)
     )
     repo_files = files_res.scalars().all()
 
@@ -168,7 +168,7 @@ async def get_repository(
     repo_layer_count = 0
 
     for f in repo_files:
-        path = f.file_path.lower()
+        path = (f.path or "").lower()
         if any(p in path for p in ["route", "api", "page", "controller", "endpoint"]):
             routes_count += 1
         elif any(p in path for p in ["model", "schema", "db", "repository", "entity"]):
@@ -291,7 +291,7 @@ async def list_github_user_repositories(
     return APIResponse(data=repos)
 
 
-@router.get("/{repo_id}/branches", response_model=APIResponse[list[str]])
+@router.get("/{repo_id:path}/branches", response_model=APIResponse[list[str]])
 async def list_repository_branches(
     repo_id: str,
     db: DBSession,
@@ -305,8 +305,7 @@ async def list_repository_branches(
 
     result = await db.execute(
         select(Repository).where(
-            Repository.id == repo_id,
-            Repository.owner_id == current_user.id,
+            (Repository.id == repo_id) | (Repository.full_name == repo_id)
         )
     )
     repo = result.scalar_one_or_none()
