@@ -45,9 +45,9 @@ export default function RepositoryDetail({ params }: { params: any }) {
     fetchRepo();
   }, [id]);
 
-  // Poll repository status every 3s while indexing is in progress
+  // Poll repository status every 3s while indexing is in progress or pending
   useEffect(() => {
-    if (repo?.index_status !== "indexing") return;
+    if (repo?.index_status !== "indexing" && repo?.index_status !== "pending") return;
     const interval = setInterval(() => {
       fetchRepo();
     }, 3000);
