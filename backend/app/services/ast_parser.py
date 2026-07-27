@@ -302,16 +302,32 @@ class ASTParser:
                 module = ""
                 names = []
                 is_relative = False
+                after_import = False
                 for child in node.children:
-                    if child.type in ("dotted_name", "relative_import"):
-                        text = get_text(child)
-                        if text.startswith("."):
-                            is_relative = True
-                        module = text.lstrip(".")
-                    elif child.type == "import":
-                        pass
-                    elif child.type == "identifier":
-                        names.append(get_text(child))
+                    if child.type == "import":
+                        after_import = True
+                        continue
+                    if not after_import:
+                        if child.type in ("dotted_name", "relative_import"):
+                            text = get_text(child)
+                            if text.startswith("."):
+                                is_relative = True
+                            module = text.lstrip(".")
+                    else:
+                        if child.type in ("dotted_name", "identifier"):
+                            names.append(get_text(child))
+                        elif child.type == "aliased_import":
+                            name_node = child.child_by_field_name("name")
+                            if name_node:
+                                names.append(get_text(name_node))
+                        elif child.type == "import_list":
+                            for sub_child in child.children:
+                                if sub_child.type in ("dotted_name", "identifier"):
+                                    names.append(get_text(sub_child))
+                                elif sub_child.type == "aliased_import":
+                                    name_node = sub_child.child_by_field_name("name")
+                                    if name_node:
+                                        names.append(get_text(name_node))
                 result.imports.append(
                     ImportInfo(
                         module=module,

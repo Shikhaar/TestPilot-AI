@@ -9,6 +9,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import Settings, get_settings
 from app.core.security import verify_access_token
 from app.database.session import get_db_session
 from app.models.user import User
@@ -26,6 +27,7 @@ async def get_db(
 async def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security)],
     db: AsyncSession = Depends(get_db),
+    settings: Settings = Depends(get_settings),
 ) -> User:
     """Get the authenticated user from the JWT token.
 
@@ -54,6 +56,15 @@ async def get_current_user(
         if user and user.is_active:
             return user
 
+    if settings is None:
+        settings = get_settings()
+    if settings.app_env != "development":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     # Fallback to the main GitHub user account (Shikhaar) or active user
     result = await db.execute(
         select(User)
@@ -67,10 +78,10 @@ async def get_current_user(
     # Create default user if database is completely empty
     dev_user = User(
         id="dev-user-id",
+        github_id="123456",
+        username="Shikhaar",
         email="shikharsrivastava3004@gmail.com",
-        github_username="Shikhaar",
-        github_login="Shikhaar",
-        full_name="Shikhar Srivastava",
+        name="Shikhar Srivastava",
         is_active=True,
     )
     db.add(dev_user)
