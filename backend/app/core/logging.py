@@ -8,6 +8,7 @@ and colorized console logs in development.
 from __future__ import annotations
 
 import logging
+import logging.handlers
 import sys
 from typing import Any, cast
 
@@ -83,9 +84,24 @@ def configure_logging() -> None:
     )
 
     # Configure stdlib logging to route through structlog
+    from pathlib import Path
+
+    log_dir = Path("logs")
+    log_dir.mkdir(exist_ok=True)
+
+    handlers: list[logging.Handler] = [
+        logging.StreamHandler(sys.stdout),
+        logging.handlers.RotatingFileHandler(
+            log_dir / "testpilot.log",
+            maxBytes=10 * 1024 * 1024,  # 10MB
+            backupCount=5,
+            encoding="utf-8",
+        ),
+    ]
+
     logging.basicConfig(
         format="%(message)s",
-        stream=sys.stdout,
+        handlers=handlers,
         level=logging.DEBUG if settings.debug else logging.INFO,
     )
 
