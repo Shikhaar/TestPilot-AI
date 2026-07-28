@@ -25,6 +25,7 @@ from app.schemas.repository import (
 )
 from app.services.github_service import GitHubService
 from app.tasks.indexing import index_repository
+from app.utils.qdrant_client import get_qdrant_client
 
 try:
     import litellm
@@ -789,3 +790,62 @@ async def create_test_pr(
             },
             message="Pull Request created successfully on GitHub!",
         )
+
+
+@router.delete("/{repo_id:path}", response_model=APIResponse[dict[str, Any]])
+async def disconnect_repository(
+    repo_id: str,
+    db: DBSession,
+    current_user: CurrentUser,
+) -> APIResponse[dict[str, Any]]:
+    """Disconnect and remove a repository from TestPilot AI."""
+    result = await db.execute(
+        select(Repository).where((Repository.id == repo_id) | (Repository.full_name == repo_id))
+    )
+    repo = result.scalar_one_or_none()
+    if not repo:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Repository '{repo_id}' not found",
+        )
+
+    # 1. Clean up local clone directory on disk
+    settings = get_settings()
+    repo_path = settings.repo_storage_path / repo.id
+    if repo_path.exists() and repo_path.is_dir():
+        import shutil
+
+        with contextlib.suppress(Exception):
+            shutil.rmtree(repo_path)
+
+    # 2. Clean up Qdrant vector points
+    with contextlib.suppress(Exception):
+        qdrant = get_qdrant_client()
+        from qdrant_client.http import models as qmodels
+
+        qdrant.delete(
+            collection_name="code_symbols",
+            points_selector=qmodels.FilterSelector(
+                filter=qmodels.Filter(
+                    must=[
+                        qmodels.FieldCondition(
+                            key="repository_id",
+                            match=qmodels.MatchValue(value=repo.id),
+                        )
+                    ]
+                )
+            ),
+        )
+
+    repo_info = {"id": repo.id, "full_name": repo.full_name}
+
+    # 3. Delete DB record
+    await db.delete(repo)
+    await db.commit()
+
+    logger.info("Repository disconnected", repo_id=repo.id, full_name=repo.full_name)
+
+    return APIResponse(
+        data=repo_info,
+        message=f"Repository '{repo.full_name}' successfully disconnected",
+    )

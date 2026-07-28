@@ -15,6 +15,8 @@ export default function RepositoryDetail({ params }: { params: any }) {
   const [prs, setPrs] = useState<PullRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [reindexing, setReindexing] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+  const [confirmDisconnect, setConfirmDisconnect] = useState(false);
 
   const [selectedBranch, setSelectedBranch] = useState("");
   const [branches, setBranches] = useState<string[]>([]);
@@ -95,6 +97,23 @@ export default function RepositoryDetail({ params }: { params: any }) {
       console.error(err);
     } finally {
       setReindexing(false);
+    }
+  };
+
+  const handleDisconnectRepo = async () => {
+    if (!confirmDisconnect) {
+      setConfirmDisconnect(true);
+      return;
+    }
+    if (!repo) return;
+    setDisconnecting(true);
+    try {
+      await repositoriesApi.disconnect(repo.id);
+      window.location.href = "/repositories";
+    } catch (err) {
+      console.error("Failed to disconnect repository", err);
+      setDisconnecting(false);
+      setConfirmDisconnect(false);
     }
   };
 
@@ -186,6 +205,20 @@ export default function RepositoryDetail({ params }: { params: any }) {
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-800 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-900/30 transition whitespace-nowrap shrink-0"
                 >
                   <span className="whitespace-nowrap">{reindexing ? "Queueing Index..." : "Force Re-Index"}</span>
+                </button>
+
+                <button
+                  onClick={handleDisconnectRepo}
+                  disabled={disconnecting}
+                  className={`px-4 py-2 rounded-xl text-xs font-semibold shadow-lg transition whitespace-nowrap shrink-0 ${
+                    confirmDisconnect
+                      ? "bg-red-600 hover:bg-red-500 text-white border border-red-400 animate-pulse shadow-red-900/50"
+                      : "bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/20"
+                  }`}
+                >
+                  <span className="whitespace-nowrap">
+                    {disconnecting ? "Disconnecting..." : confirmDisconnect ? "Confirm Disconnect?" : "Disconnect Repo"}
+                  </span>
                 </button>
               </div>
             </header>

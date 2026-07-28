@@ -15,6 +15,27 @@ export default function Repositories() {
   const [isCustom, setIsCustom] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState("");
+  const [disconnectingId, setDisconnectingId] = useState<string | null>(null);
+  const [disconnectConfirmId, setDisconnectConfirmId] = useState<string | null>(null);
+
+  const handleDisconnect = async (repo: Repository, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (disconnectConfirmId !== repo.id) {
+      setDisconnectConfirmId(repo.id);
+      return;
+    }
+    setDisconnectingId(repo.id);
+    try {
+      await repositoriesApi.disconnect(repo.id);
+      setRepos((prev) => prev.filter((r) => r.id !== repo.id));
+      setDisconnectConfirmId(null);
+    } catch (err: any) {
+      setError(err?.response?.data?.detail || "Failed to disconnect repository");
+    } finally {
+      setDisconnectingId(null);
+    }
+  };
 
   const isIndexing = (repo: Repository) =>
     repo.index_status === "indexing" || repo.index_status === "pending" || !repo.is_indexed;
@@ -225,6 +246,22 @@ export default function Repositories() {
                       }`}>
                         {repo.is_private ? "Private" : "Public"}
                       </span>
+                      <button
+                        onClick={(e) => handleDisconnect(repo, e)}
+                        disabled={disconnectingId === repo.id}
+                        title="Disconnect repository and free storage"
+                        className={`text-[10px] px-2 py-0.5 rounded border transition font-medium ${
+                          disconnectConfirmId === repo.id
+                            ? "text-red-300 border-red-500 bg-red-500/20 animate-pulse"
+                            : "text-gray-400 border-white/10 hover:text-red-400 hover:border-red-500/40 hover:bg-red-500/5"
+                        }`}
+                      >
+                        {disconnectingId === repo.id
+                          ? "Removing..."
+                          : disconnectConfirmId === repo.id
+                          ? "Confirm Delete?"
+                          : "Disconnect"}
+                      </button>
                     </div>
                   </div>
                   {isIndexing(repo) ? (

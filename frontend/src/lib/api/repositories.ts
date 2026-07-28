@@ -55,6 +55,12 @@ export const repositoriesApi = {
     return res.data.data;
   },
 
+  disconnect: async (id: string) => {
+    const encodedId = encodeURIComponent(id);
+    const res = await client.delete<{ success: boolean; message: string }>(`/repositories/${encodedId}`);
+    return res.data;
+  },
+
   triggerReindex: async (id: string, force = false, branch?: string) => {
     const encodedId = encodeURIComponent(id);
     const res = await client.post<{ task_id: string; status: string; message: string }>(
