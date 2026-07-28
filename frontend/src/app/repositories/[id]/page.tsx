@@ -101,22 +101,25 @@ export default function RepositoryDetail({ params }: { params: any }) {
   };
 
   const handleDisconnectRepo = async () => {
-    if (!confirmDisconnect) {
-      setConfirmDisconnect(true);
-      return;
-    }
     if (!repo) return;
+    const confirmed = window.confirm(
+      `Disconnect '${repo.full_name}'?\n\nThis will remove the repository from TestPilot AI and free up disk storage.`
+    );
+    if (!confirmed) return;
+
     setDisconnecting(true);
     try {
-      await repositoriesApi
-        .disconnect(repo.id)
-        .catch(() => repositoriesApi.disconnect(repo.full_name))
-        .catch(() => repositoriesApi.disconnect(id));
+      try {
+        await repositoriesApi.disconnect(repo.id);
+      } catch {
+        await repositoriesApi.disconnect(repo.full_name);
+      }
       window.location.href = "/repositories";
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to disconnect repository", err);
+      const msg = err?.response?.data?.detail || err?.message || "Failed to disconnect repository";
+      alert(`Failed to disconnect repository: ${msg}`);
       setDisconnecting(false);
-      setConfirmDisconnect(false);
     }
   };
 
@@ -213,14 +216,10 @@ export default function RepositoryDetail({ params }: { params: any }) {
                 <button
                   onClick={handleDisconnectRepo}
                   disabled={disconnecting}
-                  className={`px-4 py-2 rounded-xl text-xs font-semibold shadow-lg transition whitespace-nowrap shrink-0 ${
-                    confirmDisconnect
-                      ? "bg-red-600 hover:bg-red-500 text-white border border-red-400 animate-pulse shadow-red-900/50"
-                      : "bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/20"
-                  }`}
+                  className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/20 rounded-xl text-xs font-semibold shadow-lg transition whitespace-nowrap shrink-0 disabled:opacity-50"
                 >
                   <span className="whitespace-nowrap">
-                    {disconnecting ? "Disconnecting..." : confirmDisconnect ? "Confirm Disconnect?" : "Disconnect Repo"}
+                    {disconnecting ? "Disconnecting..." : "Disconnect Repo"}
                   </span>
                 </button>
               </div>

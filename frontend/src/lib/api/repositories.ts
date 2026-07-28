@@ -56,8 +56,8 @@ export const repositoriesApi = {
   },
 
   disconnect: async (id: string) => {
-    const encodedId = encodeURIComponent(id);
-    const res = await client.delete<{ success: boolean; message: string }>(`/repositories/${encodedId}`);
+    const path = id.includes("/") ? id : encodeURIComponent(id);
+    const res = await client.delete<{ success: boolean; message: string }>(`/repositories/${path}`);
     return res.data;
   },
 

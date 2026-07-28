@@ -21,19 +21,26 @@ export default function Repositories() {
   const handleDisconnect = async (repo: Repository, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (disconnectConfirmId !== repo.id) {
-      setDisconnectConfirmId(repo.id);
-      return;
-    }
+
+    const confirmed = window.confirm(
+      `Disconnect '${repo.full_name}'?\n\nThis will remove the repository from TestPilot AI and free up disk storage.`
+    );
+    if (!confirmed) return;
+
     setDisconnectingId(repo.id);
     setError("");
     try {
-      await repositoriesApi.disconnect(repo.id).catch(() => repositoriesApi.disconnect(repo.full_name));
+      try {
+        await repositoriesApi.disconnect(repo.id);
+      } catch {
+        await repositoriesApi.disconnect(repo.full_name);
+      }
       setRepos((prev) => prev.filter((r) => r.id !== repo.id && r.full_name !== repo.full_name));
-      setDisconnectConfirmId(null);
     } catch (err: any) {
-      setError(err?.response?.data?.detail || "Failed to disconnect repository");
-      setDisconnectConfirmId(null);
+      console.error("Disconnect error:", err);
+      const msg = err?.response?.data?.detail || err?.message || "Failed to disconnect repository";
+      setError(msg);
+      alert(`Failed to disconnect repository: ${msg}`);
     } finally {
       setDisconnectingId(null);
     }
@@ -252,17 +259,9 @@ export default function Repositories() {
                         onClick={(e) => handleDisconnect(repo, e)}
                         disabled={disconnectingId === repo.id}
                         title="Disconnect repository and free storage"
-                        className={`text-[10px] px-2 py-0.5 rounded border transition font-medium ${
-                          disconnectConfirmId === repo.id
-                            ? "text-red-300 border-red-500 bg-red-500/20 animate-pulse"
-                            : "text-gray-400 border-white/10 hover:text-red-400 hover:border-red-500/40 hover:bg-red-500/5"
-                        }`}
+                        className="text-[10px] px-2 py-0.5 rounded border border-white/10 text-gray-400 hover:text-red-400 hover:border-red-500/40 hover:bg-red-500/5 transition font-medium disabled:opacity-50"
                       >
-                        {disconnectingId === repo.id
-                          ? "Removing..."
-                          : disconnectConfirmId === repo.id
-                          ? "Confirm Delete?"
-                          : "Disconnect"}
+                        {disconnectingId === repo.id ? "Removing..." : "Disconnect"}
                       </button>
                     </div>
                   </div>
