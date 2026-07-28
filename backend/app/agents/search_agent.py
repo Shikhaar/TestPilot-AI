@@ -14,7 +14,9 @@ import time
 from typing import Any
 
 from app.agents.state import AgentState
+from app.core.config import get_settings
 from app.core.logging import get_logger
+from app.utils.qdrant_client import get_qdrant_client
 
 logger = get_logger(__name__)
 
@@ -35,9 +37,6 @@ def search_agent_node(state: AgentState) -> dict[str, Any]:
     logger.info("Search agent started", pr_id=state.get("pr_id"))
 
     try:
-        from app.core.config import get_settings
-        from app.utils.qdrant_client import get_qdrant_client
-
         settings = get_settings()
 
         changed_nodes = state.get("changed_nodes", [])

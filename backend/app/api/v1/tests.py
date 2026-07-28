@@ -1,11 +1,15 @@
-"""TestPilot AI — Tests API."""
-
-from __future__ import annotations
+from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
+from sqlalchemy import func, select
 
+from app.agents.test_discovery_agent import _discover_test_files
 from app.api.deps import CurrentUser, DBSession
+from app.core.config import get_settings
 from app.core.logging import get_logger
+from app.models.generated_test import GeneratedTest
+from app.models.repository import Repository
+from app.models.test_run import TestRun
 from app.schemas.common import APIResponse, PaginatedResponse, TaskResponse
 from app.schemas.test import (
     GeneratedTestResponse,
@@ -27,14 +31,6 @@ async def discover_tests(
     current_user: CurrentUser,
 ) -> APIResponse[TestDiscoverResponse]:
     """Discover existing tests in a repository."""
-    from pathlib import Path
-
-    from sqlalchemy import select
-
-    from app.agents.test_discovery_agent import _discover_test_files
-    from app.core.config import get_settings
-    from app.models.repository import Repository
-
     settings = get_settings()
 
     repo_result = await db.execute(
@@ -115,10 +111,6 @@ async def get_test_results(
     current_user: CurrentUser,
 ) -> APIResponse[TestRunResponse]:
     """Get test run results by ID."""
-    from sqlalchemy import select
-
-    from app.models.test_run import TestRun
-
     result = await db.execute(select(TestRun).where(TestRun.id == run_id))
     run = result.scalar_one_or_none()
     if not run:
@@ -136,10 +128,6 @@ async def get_generated_tests(
     page_size: int = 20,
 ) -> PaginatedResponse[GeneratedTestResponse]:
     """Get AI-generated tests for a pull request."""
-    from sqlalchemy import func, select
-
-    from app.models.generated_test import GeneratedTest
-
     offset = (page - 1) * page_size
     total = (
         await db.execute(

@@ -15,11 +15,23 @@ Supports: Python, JavaScript, TypeScript, Java, Go, Rust.
 from __future__ import annotations
 
 import hashlib
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from app.core.config import get_settings
 from app.core.logging import get_logger
+
+try:
+    import tree_sitter_go as tsgo
+    import tree_sitter_java as tsjava
+    import tree_sitter_javascript as tsjavascript
+    import tree_sitter_python as tspython
+    import tree_sitter_typescript as tstypescript
+    from tree_sitter import Language, Parser
+except ImportError:
+    tsgo = tsjava = tsjavascript = tspython = tstypescript = Language = Parser = None
 
 logger = get_logger(__name__)
 
@@ -119,12 +131,8 @@ class ASTParser:
     def _load_grammars(self) -> None:
         """Load Tree-sitter grammar parsers for supported languages."""
         try:
-            import tree_sitter_go as tsgo
-            import tree_sitter_java as tsjava
-            import tree_sitter_javascript as tsjavascript
-            import tree_sitter_python as tspython
-            import tree_sitter_typescript as tstypescript
-            from tree_sitter import Language, Parser
+            if not tspython or not Parser or not Language:
+                return
 
             self._parsers["python"] = Parser(Language(tspython.language()))
             self._parsers["javascript"] = Parser(Language(tsjavascript.language()))
@@ -134,8 +142,8 @@ class ASTParser:
             self._parsers["go"] = Parser(Language(tsgo.language()))
 
             logger.info("Tree-sitter grammars loaded", languages=list(self._parsers.keys()))
-        except ImportError as e:
-            logger.error("Failed to load Tree-sitter grammars", error=str(e))
+        except Exception as e:
+            logger.warning("Failed to load some tree-sitter grammars", error=str(e))
 
     def parse_file(self, file_path: Path) -> ParseResult | None:
         """Parse a single source file and extract code structure.
@@ -226,8 +234,6 @@ class ASTParser:
         Returns:
             List of ParseResult for each parsed file.
         """
-        from app.core.config import get_settings
-
         settings = get_settings()
 
         ignored_dirs = ignored_dirs or settings.ignored_directories
@@ -382,8 +388,6 @@ class ASTParser:
                     for method in ("get", "post", "put", "delete", "patch", "options"):
                         if f".{method}(" in dec or f"@{method}(" in dec:
                             # Try to extract path
-                            import re
-
                             path_match = re.search(r'["\']([^"\']+)["\']', dec)
                             if path_match:
                                 result.routes.append(

@@ -1,22 +1,29 @@
-"""TestPilot AI — AI/Chat/Search API."""
-
-from __future__ import annotations
+import json
+from pathlib import Path
 
 import litellm
 from fastapi import APIRouter, HTTPException
+from sqlalchemy import select
 
 from app.api.deps import CurrentUser, DBSession
+from app.core.config import get_settings
 from app.core.logging import get_logger
+from app.models.dependency_graph import DependencyEdge
+from app.models.pull_request import PullRequest
+from app.models.repository import Repository
 from app.schemas.ai import (
     ChatMessage,
     ChatRequest,
     ChatResponse,
     CodeSearchRequest,
     CodeSearchResponse,
+    CodeSearchResult,
     ImpactAnalysisRequest,
     RiskScoreRequest,
 )
 from app.schemas.common import APIResponse
+from app.services.dependency_graph_builder import DependencyGraphBuilder
+from app.utils.qdrant_client import get_qdrant_client
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -33,12 +40,6 @@ async def chat_with_codebase(
     Uses RAG (Retrieval-Augmented Generation) to ground responses
     in the actual repository code.
     """
-    from sqlalchemy import select
-
-    from app.core.config import get_settings
-    from app.models.repository import Repository
-    from app.utils.qdrant_client import get_qdrant_client
-
     settings = get_settings()
 
     # Verify repository access
@@ -116,13 +117,6 @@ async def search_code(
     current_user: CurrentUser,
 ) -> APIResponse[CodeSearchResponse]:
     """Semantic and structural code search."""
-    from sqlalchemy import select
-
-    from app.core.config import get_settings
-    from app.models.repository import Repository
-    from app.schemas.ai import CodeSearchResult
-    from app.utils.qdrant_client import get_qdrant_client
-
     settings = get_settings()
 
     repo_result = await db.execute(
@@ -180,15 +174,6 @@ async def run_impact_analysis(
     current_user: CurrentUser,
 ) -> APIResponse[dict]:
     """Run manual impact analysis for a set of changed files."""
-    from pathlib import Path
-
-    from sqlalchemy import select
-
-    from app.core.config import get_settings
-    from app.models.dependency_graph import DependencyEdge
-    from app.models.repository import Repository
-    from app.services.dependency_graph_builder import DependencyGraphBuilder
-
     settings = get_settings()
 
     repo_result = await db.execute(
@@ -234,12 +219,6 @@ async def get_risk_score(
     current_user: CurrentUser,
 ) -> APIResponse[dict]:
     """Get the risk score for a pull request."""
-    import json
-
-    from sqlalchemy import select
-
-    from app.models.pull_request import PullRequest
-
     result = await db.execute(select(PullRequest).where(PullRequest.id == request.pr_id))
     pr = result.scalar_one_or_none()
     if not pr:

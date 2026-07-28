@@ -15,15 +15,30 @@ import asyncio
 import json
 import shutil
 import time
-from datetime import UTC
+import uuid
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import git
 from celery import Task
+from sqlalchemy import delete, select, update
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
+from app.database.session import get_session
+from app.models.dependency_graph import DependencyEdge
+from app.models.repository import Repository
+from app.models.repository_file import RepositoryFile
+from app.services.ast_parser import ASTParser
+from app.services.dependency_graph_builder import DependencyGraphBuilder
+from app.utils.qdrant_client import get_qdrant_client
 from app.workers.celery_app import celery_app
+
+try:
+    from sentence_transformers import SentenceTransformer
+except ImportError:
+    SentenceTransformer = None
 
 logger = get_logger(__name__)
 settings = get_settings()
@@ -69,14 +84,10 @@ def index_repository(
             await asyncio.to_thread(_clone_or_pull, clone_url, repo_path, access_token, branch)
 
             # Step 2: Parse all files with AST
-            from app.services.ast_parser import ASTParser
-
             parser = ASTParser()
             parse_results = await asyncio.to_thread(parser.parse_directory, repo_path)
 
             # Step 3: Build dependency graph
-            from app.services.dependency_graph_builder import DependencyGraphBuilder
-
             builder = DependencyGraphBuilder(repo_path)
             await asyncio.to_thread(builder.build, parse_results)
             edge_records = builder.to_edge_records(repository_id)
@@ -127,7 +138,6 @@ def _clone_or_pull(
     clone_url: str, repo_path: Path, access_token: str | None, branch: str | None = None
 ) -> None:
     """Clone a repository or pull latest if already cloned, checking out target branch."""
-    import git
 
     # Inject access token into URL for private repos
     if access_token and "github.com" in clone_url:
@@ -158,11 +168,6 @@ async def _persist_index_results(
     repo_path: Path,
 ) -> dict[str, int]:
     """Persist parsed AST results and dependency graph to PostgreSQL."""
-    from sqlalchemy import delete
-
-    from app.database.session import get_session
-    from app.models.dependency_graph import DependencyEdge
-    from app.models.repository_file import RepositoryFile
 
     total_functions = 0
     total_classes = 0
@@ -219,9 +224,6 @@ async def _persist_index_results(
             await db.flush()
 
         # Auto-update Repository primary language if missing
-        from sqlalchemy import select
-        from app.models.repository import Repository
-
         repo_res = await db.execute(select(Repository).where(Repository.id == repository_id))
         repo = repo_res.scalar_one_or_none()
         if repo:
@@ -256,16 +258,9 @@ async def _generate_and_store_embeddings(
 ) -> None:
     """Generate embeddings for code chunks and store in Qdrant."""
     try:
-        from app.core.config import get_settings
-        from app.utils.qdrant_client import get_qdrant_client
-
-        settings = get_settings()
         qdrant = get_qdrant_client()
 
-        # Use sentence transformers for local embeddings
-        from sentence_transformers import SentenceTransformer
-
-        model = SentenceTransformer(settings.sentence_transformer_model)
+        model = SentenceTransformer(settings.sentence_transformer_model) if SentenceTransformer else None
 
         points = []
         for result in parse_results[:500]:  # Limit to first 500 files
@@ -281,8 +276,6 @@ async def _generate_and_store_embeddings(
             for fn in result.functions[:20]:  # Max 20 functions per file
                 text = f"function {fn.name} in {rel_path} language:{result.language}"
                 embedding = model.encode(text).tolist()
-
-                import uuid
 
                 points.append(
                     {
@@ -316,13 +309,6 @@ async def _update_repo_status(
     stats: dict[str, int] | None = None,
 ) -> None:
     """Update repository indexing status in the database."""
-    from datetime import datetime
-
-    from sqlalchemy import update
-
-    from app.database.session import get_session
-    from app.models.repository import Repository
-
     update_values: dict[str, Any] = {
         "index_status": status,
         "is_indexed": status == "indexed",

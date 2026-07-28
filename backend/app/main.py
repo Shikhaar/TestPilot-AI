@@ -20,14 +20,26 @@ from contextlib import asynccontextmanager
 
 import structlog
 from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse, ORJSONResponse, Response
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, generate_latest
+from sqlalchemy import text
 
+from app.api.v1.router import api_router
+from app.api.websocket import ws_router
 from app.core.config import get_settings
 from app.core.logging import configure_logging, get_logger
 from app.core.telemetry import configure_telemetry
+from app.database.session import engine
+from app.schemas.common import ErrorResponse, HealthResponse
+from app.utils.qdrant_client import get_qdrant_client, initialize_collections
+
+try:
+    import redis.asyncio as aioredis
+except ImportError:
+    aioredis = None
 from app.middleware.rate_limit import RateLimitMiddleware
 from app.middleware.request_id import RequestIDMiddleware
 
@@ -192,10 +204,6 @@ def create_app() -> FastAPI:
     # --------------------------------------------------------------------------
     # Exception handlers
     # --------------------------------------------------------------------------
-    from fastapi.exceptions import RequestValidationError
-
-    from app.schemas.common import ErrorResponse
-
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(
         request: Request, exc: RequestValidationError
@@ -226,8 +234,6 @@ def create_app() -> FastAPI:
     @app.get("/health", tags=["System"])
     async def health_check() -> dict[str, object]:
         """Service health check endpoint."""
-        from app.schemas.common import HealthResponse
-
         return HealthResponse(
             status="healthy",
             version=settings.app_version,
@@ -249,15 +255,11 @@ def create_app() -> FastAPI:
     # --------------------------------------------------------------------------
     # API Router
     # --------------------------------------------------------------------------
-    from app.api.v1.router import api_router
-
     app.include_router(api_router, prefix="/api/v1")
 
     # --------------------------------------------------------------------------
     # WebSocket endpoints
     # --------------------------------------------------------------------------
-    from app.api.websocket import ws_router
-
     app.include_router(ws_router, prefix="/ws")
 
     return app
@@ -271,8 +273,6 @@ def create_app() -> FastAPI:
 async def _initialize_qdrant() -> None:
     """Initialize Qdrant collections if they don't exist."""
     try:
-        from app.utils.qdrant_client import get_qdrant_client, initialize_collections
-
         qdrant = get_qdrant_client()
         await initialize_collections(qdrant)
         logger.info("Qdrant collections initialized")
@@ -286,18 +286,14 @@ async def _check_services() -> dict[str, str]:
 
     # PostgreSQL
     try:
-        from app.database.session import engine
-
         async with engine.connect() as conn:
-            await conn.execute(__import__("sqlalchemy", fromlist=["text"]).text("SELECT 1"))
+            await conn.execute(text("SELECT 1"))
         services["postgres"] = "healthy"
     except Exception:
         services["postgres"] = "unhealthy"
 
     # Redis
     try:
-        import redis.asyncio as aioredis
-
         r = aioredis.from_url(settings.redis_url)
         await r.ping()
         await r.close()
@@ -307,8 +303,6 @@ async def _check_services() -> dict[str, str]:
 
     # Qdrant
     try:
-        from app.utils.qdrant_client import get_qdrant_client
-
         qdrant = get_qdrant_client()
         qdrant.get_collections()
         services["qdrant"] = "healthy"

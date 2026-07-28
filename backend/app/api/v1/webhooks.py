@@ -1,11 +1,14 @@
-"""TestPilot AI — GitHub Webhook API."""
-
-from __future__ import annotations
+import uuid
 
 from fastapi import APIRouter, BackgroundTasks, Header, HTTPException, Request, status
+from sqlalchemy import select
 
 from app.core.logging import get_logger
 from app.core.security import verify_github_webhook_signature
+from app.database.session import get_session
+from app.models.pull_request import PullRequest
+from app.models.repository import Repository
+from app.tasks.pr_pipeline import run_pr_analysis
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -123,14 +126,6 @@ async def _handle_pull_request_event(
         return
 
     # Look up or create the PR record and trigger analysis
-    import uuid
-
-    from sqlalchemy import select
-
-    from app.database.session import get_session
-    from app.models.pull_request import PullRequest
-    from app.models.repository import Repository
-
     async with get_session() as db:
         repo_result = await db.execute(
             select(Repository).where(Repository.full_name == repo_data.get("full_name"))
@@ -176,8 +171,6 @@ async def _handle_pull_request_event(
             await db.flush()
 
     # Enqueue the analysis task
-    from app.tasks.pr_pipeline import run_pr_analysis
-
     run_pr_analysis.delay(
         pr_id=pr.id,
         repository_id=repo.id,

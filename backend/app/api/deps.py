@@ -7,6 +7,7 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, get_settings
@@ -42,8 +43,6 @@ async def get_current_user(
         HTTPException: 401 if token is missing, invalid, or expired.
         HTTPException: 401 if user not found or inactive.
     """
-    from sqlalchemy import select
-
     user_id = None
     if credentials:
         payload = verify_access_token(credentials.credentials)
@@ -68,7 +67,7 @@ async def get_current_user(
     # Fallback: use the first active user in the database (no preference)
     result = await db.execute(
         select(User)
-        .where(User.is_active == True)
+        .where(User.is_active.is_(True))
         .order_by(User.created_at.asc())
     )
     fallback_user = result.scalars().first()

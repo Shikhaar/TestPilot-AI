@@ -9,11 +9,18 @@ and runs the full LangGraph multi-agent pipeline.
 from __future__ import annotations
 
 import asyncio
+import json
 from typing import Any
 
 from celery import Task
+from sqlalchemy import update
 
+from app.agents.graph import pr_analysis_graph
+from app.agents.state import AgentState
 from app.core.logging import get_logger
+from app.database.session import get_session
+from app.models.pull_request import PullRequest
+from app.models.review_comment import ReviewComment
 from app.workers.celery_app import celery_app
 
 logger = get_logger(__name__)
@@ -95,9 +102,6 @@ def run_pr_analysis(
     asyncio.run(_update_pr_status(pr_id, "running"))
 
     try:
-        from app.agents.graph import pr_analysis_graph
-        from app.agents.state import AgentState
-
         # Build initial state
         initial_state = AgentState(
             pr_id=pr_id,
@@ -151,11 +155,6 @@ async def _update_pr_status(
     error: str | None = None,
 ) -> None:
     """Update the PR analysis status in the database."""
-    from sqlalchemy import update
-
-    from app.database.session import get_session
-    from app.models.pull_request import PullRequest
-
     async with get_session() as db:
         stmt = (
             update(PullRequest)
@@ -167,14 +166,6 @@ async def _update_pr_status(
 
 async def _store_analysis_results(pr_id: str, state: dict[str, Any]) -> None:
     """Store the complete analysis results in the database."""
-    import json
-
-    from sqlalchemy import update
-
-    from app.database.session import get_session
-    from app.models.pull_request import PullRequest
-    from app.models.review_comment import ReviewComment
-
     async with get_session() as db:
         risk_score = state.get("risk_score", {})
         review = state.get("review", {})

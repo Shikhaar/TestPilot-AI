@@ -3,9 +3,14 @@
 from __future__ import annotations
 
 from fastapi import APIRouter
+from sqlalchemy import func, select
 
 from app.api.deps import CurrentUser, DBSession
 from app.core.logging import get_logger
+from app.models.ai_log import AILog
+from app.models.generated_test import GeneratedTest
+from app.models.pull_request import PullRequest
+from app.models.repository import Repository
 from app.schemas.common import APIResponse
 
 logger = get_logger(__name__)
@@ -18,12 +23,6 @@ async def get_dashboard(
     current_user: CurrentUser,
 ) -> APIResponse[dict]:
     """Get aggregated dashboard metrics for the current user."""
-    from sqlalchemy import func, select
-
-    from app.models.generated_test import GeneratedTest
-    from app.models.pull_request import PullRequest
-    from app.models.repository import Repository
-
     # Repository stats across workspace
     repo_count = (
         await db.execute(select(func.count()).select_from(Repository))
@@ -129,11 +128,6 @@ async def get_metrics(
     current_user: CurrentUser,
 ) -> APIResponse[dict]:
     """Get detailed metrics for the current user's repositories."""
-    from sqlalchemy import func, select
-
-    from app.models.ai_log import AILog
-    from app.models.repository import Repository
-
     # AI usage stats
     token_usage = (
         await db.execute(select(func.sum(AILog.total_tokens)).select_from(AILog))

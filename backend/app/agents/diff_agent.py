@@ -21,6 +21,7 @@ import time
 from typing import Any
 
 from app.agents.state import AgentState, ChangedFile, CodeNode
+from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.services.ast_parser import ASTParser
 from app.services.github_service import GitHubService
@@ -125,8 +126,6 @@ def _identify_changed_nodes(
     Returns:
         List of CodeNode representing modified symbols.
     """
-    from app.core.config import get_settings
-
     settings = get_settings()
 
     parser = ASTParser()

@@ -65,8 +65,6 @@ async def update_user_settings(
 
     Passing `gemini_api_key: null` clears the stored key.
     """
-    update_values: dict = {}
-
     if "gemini_api_key" in payload.model_fields_set:
         api_key = payload.gemini_api_key.strip() if payload.gemini_api_key else None
 

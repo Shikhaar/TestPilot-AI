@@ -5,14 +5,16 @@ Loads the pre-built dependency graph for the repository from the database
 to downstream agents for impact analysis.
 """
 
-from __future__ import annotations
-
+import asyncio
 import time
 from typing import Any
+
+from sqlalchemy import select
 
 from app.agents.state import AgentState
 from app.core.logging import get_logger
 from app.database.session import get_session
+from app.models.dependency_graph import DependencyEdge
 
 logger = get_logger(__name__)
 
@@ -33,8 +35,6 @@ def dependency_agent_node(state: AgentState) -> dict[str, Any]:
     logger.info("Dependency agent started", repo_id=state.get("repository_id"))
 
     try:
-        import asyncio
-
         edges = asyncio.run(_load_dependency_edges(state["repository_id"]))
 
         duration = time.monotonic() - start_time
@@ -62,10 +62,6 @@ def dependency_agent_node(state: AgentState) -> dict[str, Any]:
 
 async def _load_dependency_edges(repository_id: str) -> list[dict[str, str]]:
     """Load dependency graph edges from the database."""
-    from sqlalchemy import select
-
-    from app.models.dependency_graph import DependencyEdge
-
     async with get_session() as db:
         result = await db.execute(
             select(DependencyEdge).where(DependencyEdge.repository_id == repository_id)

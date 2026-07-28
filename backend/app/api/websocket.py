@@ -7,7 +7,13 @@ import json
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
+from app.core.config import get_settings
 from app.core.logging import get_logger
+
+try:
+    import redis.asyncio as aioredis
+except ImportError:
+    aioredis = None
 
 logger = get_logger(__name__)
 ws_router = APIRouter()
@@ -36,10 +42,6 @@ async def websocket_pr_updates(websocket: WebSocket, pr_id: str) -> None:
     logger.info("WebSocket connection opened", pr_id=pr_id)
 
     try:
-        import redis.asyncio as aioredis
-
-        from app.core.config import get_settings
-
         settings = get_settings()
 
         redis = aioredis.from_url(settings.redis_url)
@@ -95,10 +97,6 @@ async def websocket_indexing_progress(websocket: WebSocket, repo_id: str) -> Non
     logger.info("Indexing WebSocket opened", repo_id=repo_id)
 
     try:
-        import redis.asyncio as aioredis
-
-        from app.core.config import get_settings
-
         settings = get_settings()
 
         redis = aioredis.from_url(settings.redis_url)

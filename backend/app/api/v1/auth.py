@@ -1,14 +1,18 @@
-"""TestPilot AI — Authentication API (GitHub OAuth)."""
-
-from __future__ import annotations
+import secrets
+import uuid
 
 from fastapi import APIRouter, Cookie, HTTPException, Response, status
+from jose import JWTError
+from sqlalchemy import select
 
 from app.api.deps import CurrentUser, DBSession
+from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.core.security import create_access_token, create_refresh_token, decode_token
+from app.models.user import User
 from app.schemas.common import APIResponse
 from app.schemas.user import GitHubCallbackRequest, RefreshTokenRequest, TokenResponse, UserResponse
+from app.services.github_service import GitHubService
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -21,10 +25,6 @@ async def github_login_url(redirect_uri: str | None = None) -> dict[str, str]:
     Returns:
         The GitHub OAuth/App URL to redirect the user to.
     """
-    import secrets
-
-    from app.core.config import get_settings
-
     settings = get_settings()
     state = secrets.token_urlsafe(32)
 
@@ -71,13 +71,6 @@ async def github_callback(
     fetches the user's GitHub profile, and creates/updates
     the user record in the database.
     """
-    import uuid
-
-    from sqlalchemy import select
-
-    from app.models.user import User
-    from app.services.github_service import GitHubService
-
     github = GitHubService()
 
     # Exchange OAuth code for access token
@@ -134,8 +127,6 @@ async def github_callback(
     jwt_access = create_access_token(user.id)
     jwt_refresh = create_refresh_token(user.id)
 
-    from app.core.config import get_settings
-
     settings = get_settings()
 
     # Set HTTP-only cookie for refresh token
@@ -164,11 +155,6 @@ async def refresh_token(
     refresh_token: str | None = Cookie(default=None),
 ) -> dict[str, str]:
     """Refresh an expired access token using a refresh token from cookies or request body."""
-    from jose import JWTError
-    from sqlalchemy import select
-
-    from app.models.user import User
-
     # Priority: Cookie > Request Body
     token = refresh_token
     if not token and request:
@@ -210,13 +196,7 @@ async def get_current_user_profile(current_user: CurrentUser) -> APIResponse[Use
 @router.post("/dev-login", response_model=TokenResponse)
 async def dev_login(db: DBSession, response: Response) -> TokenResponse:
     """Instant Developer Login for local testing without OAuth configuration."""
-    import uuid
-
-    from sqlalchemy import select
-
-    from app.core.config import get_settings
-    from app.models.user import User
-
+    settings = get_settings()
     result = await db.execute(select(User).where(User.username == "shikhar-dev"))
     user = result.scalar_one_or_none()
 

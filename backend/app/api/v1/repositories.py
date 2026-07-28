@@ -1,13 +1,20 @@
-"""TestPilot AI — Repository API."""
-
-from __future__ import annotations
-
+import base64
+import json
+import random
+import re
+import uuid
+from pathlib import Path
 from typing import Any
 
+import httpx
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
+from sqlalchemy import func, select
 
 from app.api.deps import CurrentUser, DBSession
+from app.core.config import get_settings
 from app.core.logging import get_logger
+from app.models.repository import Repository
+from app.models.repository_file import RepositoryFile
 from app.schemas.common import APIResponse, PaginatedResponse, TaskResponse
 from app.schemas.repository import (
     RepositoryConnectRequest,
@@ -15,15 +22,22 @@ from app.schemas.repository import (
     RepositoryIndexRequest,
     RepositoryResponse,
 )
+from app.services.github_service import GitHubService
+from app.tasks.indexing import index_repository
+
+try:
+    import litellm
+except ImportError:
+    litellm = None
 
 logger = get_logger(__name__)
 router = APIRouter()
 
 
-def _normalize_lang(l: str | None) -> str | None:
-    if not l:
+def _normalize_lang(lang_raw: str | None) -> str | None:
+    if not lang_raw:
         return None
-    l_lower = l.lower().strip()
+    l_lower = lang_raw.lower().strip()
     if l_lower in ["typescript", "ts", "tsx"]:
         return "TypeScript"
     if l_lower in ["javascript", "js", "jsx"]:
@@ -47,10 +61,7 @@ def _normalize_lang(l: str | None) -> str | None:
     return l.title()
 
 
-async def _auto_detect_repo_language(db: AsyncSession, repo: Any) -> str | None:
-    from sqlalchemy import select
-    from app.models.repository_file import RepositoryFile
-
+async def _auto_detect_repo_language(db: Any, repo: Any) -> str | None:
     # If repo already has a normalized language, return it
     if repo.language and repo.language.lower() not in ["unknown", "tsx", "jsx", "ts", "js"]:
         norm = _normalize_lang(repo.language)
@@ -87,7 +98,6 @@ async def _auto_detect_repo_language(db: AsyncSession, repo: Any) -> str | None:
 
 
 async def _extract_readme_description(repo_path: Path | None = None, full_name: str | None = None) -> str | None:
-    import re
     content = None
 
     # 1. Try reading from local cloned repository folder
@@ -109,8 +119,6 @@ async def _extract_readme_description(repo_path: Path | None = None, full_name: 
     # 2. Fallback to fetching directly from GitHub API if not on local disk
     if not content and full_name and "/" in full_name:
         try:
-            import base64
-            import httpx
             async with httpx.AsyncClient(timeout=8.0) as client:
                 res = await client.get(
                     f"https://api.github.com/repos/{full_name}/readme",
@@ -184,12 +192,8 @@ async def list_repositories(
     page_size: int = 20,
 ) -> PaginatedResponse[RepositoryResponse]:
     """List all repositories connected by the current user."""
-    from sqlalchemy import func, select
-
-    from app.core.config import get_settings
-    from app.models.repository import Repository
-
     settings = get_settings()
+    page = max(1, page)
     offset = (page - 1) * page_size
 
     total_result = await db.execute(
@@ -230,13 +234,6 @@ async def connect_repository(
     Fetches repository metadata from GitHub, creates a database record,
     and enqueues an initial indexing job.
     """
-    import uuid
-
-    from sqlalchemy import select
-
-    from app.models.repository import Repository
-    from app.services.github_service import GitHubService
-
     full_name = request.full_name.strip()
     if "/" not in full_name:
         if not current_user.github_login:
@@ -290,9 +287,7 @@ async def connect_repository(
     await db.refresh(repo)
 
     # Trigger background indexing
-    background_tasks.add_task(
-        _trigger_indexing, repo.id, repo.clone_url, current_user.github_access_token
-    )
+    _trigger_indexing(repo.id, repo.clone_url, current_user.github_access_token)
 
     logger.info("Repository connected", repo_id=repo.id, full_name=repo.full_name)
 
@@ -300,9 +295,6 @@ async def connect_repository(
         data=RepositoryResponse.model_validate(repo),
         message="Repository connected. Indexing has been queued.",
     )
-
-
-
 
 
 @router.post("/{repo_id:path}/index", response_model=TaskResponse)
@@ -313,10 +305,6 @@ async def trigger_reindex(
     current_user: CurrentUser,
 ) -> TaskResponse:
     """Trigger re-indexing of a repository."""
-    from sqlalchemy import select
-
-    from app.models.repository import Repository
-
     result = await db.execute(
         select(Repository).where(
             (Repository.id == repo_id) | (Repository.full_name == repo_id)
@@ -336,8 +324,6 @@ async def trigger_reindex(
     repo.index_status = "indexing"
     repo.index_error = None
     await db.commit()
-
-    from app.tasks.indexing import index_repository
 
     task = index_repository.delay(
         repository_id=repo.id,
@@ -362,8 +348,6 @@ async def list_github_user_repositories(
     current_user: CurrentUser,
 ) -> APIResponse[list[dict[str, Any]]]:
     """Fetch GitHub repositories accessible to the current authenticated user."""
-    from app.services.github_service import GitHubService
-
     github = GitHubService()
     repos = await github.list_user_repositories(
         access_token=current_user.github_access_token,
@@ -379,11 +363,6 @@ async def list_repository_branches(
     current_user: CurrentUser,
 ) -> APIResponse[list[str]]:
     """Fetch active git branches for a specific connected repository."""
-    from sqlalchemy import select
-
-    from app.models.repository import Repository
-    from app.services.github_service import GitHubService
-
     result = await db.execute(
         select(Repository).where(
             (Repository.id == repo_id) | (Repository.full_name == repo_id)
@@ -407,12 +386,7 @@ async def get_repository(
     current_user: CurrentUser,
 ) -> APIResponse[RepositoryDetailResponse]:
     """Get a specific repository by ID with real AST metrics and architecture breakdown."""
-    from sqlalchemy import select, func
-
-    from app.models.repository import Repository
-    from app.models.repository_file import RepositoryFile
-    from app.schemas.repository import RepositoryDetailResponse
-
+    settings = get_settings()
     result = await db.execute(
         select(Repository).where(
             (Repository.id == repo_id) | (Repository.full_name == repo_id)
@@ -546,8 +520,6 @@ async def _trigger_indexing(
     access_token: str | None,
 ) -> None:
     """Enqueue repository indexing as a background task."""
-    from app.tasks.indexing import index_repository
-
     index_repository.delay(
         repository_id=repo_id,
         clone_url=clone_url,
@@ -570,12 +542,6 @@ async def generate_repository_tests(
     current_user: CurrentUser,
 ) -> APIResponse[dict[str, Any]]:
     """Generate unit test suite dynamically from AST-indexed source files."""
-    import json
-    from sqlalchemy import select
-    from app.models.repository import Repository
-    from app.models.repository_file import RepositoryFile
-    from app.core.config import get_settings
-
     result = await db.execute(
         select(Repository).where(
             (Repository.id == repo_id) | (Repository.full_name == repo_id)
@@ -589,7 +555,7 @@ async def generate_repository_tests(
         select(RepositoryFile)
         .where(
             (RepositoryFile.repository_id == repo.id)
-            & (RepositoryFile.is_test_file == False)
+            & (RepositoryFile.is_test_file.is_(False))
         )
         .limit(10)
     )
@@ -620,7 +586,6 @@ async def generate_repository_tests(
     settings = get_settings()
     if getattr(settings, "gemini_api_key", None) or getattr(settings, "openai_api_key", None):
         try:
-            import litellm
             model_name = "gemini/gemini-1.5-pro-latest" if getattr(settings, "gemini_api_key", None) else "gpt-4o-mini"
             prompt = (
                 f"Generate a comprehensive unit test suite for repository '{repo.full_name}' ({repo.language or 'source'}).\n"
@@ -695,13 +660,6 @@ async def create_test_pr(
     current_user: CurrentUser,
 ) -> APIResponse[dict[str, Any]]:
     """Create a real branch and Pull Request on GitHub with the AI-generated unit test suite."""
-    import base64
-    import random
-    import httpx
-    from sqlalchemy import select
-    from app.core.config import get_settings
-    from app.models.repository import Repository
-
     settings = get_settings()
 
     result = await db.execute(

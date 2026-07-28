@@ -9,6 +9,7 @@ persisting index metadata to databases.
 from __future__ import annotations
 
 import json
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -145,8 +146,6 @@ class RepositoryIndexer:
                     chunk_text = f"function {fn.name} in {rel_path} language:{res.language}"
                     # Generate embedding
                     embedding = self.embedding_service.generate_embedding(chunk_text)
-
-                    import uuid
 
                     points.append(
                         {

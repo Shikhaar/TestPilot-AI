@@ -15,6 +15,11 @@ import litellm
 from app.core.config import get_settings
 from app.core.logging import get_logger
 
+try:
+    from sentence_transformers import SentenceTransformer
+except ImportError:
+    SentenceTransformer = None
+
 logger = get_logger(__name__)
 settings = get_settings()
 
@@ -29,18 +34,15 @@ class EmbeddingService:
     def _get_local_model(self) -> Any:
         """Lazy-load the SentenceTransformer model to save memory on start."""
         if self._local_model is None:
-            try:
-                from sentence_transformers import SentenceTransformer
-
-                self._local_model = SentenceTransformer(settings.sentence_transformer_model)  # type: ignore[assignment]
-                logger.info(
-                    "SentenceTransformer model loaded", model=settings.sentence_transformer_model
-                )
-            except ImportError as e:
-                logger.error("Failed to load sentence-transformers library", error=str(e))
+            if SentenceTransformer is None:
+                logger.error("Failed to load sentence-transformers library")
                 raise RuntimeError(
                     "sentence-transformers not installed. Install it or set USE_LOCAL_EMBEDDINGS=False"
                 )
+            self._local_model = SentenceTransformer(settings.sentence_transformer_model)  # type: ignore[assignment]
+            logger.info(
+                "SentenceTransformer model loaded", model=settings.sentence_transformer_model
+            )
         return self._local_model
 
     def generate_embedding(self, text: str) -> list[float]:

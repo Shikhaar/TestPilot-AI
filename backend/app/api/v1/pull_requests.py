@@ -1,17 +1,21 @@
-"""TestPilot AI — Pull Requests API."""
-
-from __future__ import annotations
+import json
 
 from fastapi import APIRouter, HTTPException, status
+from sqlalchemy import func, select
 
 from app.api.deps import CurrentUser, DBSession
 from app.core.logging import get_logger
+from app.models.pull_request import PullRequest
+from app.models.repository import Repository
+from app.models.review_comment import ReviewComment
 from app.schemas.common import APIResponse, PaginatedResponse, TaskResponse
 from app.schemas.pull_request import (
     PRAnalyzeRequest,
     PullRequestDetailResponse,
     PullRequestResponse,
 )
+from app.services.github_service import GitHubService
+from app.tasks.pr_pipeline import run_pr_analysis
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -27,11 +31,6 @@ async def list_pull_requests(
     page_size: int = 20,
 ) -> PaginatedResponse[PullRequestResponse]:
     """List pull requests with optional filtering."""
-    from sqlalchemy import func, select
-
-    from app.models.pull_request import PullRequest
-    from app.models.repository import Repository
-
     offset = (page - 1) * page_size
 
     stmt = (
@@ -73,13 +72,6 @@ async def get_pull_request(
     current_user: CurrentUser,
 ) -> APIResponse[PullRequestDetailResponse]:
     """Get detailed pull request analysis results."""
-    import json
-
-    from sqlalchemy import select
-
-    from app.models.pull_request import PullRequest
-    from app.models.repository import Repository
-
     result = await db.execute(
         select(PullRequest)
         .join(Repository)
@@ -104,11 +96,6 @@ async def trigger_pr_analysis(
     current_user: CurrentUser,
 ) -> TaskResponse:
     """Manually trigger analysis for a specific pull request."""
-    from sqlalchemy import select
-
-    from app.models.pull_request import PullRequest
-    from app.models.repository import Repository
-
     result = await db.execute(
         select(PullRequest)
         .join(Repository)
@@ -123,8 +110,6 @@ async def trigger_pr_analysis(
     pr = result.scalar_one_or_none()
     if not pr:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pull request not found")
-
-    from app.tasks.pr_pipeline import run_pr_analysis
 
     task = run_pr_analysis.delay(
         pr_id=pr.id,
@@ -150,13 +135,6 @@ async def post_github_review(
     current_user: CurrentUser,
 ) -> APIResponse[dict]:
     """Post the AI-generated review to GitHub."""
-    from sqlalchemy import select
-
-    from app.models.pull_request import PullRequest
-    from app.models.repository import Repository
-    from app.models.review_comment import ReviewComment
-    from app.services.github_service import GitHubService
-
     pr_result = await db.execute(
         select(PullRequest)
         .join(Repository)

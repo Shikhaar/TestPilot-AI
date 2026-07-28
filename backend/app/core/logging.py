@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 import logging.handlers
 import sys
+from pathlib import Path
 from typing import Any, cast
 
 import structlog
@@ -84,8 +85,6 @@ def configure_logging() -> None:
     )
 
     # Configure stdlib logging to route through structlog
-    from pathlib import Path
-
     log_dir = Path("logs")
     log_dir.mkdir(exist_ok=True)
 
