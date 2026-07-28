@@ -65,23 +65,23 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Fallback to the main GitHub user account (Shikhaar) or active user
+    # Fallback: use the first active user in the database (no preference)
     result = await db.execute(
         select(User)
         .where(User.is_active == True)
-        .order_by((User.username == "Shikhaar").desc(), User.created_at.asc())
+        .order_by(User.created_at.asc())
     )
     fallback_user = result.scalars().first()
     if fallback_user:
         return fallback_user
 
-    # Create default user if database is completely empty
+    # Create a generic dev stub if the database is completely empty
     dev_user = User(
         id="dev-user-id",
-        github_id="123456",
-        username="Shikhaar",
-        email="shikharsrivastava3004@gmail.com",
-        name="Shikhar Srivastava",
+        github_id="000000",
+        username="dev-user",
+        email="dev@example.com",
+        name="Dev User",
         is_active=True,
     )
     db.add(dev_user)

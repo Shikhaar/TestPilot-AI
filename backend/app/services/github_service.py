@@ -188,8 +188,11 @@ class GitHubService:
             headers["Authorization"] = f"Bearer {access_token}"
 
         url = "https://api.github.com/user/repos?sort=updated&per_page=30" if access_token else (
-            f"https://api.github.com/users/{github_username or 'Shikhaar'}/repos?sort=updated&per_page=30"
+            f"https://api.github.com/users/{github_username}/repos?sort=updated&per_page=30"
+            if github_username else None
         )
+        if not url:
+            return []
 
         try:
             async with httpx.AsyncClient() as client:

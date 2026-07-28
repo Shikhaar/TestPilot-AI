@@ -27,49 +27,24 @@ export default function RepositoryDetail({ params }: { params: any }) {
   const [prCreated, setPrCreated] = useState(false);
   const [prUrl, setPrUrl] = useState<string | null>(null);
   const [prBranch, setPrBranch] = useState<string | null>(null);
+  const [targetFilePath, setTargetFilePath] = useState<string | null>(null);
 
   const handleGenerateTests = async () => {
+    if (!repo) return;
     setGenerating(true);
     setGeneratedCode(null);
     try {
-      // Simulate/trigger AI test generation via Gemini
-      await new Promise((resolve) => setTimeout(resolve, 2200));
-      const lang = (repo?.language || "").toLowerCase();
-      if (lang.includes("typescript") || lang.includes("javascript")) {
-        setGeneratedCode(`import { render, screen } from "@testing-library/react";
-import RepositoryDetail from "@/app/repositories/[id]/page";
-
-describe("${repo?.name || 'Repository'} Component Suite", () => {
-  it("renders repository metrics and dynamic health score", () => {
-    render(<RepositoryDetail params={{ id: "${repo?.id || 'demo-id'}" }} />);
-    expect(screen.getByText(/Health Score/i)).toBeInTheDocument();
-  });
-
-  it("triggers re-indexing workflow on button click", async () => {
-    // Verified AST node graph assertions
-    expect(true).toBe(true);
-  });
-});`);
+      const res = await repositoriesApi.generateTests(repo.id);
+      if (res?.data?.generated_code) {
+        setGeneratedCode(res.data.generated_code);
+        if (res.data.target_file) {
+          setTargetFilePath(res.data.target_file);
+        }
       } else {
-        setGeneratedCode(`import pytest
-from app.models.repository import Repository
-from app.tasks.indexing import _update_repo_status
-
-@pytest.mark.asyncio
-async def test_repository_ast_indexing(db_session):
-    """Verify AST file parsing and coverage metric bounds for ${repo?.name}."""
-    repo = Repository(name="${repo?.name}", full_name="${repo?.full_name}")
-    assert repo.name == "${repo?.name}"
-    
-@pytest.mark.asyncio
-async def test_health_score_calculation():
-    cov = 90.7
-    health = min(99.0, max(70.0, 78.0 + (cov * 0.15)))
-    assert health >= 90.0
-`);
+        throw new Error("Invalid response");
       }
     } catch {
-      setGeneratedCode("# Failed to generate tests. Please check Gemini API Key in Settings.");
+      setGeneratedCode(`# Failed to generate tests for ${repo.name}. Please check backend connection.`);
     } finally {
       setGenerating(false);
     }
@@ -417,9 +392,9 @@ async def test_health_score_calculation():
                           if (!repo || !generatedCode) return;
                           setPrCreating(true);
                           try {
-                            const targetPath = repo.language?.toLowerCase().includes("typescript")
-                              ? "test/component.test.tsx"
-                              : "tests/test_indexing.py";
+                            const targetPath = targetFilePath || (repo.language?.toLowerCase().includes("typescript") || repo.language?.toLowerCase().includes("javascript")
+                              ? `tests/${repo.name.toLowerCase().replace(/-/g, "_")}.test.ts`
+                              : `tests/test_${repo.name.toLowerCase().replace(/-/g, "_")}.py`);
                             const res = await repositoriesApi.createPR(repo.id, targetPath, generatedCode);
                             if (res.data) {
                               setPrUrl(res.data.pr_url);

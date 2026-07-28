@@ -83,4 +83,12 @@ export const repositoriesApi = {
     );
     return res.data;
   },
+
+  generateTests: async (repoId: string) => {
+    const encodedId = encodeURIComponent(repoId);
+    const res = await client.post<{ success: boolean; data: { generated_code: string; target_file: string } }>(
+      `/repositories/${encodedId}/generate-tests`
+    );
+    return res.data;
+  },
 };

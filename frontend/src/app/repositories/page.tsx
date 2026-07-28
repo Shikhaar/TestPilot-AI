@@ -5,17 +5,10 @@ import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
 import { repositoriesApi, Repository } from "@/lib/api/repositories";
 
-const DEFAULT_USER_REPOS = [
-  { full_name: "Shikhaar/TestPilot-AI", name: "TestPilot-AI" },
-  { full_name: "Shikhaar/Portfolio2.0", name: "Portfolio2.0" },
-  { full_name: "Shikhaar/Portfolio", name: "Portfolio" },
-  { full_name: "Shikhaar/Idea", name: "Idea" },
-  { full_name: "Shikhaar/passop", name: "passop" },
-];
-
 export default function Repositories() {
   const [repos, setRepos] = useState<Repository[]>([]);
-  const [userGitHubRepos, setUserGitHubRepos] = useState<Array<{ full_name: string; name: string }>>(DEFAULT_USER_REPOS);
+  const [userGitHubRepos, setUserGitHubRepos] = useState<Array<{ full_name: string; name: string }>>([]);
+  const [ghReposError, setGhReposError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedRepo, setSelectedRepo] = useState("");
   const [customRepo, setCustomRepo] = useState("");
@@ -40,14 +33,15 @@ export default function Repositories() {
       try {
         const [res, ghRepos] = await Promise.all([
           repositoriesApi.list().catch(() => null),
-          repositoriesApi.listUserGitHubRepos().catch(() => []),
+          repositoriesApi.listUserGitHubRepos().catch(() => null),
         ]);
         if (res && res.items) {
           setRepos(res.items);
         }
         if (ghRepos && ghRepos.length > 0) {
-          const top5 = ghRepos.slice(0, 5);
-          setUserGitHubRepos(top5);
+          setUserGitHubRepos(ghRepos.slice(0, 10));
+        } else if (ghRepos === null) {
+          setGhReposError(true);
         }
       } catch (e) {
         console.error("Failed to load repositories data", e);
@@ -147,7 +141,13 @@ export default function Repositories() {
                   <option value="" disabled hidden className="bg-[#0d0d12] text-gray-500">
                     Select a repository...
                   </option>
-                  {userGitHubRepos.slice(0, 5).map((r) => (
+                  {userGitHubRepos.length === 0 && !ghReposError && (
+                    <option disabled className="bg-[#0d0d12] text-gray-500">Loading your repositories…</option>
+                  )}
+                  {ghReposError && (
+                    <option disabled className="bg-[#0d0d12] text-yellow-400">⚠ Sign in with GitHub to load your repositories</option>
+                  )}
+                  {userGitHubRepos.map((r) => (
                     <option key={r.full_name} value={r.full_name} className="bg-[#0d0d12] text-white">
                       {r.full_name}
                     </option>
@@ -172,7 +172,7 @@ export default function Repositories() {
                     type="text"
                     value={customRepo}
                     onChange={(e) => setCustomRepo(e.target.value)}
-                    placeholder="e.g. Shikhaar/DSA or https://github.com/Shikhaar/DSA"
+                    placeholder="e.g. owner/my-repo or https://github.com/owner/my-repo"
                     className="w-full px-4 py-2.5 glass-input text-sm text-white"
                     autoFocus
                     required
