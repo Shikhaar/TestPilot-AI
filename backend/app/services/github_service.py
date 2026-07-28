@@ -261,6 +261,20 @@ class GitHubService:
             logger.warning("Failed to list branches for repository", repo=full_name, error=str(e))
             return ["main", "dev", "master", "staging"]
 
+    def get_repository_languages(
+        self,
+        full_name: str,
+        access_token: str | None = None,
+        installation_id: str | None = None,
+    ) -> dict[str, int]:
+        """Fetch language byte breakdown from GitHub API (GitHub Linguist)."""
+        try:
+            repo = self.get_repository(full_name, access_token, installation_id)
+            return dict(repo.get_languages())
+        except Exception as e:
+            logger.warning("Failed to fetch languages for repository", repo=full_name, error=str(e))
+            return {}
+
     def get_pull_request(
         self,
         repo_full_name: str,

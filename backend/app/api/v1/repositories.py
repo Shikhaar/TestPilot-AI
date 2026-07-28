@@ -35,35 +35,42 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
+# Language alias lookup table
+_KNOWN_LANGUAGES: dict[str, str] = {
+    "ts": "TypeScript",
+    "tsx": "TypeScript",
+    "typescript": "TypeScript",
+    "js": "JavaScript",
+    "jsx": "JavaScript",
+    "javascript": "JavaScript",
+    "py": "Python",
+    "python": "Python",
+    "go": "Go",
+    "golang": "Go",
+    "java": "Java",
+    "rs": "Rust",
+    "rust": "Rust",
+    "rb": "Ruby",
+    "ruby": "Ruby",
+    "php": "PHP",
+    "cs": "C#",
+    "csharp": "C#",
+    "c#": "C#",
+    "cpp": "C++",
+    "c++": "C++",
+}
+
+
 def _normalize_lang(lang_raw: str | None) -> str | None:
     if not lang_raw:
         return None
-    l_lower = lang_raw.lower().strip()
-    if l_lower in ["typescript", "ts", "tsx"]:
-        return "TypeScript"
-    if l_lower in ["javascript", "js", "jsx"]:
-        return "JavaScript"
-    if l_lower in ["python", "py"]:
-        return "Python"
-    if l_lower in ["go", "golang"]:
-        return "Go"
-    if l_lower == "java":
-        return "Java"
-    if l_lower in ["rust", "rs"]:
-        return "Rust"
-    if l_lower in ["ruby", "rb"]:
-        return "Ruby"
-    if l_lower == "php":
-        return "PHP"
-    if l_lower in ["c#", "csharp", "cs"]:
-        return "C#"
-    if l_lower in ["cpp", "c++"]:
-        return "C++"
-    return lang_raw.title()
+    key = lang_raw.lower().strip()
+    return _KNOWN_LANGUAGES.get(key, lang_raw.strip().capitalize())
 
 
 async def _auto_detect_repo_language(db: Any, repo: Any) -> str | None:
-    # If repo already has a normalized language, return it
+    """Detect repository primary language from GitHub API (GitHub Linguist) or parsed AST files."""
+    # 1. If repo already has a normalized language, return it
     if repo.language and repo.language.lower() not in ["unknown", "tsx", "jsx", "ts", "js"]:
         norm = _normalize_lang(repo.language)
         if norm and repo.language != norm:
@@ -71,7 +78,21 @@ async def _auto_detect_repo_language(db: Any, repo: Any) -> str | None:
             await db.commit()
         return repo.language
 
-    # Auto-detect language dynamically from parsed RepositoryFile records
+    # 2. Fetch official language breakdown directly from GitHub API (GitHub Linguist)
+    if repo.full_name and "/" in repo.full_name:
+        try:
+            github = GitHubService()
+            gh_langs = github.get_repository_languages(repo.full_name)
+            if gh_langs:
+                # Top key by byte count calculated by GitHub Linguist
+                primary_lang = max(gh_langs, key=lambda k: gh_langs[k])
+                repo.language = _normalize_lang(primary_lang) or primary_lang
+                await db.commit()
+                return repo.language
+        except Exception:
+            pass
+
+    # 3. Fallback: Auto-detect language dynamically from parsed RepositoryFile records
     files_res = await db.execute(
         select(RepositoryFile.language).where(
             RepositoryFile.repository_id == repo.id,
@@ -659,8 +680,6 @@ async def create_test_pr(
     current_user: CurrentUser,
 ) -> APIResponse[dict[str, Any]]:
     """Create a real branch and Pull Request on GitHub with the AI-generated unit test suite."""
-    settings = get_settings()
-
     result = await db.execute(
         select(Repository).where((Repository.id == repo_id) | (Repository.full_name == repo_id))
     )
