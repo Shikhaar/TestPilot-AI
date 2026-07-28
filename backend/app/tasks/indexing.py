@@ -292,9 +292,7 @@ async def _generate_and_store_embeddings(
             # Embed each function
             for fn in result.functions[:20]:  # Max 20 functions per file
                 text = f"function {fn.name} in {rel_path} language:{result.language}"
-                embedding = (
-                    model.encode(text).tolist() if model is not None else [0.0] * 384
-                )
+                embedding = model.encode(text).tolist() if model is not None else [0.0] * 384
 
                 points.append(
                     {
