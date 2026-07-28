@@ -5,222 +5,194 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Shikhaar/TestPilot-AI/pulls)
 
-> **AI-Powered Regression Testing & AST Code Indexing Platform for Modern Software Engineering Teams**
+**Automated Regression Testing & Tree-Sitter AST Code Indexing Platform**
 
-![TestPilot AI Platform Overview](docs/images/dashboard.png)
-
-TestPilot AI is a production-grade AI platform that automatically parses GitHub repositories, indexes Tree-sitter AST symbol graphs, tracks dynamic test coverage, analyzes PR regression risks, generates unit test suites, and opens pull requests on GitHub.
+TestPilot AI is an enterprise-grade AI software engineering platform designed to automate regression analysis, map codebase dependency impact trees, discover existing test structures, synthesize unit test suites using Large Language Models (LLMs), and automate Pull Request reviews on GitHub.
 
 ---
 
-##  Core Features
+## Executive Summary
 
--  **Tree-Sitter AST Code Indexing**: Automatically parses functions, classes, imports, and API routes across TypeScript, JavaScript, Python, Go, Java, and Rust codebases.
--  **Dynamic README & Description Extraction**: Dynamically extracts repository metadata and documentation directly from local disk clones or GitHub APIs without hardcoded fallbacks.
--  **Real-Time Indexing Progress & Auto-Polling**: Interactive progress indicators and automatic UI polling keep users informed while repositories are being cloned and parsed.
--  **AI Unit Test Generation**: Generates production-ready unit test suites tailored to the codebase's specific language framework (PyTest, Vitest/Jest, JUnit, Go Test).
--  **One-Click GitHub PR Creation**: Automatically commits generated test files to a dedicated feature branch and opens a Pull Request on GitHub.
--  **Multi-Agent Risk Analysis**: LangGraph multi-agent pipeline analyzes PR diffs, builds dependency graphs, and scores regression risk.
+Modern software engineering teams face significant friction verifying regression risks across complex, microservice-oriented codebases. TestPilot AI solves this by combining deterministic static analysis (Tree-sitter Abstract Syntax Trees) with non-deterministic artificial intelligence (LangGraph Multi-Agent Orchestration and Qdrant Vector Retrieval) to perform context-aware test generation and risk evaluation in CI/CD pipelines.
 
 ---
 
-##  System Architecture
+## System Architecture
 
 ```
-                    ┌───────────────────────────┐
-                    │      Next.js Frontend     │
-                    │   (React 19 + Tailwind)   │
-                    └─────────────┬─────────────┘
-                                  │ REST / WebSockets / SSE
-                                  │
-                    ┌─────────────▼─────────────┐
-                    │      FastAPI Backend      │
-                    │  (Python 3.12 / Alembic)  │
-                    └─────────────┬─────────────┘
-                                  │
-          ┌───────────────────────┼───────────────────────┐
-          │                       │                       │
-   ┌──────▼──────┐         ┌──────▼──────┐         ┌──────▼──────┐
-   │ PostgreSQL  │         │    Redis    │         │   Qdrant    │
-   │ (Relational)│         │ (Celery/WS) │         │ (Vector DB) │
-   └─────────────┘         └─────────────┘         └─────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           Next.js 15 Frontend                           │
+│                        (React 19, TailwindCSS)                          │
+└────────────────────────────────────┬────────────────────────────────────┘
+                                     │ REST / WebSockets / SSE
+┌────────────────────────────────────▼────────────────────────────────────┐
+│                             FastAPI Backend                             │
+│                      (Python 3.12, Async SQLAlchemy)                    │
+└──────┬─────────────────────────────┬─────────────────────────────┬──────┘
+       │                             │                             │
+┌──────▼──────┐               ┌──────▼──────┐               ┌──────▼──────┐
+│ PostgreSQL  │               │    Redis    │               │   Qdrant    │
+│ (Relational)│               │ (Broker/WS) │               │ (Vector DB) │
+└─────────────┘               └──────┬──────┘               └─────────────┘
+                                     │
+                              ┌──────▼──────┐
+                              │Celery Worker│
+                              │(LangGraph)  │
+                              └─────────────┘
 ```
 
-The engine uses a **multi-agent orchestration workflow** powered by **LangGraph**, consisting of 11 specialized agent nodes:
+The core engine uses a stateful **multi-agent orchestration workflow** powered by **LangGraph**, consisting of 11 specialized agent nodes:
 
-1. **Planner Agent**: Orchestrates pipeline entry and validates input parameters.
-2. **Diff Agent**: Parses the Git diff and extracts modified AST symbols (functions, classes, variables).
-3. **Dependency Agent**: Computes the dependency imports graph for affected symbols.
-4. **Impact Agent**: Graph-traverses imported models/APIs to map regression scope.
-5. **Search Agent**: Queries semantic embeddings in Qdrant to find contextually relevant codebase samples.
-6. **Test Discovery Agent**: Discovers and indexes existing test structures.
-7. **Test Generator Agent**: Synthesizes custom PyTest / Vitest test code to cover modified blocks.
-8. **Execution Agent**: Executes test suites in insulated subprocesses.
-9. **Failure Analysis Agent**: Explains test failures with actionable code patches.
-10. **Review Agent**: Compiles code changes, quality risk metrics, and generated tests into a markdown review.
-11. **Documentation Agent**: Identifies missing API docs and creates updates matching code changes.
+1. **Planner Agent**: Validates incoming pipeline requests and normalizes execution state.
+2. **Diff Agent**: Parses unified Git diffs and maps changed line ranges to Tree-sitter AST nodes (functions, classes, routes).
+3. **Dependency Agent**: Queries the static import graph to construct an upstream and downstream call graph.
+4. **Impact Agent**: Performs graph traversal across imported models, services, and route handlers to calculate total blast radius.
+5. **Search Agent**: Queries Qdrant vector embeddings to retrieve relevant reference code snippets via hybrid RAG.
+6. **Test Discovery Agent**: Indexes existing test frameworks (PyTest, Vitest/Jest, JUnit, Go Test) and identifies coverage gaps.
+7. **Test Generator Agent**: Synthesizes production-ready unit test files matching repository code style using LLM structured outputs.
+8. **Execution Agent**: Runs generated test suites inside isolated subprocess environments to verify test validity.
+9. **Failure Analysis Agent**: Parses stdout/stderr logs of failing tests and generates root-cause diagnostic reports.
+10. **Review Agent**: Aggregates risk metrics, affected symbols, and generated code into structured Pull Request markdown comments.
+11. **Documentation Agent**: Identifies API documentation drifts and generates OpenAPI/Markdown specification updates.
 
 ---
 
-##  Technology Stack
+## Key Technical Features
 
-* **Frontend**: Next.js 15 (React 19, TailwindCSS, CSS Variables)
-* **Backend**: FastAPI, SQLAlchemy 2, Alembic, Poetry, Pydantic v2
-* **Agent Flow & Orchestration**: LangGraph, Tree-sitter, LiteLLM, Instructor, Sentence-Transformers
-* **Background Tasks**: Celery, Redis, Kombu
+### Multi-Language Tree-sitter AST Parsing
+Supports deep AST parsing for TypeScript, JavaScript, Python, Go, Java, and Rust. Extracts function signatures, decorators, class hierarchies, imports, exports, and web route handlers (FastAPI, Express, Spring, Flask).
+
+### Dynamic README & Description Extraction
+Extracts repository documentation directly from local cloned file paths or fallbacks to GitHub REST API endpoints dynamically, avoiding stale or hardcoded fallback data.
+
+### Real-Time Async Architecture
+Built with FastAPI async endpoints, Redis Pub/Sub, and WebSockets to push live indexing progress, AST parsing metrics, and pipeline status updates directly to the Next.js frontend.
+
+### One-Click GitHub Pull Request Creation
+Provides automated branch creation and commit generation via the GitHub API, allowing developers to push generated unit tests directly to active Pull Requests.
+
+---
+
+## Technology Stack
+
+* **Frontend**: Next.js 15, React 19, TailwindCSS, CSS Modules
+* **Backend**: Python 3.12, FastAPI, SQLAlchemy 2 (AsyncIO), Alembic, Pydantic v2, Poetry
+* **AI & Agent Orchestration**: LangGraph, Tree-sitter, LiteLLM, Instructor, Sentence-Transformers
+* **Asynchronous Infrastructure**: Celery, Redis, Kombu
 * **Vector Storage**: Qdrant Vector DB
-* **Observability & Infrastructure**: Docker, Docker Compose, Nginx, Prometheus, Grafana, OpenTelemetry
+* **Observability**: Prometheus, Grafana, OpenTelemetry, Celery Flower, Structlog
 
 ---
 
-##  Observability & Task Telemetry
+## Quickstart Guide
 
-TestPilot AI comes out-of-the-box with production-grade monitoring dashboards for system metrics, HTTP request latencies, and distributed background worker queues.
+### Option 1: 60-Second Containerized Deployment (Recommended)
 
-### Grafana Telemetry Dashboard (`http://localhost:3001`)
-![Grafana Platform Telemetry](docs/images/grafana.png)
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Shikhaar/TestPilot-AI.git
+   cd TestPilot-AI
+   ```
 
-### Celery Flower Worker Dashboard (`http://localhost:5555`)
-![Celery Flower Task Monitor](docs/images/flower.png)
+2. Copy the environment configuration template:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Spin up all containerized services (Frontend, Backend, PostgreSQL, Redis, Qdrant, Celery, Grafana):
+   ```bash
+   docker compose up -d
+   ```
+
+4. Execute database migrations:
+   ```bash
+   docker compose exec backend poetry run alembic upgrade head
+   ```
+
+5. Access the Web Dashboard at `http://localhost:3000`.
 
 ---
 
-##  Getting Started
+### Option 2: Native Host Development Setup
 
-### Prerequisites
+#### Prerequisites
+* Python 3.12 & Poetry
+* Node.js v18+ & npm
+* Docker & Docker Compose (for PostgreSQL, Redis, and Qdrant infrastructure)
 
-* **Docker & Docker Compose** (WSL2 backend enabled if running on Windows)
-* **Node.js v18+** (for frontend development)
-* **Python 3.12** & **Poetry** (for backend development)
-
----
-
-### Step 1: Clone & Configure Environment
-
-Clone the repository and copy the environment template:
-
+#### 1. Start Storage Infrastructure
 ```bash
-git clone https://github.com/Shikhaar/TestPilot-AI.git
-cd TestPilot-AI
+docker compose up -d postgres redis qdrant
+```
+
+#### 2. Environment Configuration
+Copy `.env.example` to `.env`:
+```bash
 cp .env.example .env
 ```
-
-Ensure the following variables are set in your `.env` file:
-* `GEMINI_API_KEY` or `OPENAI_API_KEY`: Your AI provider API key (LiteLLM automatically routes to Gemini or OpenAI).
-* `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`: Generated from your GitHub App (see Step 2 below).
-* `GITHUB_APP_ID` / `GITHUB_APP_PRIVATE_KEY_PATH`: From your GitHub App settings.
-
----
-
-### Step 2: Create Your Local GitHub App (2 Minutes)
-
-To enable GitHub OAuth login and repository integration:
-
-1. Go to **[GitHub App Registration](https://github.com/settings/apps/new)**.
-2. Fill in the required fields:
-   * **GitHub App name**: `TestPilot-AI-YourName`
-   * **Homepage URL**: `http://localhost:3000`
-   * **User authorization callback URL**: `http://localhost:3000/auth/callback`
-   * **Webhooks**: Uncheck **Active** (Webhooks are optional for local development).
-3. Under **Permissions**, grant:
-   * **Contents**: Read & Write (for creating test branches and files)
-   * **Pull requests**: Read & Write (for posting PR code reviews)
-   * **Metadata**: Read-only
-4. Click **Create GitHub App**.
-5. Copy the generated **App ID**, **Client ID**, and generate a **Client Secret** and **Private Key** (`.pem` file), then update your `.env` file.
-
----
-
-### Step 3: Local Webhook Relay with Smee.io (Optional)
-
-If you want to test real-time GitHub `push` or `pull_request` webhooks on your local machine:
-
-1. Go to **[smee.io](https://smee.io)** and click **Start a new channel**.
-2. Copy your unique Smee URL (e.g. `https://smee.io/abc123xyz`).
-3. In your GitHub App settings, check **Active** under Webhooks and paste your Smee URL as the **Webhook URL**.
-4. Run the Smee client in a terminal to proxy incoming webhooks to your local FastAPI backend:
-
-```bash
-npx smee -u https://smee.io/YOUR_SMEE_CHANNEL_ID -t http://localhost:8000/api/v1/github/webhook
+Ensure host connection strings are configured for native execution:
+```env
+POSTGRES_HOST=localhost
+REDIS_HOST=localhost
+QDRANT_HOST=localhost
+DATABASE_URL=postgresql+asyncpg://testpilot:testpilot_secret@localhost:5432/testpilot
+REDIS_URL=redis://:redis_secret@localhost:6379/0
+QDRANT_URL=http://localhost:6333
 ```
 
----
-
-### Step 4: Launch Local Services
-
-Start local infrastructure (PostgreSQL, Redis, Qdrant Vector DB):
-
-```bash
-docker compose up -d
-```
-
-#### Running Backend
+#### 3. Run Backend API
 ```bash
 cd backend
 poetry install
+poetry run alembic upgrade head
 poetry run uvicorn app.main:app --port 8000 --reload
 ```
+FastAPI Swagger documentation will be available at `http://localhost:8000/docs`.
 
-#### Running Frontend
+#### 4. Run Frontend Web App
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-
-Visit **`http://localhost:3000`** in your browser!
-
----
-
-##  CLI Developer Commands (Makefile)
-
-A `Makefile` is provided with helpful shortcuts for local execution:
-
-### Infrastructure
-```bash
-make dev             # Start all services (Frontend, Backend, DB, Redis, Grafana)
-make stop            # Shut down all running services
-make rebuild         # Rebuild all Docker images from scratch and restart
-make logs            # Tail docker container logs
-```
-
-### Database & Migrations
-```bash
-make migrate         # Apply pending Alembic database migrations
-make db-shell        # Open PostgreSQL client interface (psql)
-make db-reset        # Wipe and recreate database tables
-```
-
-### Quality Assurance & Linting
-```bash
-make lint            # Check files using Ruff linter
-make lint-fix        # Auto-fix Ruff formatting/import rules
-make format          # Format Python codebase using Black
-```
-
-### Running Tests
-```bash
-make test            # Execute Python test suite
-make test-cov        # Run tests and output HTML coverage reports
-```
+Frontend interface will be available at `http://localhost:3000`.
 
 ---
 
-##  Monitoring & Port Mappings
+## Usage Workflow
 
-Once running (`make dev`), you can access different platform dashboards:
+1. **Access the Dashboard**: Open `http://localhost:3000`.
+2. **Connect a Repository**: Select a pre-configured repository or enter any public GitHub repository (e.g., `expressjs/express` or `psf/requests`).
+3. **Observe AST Indexing**: Track progress as the backend clones the target repository, parses AST symbols, and computes health and coverage metrics.
+4. **Generate Unit Tests**: Open the repository detail page, click **Generate Tests**, inspect the synthesized test file, and click **Create PR on GitHub** to push changes directly to the remote repository.
 
-| Service | Address | Description |
+---
+
+## Infrastructure & Monitoring Endpoints
+
+| Service | Endpoint | Purpose |
 | :--- | :--- | :--- |
-| **Web Dashboard** | [http://localhost:3000](http://localhost:3000) | Frontend interface (Metrics, PRs, Repositories). |
-| **Backend API** | [http://localhost:8000/docs](http://localhost:8000/docs) | FastAPI interactive Swagger documentation. |
-| **Qdrant Console** | [http://localhost:6333/dashboard](http://localhost:6333/dashboard) | Semantic Vector database admin UI. |
-| **Celery Flower** | [http://localhost:5555](http://localhost:5555) | Asynchronous task queues and workers metrics. |
-| **Grafana** | [http://localhost:3001](http://localhost:3001) | Prometheus logs and system health telemetry. |
+| **Web Interface** | `http://localhost:3000` | Application frontend dashboard |
+| **Backend OpenAPI Docs** | `http://localhost:8000/docs` | Interactive Swagger API specification |
+| **Qdrant Vector Console** | `http://localhost:6333/dashboard` | Vector storage & collection management |
+| **Celery Flower** | `http://localhost:5555` | Worker queue and task execution monitor |
+| **Grafana Telemetry** | `http://localhost:3001` | Prometheus metric visualization dashboard |
 
 ---
 
-##  License
+## Developer Automation Tools (Makefile)
+
+| Command | Action |
+| :--- | :--- |
+| `make dev` | Launch complete stack via Docker Compose |
+| `make stop` | Terminate all active container services |
+| `make migrate` | Execute pending Alembic migrations |
+| `make db-reset` | Reset database state and re-apply schema |
+| `make lint` | Run Ruff static analysis across Python modules |
+| `make test` | Execute Pytest automated test suite |
+
+---
+
+## License
 
 Distributed under the **MIT License**. See `LICENSE` for more information.
-
