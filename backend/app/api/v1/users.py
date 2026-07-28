@@ -105,9 +105,7 @@ async def clear_gemini_api_key(
     db: DBSession,
 ) -> APIResponse[UserSettingsResponse]:
     """Clears the stored Gemini API key for the current user."""
-    await db.execute(
-        update(User).where(User.id == current_user.id).values(gemini_api_key=None)
-    )
+    await db.execute(update(User).where(User.id == current_user.id).values(gemini_api_key=None))
     await db.commit()
 
     result = await db.execute(select(User).where(User.id == current_user.id))

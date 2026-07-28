@@ -1,4 +1,5 @@
 import base64
+import contextlib
 import json
 import random
 import re
@@ -28,7 +29,7 @@ from app.tasks.indexing import index_repository
 try:
     import litellm
 except ImportError:
-    litellm = None
+    litellm = None  # type: ignore[assignment]
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -58,7 +59,7 @@ def _normalize_lang(lang_raw: str | None) -> str | None:
         return "C#"
     if l_lower in ["cpp", "c++"]:
         return "C++"
-    return l.title()
+    return lang_raw.title()
 
 
 async def _auto_detect_repo_language(db: Any, repo: Any) -> str | None:
@@ -79,13 +80,13 @@ async def _auto_detect_repo_language(db: Any, repo: Any) -> str | None:
     )
     langs = files_res.scalars().all()
     lang_counts: dict[str, int] = {}
-    for l in langs:
-        norm = _normalize_lang(l)
+    for lang_item in langs:
+        norm = _normalize_lang(lang_item)
         if norm:
             lang_counts[norm] = lang_counts.get(norm, 0) + 1
 
     if lang_counts:
-        detected = max(lang_counts, key=lang_counts.get)
+        detected = max(lang_counts, key=lambda k: lang_counts[k])
         repo.language = detected
         await db.commit()
         return detected
@@ -97,7 +98,9 @@ async def _auto_detect_repo_language(db: Any, repo: Any) -> str | None:
     return repo.language
 
 
-async def _extract_readme_description(repo_path: Path | None = None, full_name: str | None = None) -> str | None:
+async def _extract_readme_description(
+    repo_path: Path | None = None, full_name: str | None = None
+) -> str | None:
     content = None
 
     # 1. Try reading from local cloned repository folder
@@ -111,10 +114,8 @@ async def _extract_readme_description(repo_path: Path | None = None, full_name: 
         ]
         readme_path = next((p for p in readme_candidates if p.exists() and p.is_file()), None)
         if readme_path:
-            try:
+            with contextlib.suppress(Exception):
                 content = readme_path.read_text(encoding="utf-8", errors="ignore")
-            except Exception:
-                pass
 
     # 2. Fallback to fetching directly from GitHub API if not on local disk
     if not content and full_name and "/" in full_name:
@@ -139,8 +140,8 @@ async def _extract_readme_description(repo_path: Path | None = None, full_name: 
             line_str = line.strip()
             if not line_str or line_str.startswith(("[!", "![", "<", "---", "===")):
                 continue
-            line_str = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', line_str)
-            line_str = re.sub(r'^#+\s*', '', line_str).strip()
+            line_str = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", line_str)
+            line_str = re.sub(r"^#+\s*", "", line_str).strip()
             if line_str and len(line_str) > 10:
                 lines.append(line_str)
             if len(" ".join(lines)) >= 140:
@@ -196,16 +197,11 @@ async def list_repositories(
     page = max(1, page)
     offset = (page - 1) * page_size
 
-    total_result = await db.execute(
-        select(func.count()).select_from(Repository)
-    )
+    total_result = await db.execute(select(func.count()).select_from(Repository))
     total = total_result.scalar_one()
 
     repos_result = await db.execute(
-        select(Repository)
-        .order_by(Repository.created_at.desc())
-        .offset(offset)
-        .limit(page_size)
+        select(Repository).order_by(Repository.created_at.desc()).offset(offset).limit(page_size)
     )
     repos = repos_result.scalars().all()
     for r in repos:
@@ -236,12 +232,12 @@ async def connect_repository(
     """
     full_name = request.full_name.strip()
     if "/" not in full_name:
-        if not current_user.github_login:
+        if not current_user.username:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="GitHub login not available. Please re-authenticate to connect a repository.",
             )
-        full_name = f"{current_user.github_login}/{full_name}"
+        full_name = f"{current_user.username}/{full_name}"
 
     # Check if already connected
     existing = await db.execute(select(Repository).where(Repository.full_name == full_name))
@@ -287,7 +283,13 @@ async def connect_repository(
     await db.refresh(repo)
 
     # Trigger background indexing
-    _trigger_indexing(repo.id, repo.clone_url, current_user.github_access_token)
+    index_repository.delay(
+        repository_id=repo.id,
+        clone_url=repo.clone_url,
+        access_token=current_user.github_access_token,
+        force_reindex=False,
+        branch=repo.default_branch,
+    )
 
     logger.info("Repository connected", repo_id=repo.id, full_name=repo.full_name)
 
@@ -306,9 +308,7 @@ async def trigger_reindex(
 ) -> TaskResponse:
     """Trigger re-indexing of a repository."""
     result = await db.execute(
-        select(Repository).where(
-            (Repository.id == repo_id) | (Repository.full_name == repo_id)
-        )
+        select(Repository).where((Repository.id == repo_id) | (Repository.full_name == repo_id))
     )
     repo = result.scalar_one_or_none()
     if not repo:
@@ -351,7 +351,7 @@ async def list_github_user_repositories(
     github = GitHubService()
     repos = await github.list_user_repositories(
         access_token=current_user.github_access_token,
-        github_username=current_user.github_username,
+        github_username=current_user.username,
     )
     return APIResponse(data=repos)
 
@@ -364,9 +364,7 @@ async def list_repository_branches(
 ) -> APIResponse[list[str]]:
     """Fetch active git branches for a specific connected repository."""
     result = await db.execute(
-        select(Repository).where(
-            (Repository.id == repo_id) | (Repository.full_name == repo_id)
-        )
+        select(Repository).where((Repository.id == repo_id) | (Repository.full_name == repo_id))
     )
     repo = result.scalar_one_or_none()
     if not repo:
@@ -388,9 +386,7 @@ async def get_repository(
     """Get a specific repository by ID with real AST metrics and architecture breakdown."""
     settings = get_settings()
     result = await db.execute(
-        select(Repository).where(
-            (Repository.id == repo_id) | (Repository.full_name == repo_id)
-        )
+        select(Repository).where((Repository.id == repo_id) | (Repository.full_name == repo_id))
     )
     repo = result.scalar_one_or_none()
     if not repo:
@@ -412,8 +408,8 @@ async def get_repository(
     services_count = 0
     repo_layer_count = 0
 
-    def _normalize_lang(l: str) -> str:
-        l_lower = (l or "").lower()
+    def _normalize_lang(lang_str: str) -> str:
+        l_lower = (lang_str or "").lower()
         if "tsx" in l_lower or "typescript" in l_lower or l_lower == "ts":
             return "TypeScript"
         if "jsx" in l_lower or "javascript" in l_lower or l_lower == "js":
@@ -434,7 +430,7 @@ async def get_repository(
             return "C#"
         if "cpp" in l_lower or "c++" in l_lower:
             return "C++"
-        return l.capitalize() if l else "Unknown"
+        return lang_str.capitalize() if lang_str else "Unknown"
 
     lang_counts: dict[str, int] = {}
     for f in repo_files:
@@ -450,8 +446,10 @@ async def get_repository(
             services_count += 1
 
     # Auto-detect language if missing or un-normalized in repo record
-    if (not repo.language or repo.language.lower() in ["unknown", "tsx", "jsx", "ts", "js"]) and lang_counts:
-        repo.language = max(lang_counts, key=lang_counts.get)
+    if (
+        not repo.language or repo.language.lower() in ["unknown", "tsx", "jsx", "ts", "js"]
+    ) and lang_counts:
+        repo.language = max(lang_counts, key=lambda k: lang_counts[k])
         await db.commit()
     elif repo.language:
         repo.language = _normalize_lang(repo.language)
@@ -543,9 +541,7 @@ async def generate_repository_tests(
 ) -> APIResponse[dict[str, Any]]:
     """Generate unit test suite dynamically from AST-indexed source files."""
     result = await db.execute(
-        select(Repository).where(
-            (Repository.id == repo_id) | (Repository.full_name == repo_id)
-        )
+        select(Repository).where((Repository.id == repo_id) | (Repository.full_name == repo_id))
     )
     repo = result.scalar_one_or_none()
     if not repo:
@@ -553,10 +549,7 @@ async def generate_repository_tests(
 
     files_result = await db.execute(
         select(RepositoryFile)
-        .where(
-            (RepositoryFile.repository_id == repo.id)
-            & (RepositoryFile.is_test_file.is_(False))
-        )
+        .where((RepositoryFile.repository_id == repo.id) & (RepositoryFile.is_test_file.is_(False)))
         .limit(10)
     )
     source_files = files_result.scalars().all()
@@ -586,7 +579,11 @@ async def generate_repository_tests(
     settings = get_settings()
     if getattr(settings, "gemini_api_key", None) or getattr(settings, "openai_api_key", None):
         try:
-            model_name = "gemini/gemini-1.5-pro-latest" if getattr(settings, "gemini_api_key", None) else "gpt-4o-mini"
+            model_name = (
+                "gemini/gemini-1.5-pro-latest"
+                if getattr(settings, "gemini_api_key", None)
+                else "gpt-4o-mini"
+            )
             prompt = (
                 f"Generate a comprehensive unit test suite for repository '{repo.full_name}' ({repo.language or 'source'}).\n"
                 f"Source files: {', '.join(sample_paths[:5])}\n"
@@ -613,29 +610,29 @@ async def generate_repository_tests(
         if is_js_ts:
             code_content = (
                 f'import {{ describe, it, expect }} from "vitest";\n'
-                f'// Auto-generated AST unit test suite for {repo.name}\n'
-                f'// Target module: {target_path}\n\n'
+                f"// Auto-generated AST unit test suite for {repo.name}\n"
+                f"// Target module: {target_path}\n\n"
                 f'describe("{repo.name} AST Module Suite", () => {{\n'
                 f'  it("verifies {target_fn} initialization and execution", () => {{\n'
-                f'    // Verified AST node: {target_fn}\n'
-                f'    expect(true).toBe(true);\n'
-                f'  }});\n\n'
+                f"    // Verified AST node: {target_fn}\n"
+                f"    expect(true).toBe(true);\n"
+                f"  }});\n\n"
                 f'  it("handles boundary parameters for {target_cls}", () => {{\n'
-                f'    // AST class structure assertion\n'
+                f"    // AST class structure assertion\n"
                 f'    expect(typeof "{target_cls}").toBe("string");\n'
-                f'  }});\n'
-                f'}});\n'
+                f"  }});\n"
+                f"}});\n"
             )
         else:
             code_content = (
-                f'import pytest\n'
-                f'# Auto-generated AST unit test suite for {repo.name}\n'
-                f'# Target module: {target_path}\n\n'
-                f'@pytest.mark.asyncio\n'
-                f'async def test_{target_fn.lower()}_execution():\n'
+                f"import pytest\n"
+                f"# Auto-generated AST unit test suite for {repo.name}\n"
+                f"# Target module: {target_path}\n\n"
+                f"@pytest.mark.asyncio\n"
+                f"async def test_{target_fn.lower()}_execution():\n"
                 f'    """Verify {target_fn} parsed from AST graph."""\n'
-                f'    assert True\n\n'
-                f'def test_{target_cls.lower()}_structure():\n'
+                f"    assert True\n\n"
+                f"def test_{target_cls.lower()}_structure():\n"
                 f'    """Verify AST class structure for {target_cls}."""\n'
                 f'    assert "{target_cls}" is not None\n'
             )
@@ -646,10 +643,12 @@ async def generate_repository_tests(
         else f"tests/test_{repo.name.lower().replace('-', '_')}_ai.py"
     )
 
-    return APIResponse(data={
-        "generated_code": code_content,
-        "target_file": default_test_file,
-    })
+    return APIResponse(
+        data={
+            "generated_code": code_content,
+            "target_file": default_test_file,
+        }
+    )
 
 
 @router.post("/{repo_id:path}/create-pr", response_model=APIResponse[dict[str, Any]])
@@ -663,15 +662,13 @@ async def create_test_pr(
     settings = get_settings()
 
     result = await db.execute(
-        select(Repository).where(
-            (Repository.id == repo_id) | (Repository.full_name == repo_id)
-        )
+        select(Repository).where((Repository.id == repo_id) | (Repository.full_name == repo_id))
     )
     repo = result.scalar_one_or_none()
     if not repo:
         raise HTTPException(status_code=404, detail="Repository not found")
 
-    token = current_user.github_access_token or settings.github_oauth_token
+    token = current_user.github_access_token
     if not token:
         raise HTTPException(
             status_code=400,

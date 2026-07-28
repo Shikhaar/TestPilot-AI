@@ -39,7 +39,7 @@ from app.utils.qdrant_client import get_qdrant_client, initialize_collections
 try:
     import redis.asyncio as aioredis
 except ImportError:
-    aioredis = None
+    aioredis = None  # type: ignore[assignment]
 from app.middleware.rate_limit import RateLimitMiddleware
 from app.middleware.request_id import RequestIDMiddleware
 

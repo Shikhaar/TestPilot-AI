@@ -18,7 +18,7 @@ from app.core.logging import get_logger
 try:
     from sentence_transformers import SentenceTransformer
 except ImportError:
-    SentenceTransformer = None
+    SentenceTransformer = None  # type: ignore[misc, assignment]
 
 logger = get_logger(__name__)
 settings = get_settings()

@@ -66,9 +66,7 @@ async def get_current_user(
 
     # Fallback: use the first active user in the database (no preference)
     result = await db.execute(
-        select(User)
-        .where(User.is_active.is_(True))
-        .order_by(User.created_at.asc())
+        select(User).where(User.is_active.is_(True)).order_by(User.created_at.asc())
     )
     fallback_user = result.scalars().first()
     if fallback_user:

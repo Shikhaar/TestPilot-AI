@@ -187,9 +187,14 @@ class GitHubService:
         if access_token:
             headers["Authorization"] = f"Bearer {access_token}"
 
-        url = "https://api.github.com/user/repos?sort=updated&per_page=30" if access_token else (
-            f"https://api.github.com/users/{github_username}/repos?sort=updated&per_page=30"
-            if github_username else None
+        url = (
+            "https://api.github.com/user/repos?sort=updated&per_page=30"
+            if access_token
+            else (
+                f"https://api.github.com/users/{github_username}/repos?sort=updated&per_page=30"
+                if github_username
+                else None
+            )
         )
         if not url:
             return []
@@ -250,8 +255,8 @@ class GitHubService:
         """List active branches for a repository."""
         try:
             repo = self.get_repository(full_name, access_token, installation_id)
-            branches = repo.get_branches()
-            return [b.name for b in branches[:20]]
+            branches_list = list(repo.get_branches())
+            return [str(getattr(b, "name", "main")) for b in branches_list[:20]]
         except Exception as e:
             logger.warning("Failed to list branches for repository", repo=full_name, error=str(e))
             return ["main", "dev", "master", "staging"]

@@ -31,7 +31,8 @@ try:
     import tree_sitter_typescript as tstypescript
     from tree_sitter import Language, Parser
 except ImportError:
-    tsgo = tsjava = tsjavascript = tspython = tstypescript = Language = Parser = None
+    tsgo = tsjava = tsjavascript = tspython = tstypescript = None  # type: ignore[assignment]
+    Language = Parser = None  # type: ignore[misc, assignment]
 
 logger = get_logger(__name__)
 
@@ -131,7 +132,7 @@ class ASTParser:
     def _load_grammars(self) -> None:
         """Load Tree-sitter grammar parsers for supported languages."""
         try:
-            if not tspython or not Parser or not Language:
+            if tspython is None or Parser is None or Language is None:
                 return
 
             self._parsers["python"] = Parser(Language(tspython.language()))

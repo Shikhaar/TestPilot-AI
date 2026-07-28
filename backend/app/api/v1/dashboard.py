@@ -24,22 +24,16 @@ async def get_dashboard(
 ) -> APIResponse[dict]:
     """Get aggregated dashboard metrics for the current user."""
     # Repository stats across workspace
-    repo_count = (
-        await db.execute(select(func.count()).select_from(Repository))
-    ).scalar_one()
+    repo_count = (await db.execute(select(func.count()).select_from(Repository))).scalar_one()
 
     indexed_count = (
         await db.execute(
-            select(func.count())
-            .select_from(Repository)
-            .where(Repository.is_indexed.is_(True))
+            select(func.count()).select_from(Repository).where(Repository.is_indexed.is_(True))
         )
     ).scalar_one()
 
     # PR stats
-    total_prs = (
-        await db.execute(select(func.count()).select_from(PullRequest))
-    ).scalar_one()
+    total_prs = (await db.execute(select(func.count()).select_from(PullRequest))).scalar_one()
 
     critical_prs = (
         await db.execute(
@@ -83,9 +77,7 @@ async def get_dashboard(
 
     # Recent PRs
     recent_prs_result = await db.execute(
-        select(PullRequest)
-        .order_by(PullRequest.created_at.desc())
-        .limit(5)
+        select(PullRequest).order_by(PullRequest.created_at.desc()).limit(5)
     )
     recent_prs = recent_prs_result.scalars().all()
 

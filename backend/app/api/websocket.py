@@ -13,7 +13,7 @@ from app.core.logging import get_logger
 try:
     import redis.asyncio as aioredis
 except ImportError:
-    aioredis = None
+    aioredis = None  # type: ignore[assignment]
 
 logger = get_logger(__name__)
 ws_router = APIRouter()

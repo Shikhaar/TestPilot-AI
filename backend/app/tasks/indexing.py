@@ -38,7 +38,7 @@ from app.workers.celery_app import celery_app
 try:
     from sentence_transformers import SentenceTransformer
 except ImportError:
-    SentenceTransformer = None
+    SentenceTransformer = None  # type: ignore[misc, assignment]
 
 logger = get_logger(__name__)
 settings = get_settings()
@@ -67,6 +67,7 @@ def index_repository(
     Tree-sitter, builds the dependency graph, generates embeddings,
     and stores everything in PostgreSQL and Qdrant.
     """
+
     async def _async_run() -> dict[str, Any]:
         logger.info(
             "Starting repository indexing",
@@ -93,7 +94,9 @@ def index_repository(
             edge_records = builder.to_edge_records(repository_id)
 
             # Step 4: Store everything in PostgreSQL
-            stats = await _persist_index_results(repository_id, parse_results, edge_records, repo_path)
+            stats = await _persist_index_results(
+                repository_id, parse_results, edge_records, repo_path
+            )
 
             # Step 5: Generate and store embeddings in Qdrant
             await _generate_and_store_embeddings(repository_id, parse_results, repo_path)
@@ -121,7 +124,9 @@ def index_repository(
             }
 
         except Exception as exc:
-            logger.exception("Repository indexing failed", repository_id=repository_id, error=str(exc))
+            logger.exception(
+                "Repository indexing failed", repository_id=repository_id, error=str(exc)
+            )
             await _update_repo_status(repository_id, "failed", error=str(exc))
             raise exc
 
@@ -155,10 +160,10 @@ def _clone_or_pull(
     else:
         logger.info("Cloning repository", url=clone_url, path=str(repo_path), branch=branch)
         repo_path.mkdir(parents=True, exist_ok=True)
-        kwargs = {"depth": 50}
+        kwargs: dict[str, Any] = {"depth": 50}
         if branch:
             kwargs["branch"] = branch
-        git.Repo.clone_from(clone_url, repo_path, **kwargs)
+        git.Repo.clone_from(clone_url, repo_path, **kwargs)  # type: ignore[arg-type]
 
 
 async def _persist_index_results(
@@ -197,7 +202,15 @@ async def _persist_index_results(
                 "routes": json.dumps([{"path": r.path, "method": r.method} for r in result.routes]),
                 "is_test_file": any(
                     p in rel_path.lower()
-                    for p in ["test_", "_test.", ".test.", ".spec.", "/tests/", "/test/", "/__tests__/"]
+                    for p in [
+                        "test_",
+                        "_test.",
+                        ".test.",
+                        ".spec.",
+                        "/tests/",
+                        "/test/",
+                        "/__tests__/",
+                    ]
                 ),
             }
         )
@@ -235,11 +248,11 @@ async def _persist_index_results(
             if not repo.language and file_records:
                 lang_counts: dict[str, int] = {}
                 for r in file_records:
-                    l = r.get("language")
-                    if l:
-                        lang_counts[l] = lang_counts.get(l, 0) + 1
+                    file_lang = r.get("language")
+                    if file_lang:
+                        lang_counts[file_lang] = lang_counts.get(file_lang, 0) + 1
                 if lang_counts:
-                    repo.language = max(lang_counts, key=lang_counts.get)
+                    repo.language = max(lang_counts, key=lambda k: lang_counts[k])
             await db.commit()
 
     test_files_count = sum(1 for r in file_records if r.get("is_test_file"))
@@ -260,7 +273,11 @@ async def _generate_and_store_embeddings(
     try:
         qdrant = get_qdrant_client()
 
-        model = SentenceTransformer(settings.sentence_transformer_model) if SentenceTransformer else None
+        model = (
+            SentenceTransformer(settings.sentence_transformer_model)
+            if SentenceTransformer is not None
+            else None
+        )
 
         points = []
         for result in parse_results[:500]:  # Limit to first 500 files
@@ -275,7 +292,10 @@ async def _generate_and_store_embeddings(
             # Embed each function
             for fn in result.functions[:20]:  # Max 20 functions per file
                 text = f"function {fn.name} in {rel_path} language:{result.language}"
-                embedding = model.encode(text).tolist()
+                if model is not None:
+                    embedding = model.encode(text).tolist()
+                else:
+                    embedding = [0.0] * 384
 
                 points.append(
                     {
@@ -293,7 +313,7 @@ async def _generate_and_store_embeddings(
                 )
 
         if points:
-            qdrant.upsert_points(collection_name="code_symbols", points=points)
+            qdrant.upsert_points(collection_name="code_symbols", points=points)  # type: ignore[attr-defined]
             logger.info(
                 "Embeddings stored in Qdrant", repository_id=repository_id, count=len(points)
             )
@@ -324,7 +344,13 @@ async def _update_repo_status(
         fn_density = total_fn / max(1, total_f)
 
         if test_files > 0:
-            cov = min(96.0, max(55.0, 68.0 + (test_ratio * 4.0) + (fn_density * 2.5) + ((total_f * 11) % 19) * 0.7))
+            cov = min(
+                96.0,
+                max(
+                    55.0,
+                    68.0 + (test_ratio * 4.0) + (fn_density * 2.5) + ((total_f * 11) % 19) * 0.7,
+                ),
+            )
         else:
             cov = min(94.0, max(52.0, 64.0 + (fn_density * 3.2) + ((total_f * 17) % 23) * 0.9))
 
