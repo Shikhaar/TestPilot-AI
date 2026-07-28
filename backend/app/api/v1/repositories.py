@@ -148,8 +148,16 @@ async def _extract_readme_description(repo_path: Path | None = None, full_name: 
 
 
 async def _format_description(r: Any, repo_path: Path | None = None) -> str:
-    # 1. If repo has a custom description (not generic placeholder), return it
-    if r.description and not r.description.startswith("Automated test generation") and not r.description.endswith("indexed for AST analysis."):
+    # 1. If repo has a meaningful custom description (not any known placeholder), return it
+    _stale_patterns = (
+        "Automated test generation",
+        "indexed for AST analysis.",
+        "indexed for automated AST",
+        "codebase comprising",
+        "repository indexed for automated AST",
+    )
+    is_stale = not r.description or any(p in (r.description or "") for p in _stale_patterns)
+    if not is_stale:
         return r.description
 
     # 2. Try parsing description dynamically from local cloned README.md or GitHub API
