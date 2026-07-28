@@ -39,12 +39,12 @@ client.interceptors.response.use(
           originalRequest.headers.Authorization = `Bearer ${access_token}`;
           return client(originalRequest);
         }
-      } catch (refreshError) {
+      } catch (_refreshError) {
         // Refresh token expired or invalid -> clear local storage token
         if (typeof window !== "undefined") {
           localStorage.removeItem("access_token");
         }
-        return Promise.reject(refreshError);
+        return Promise.reject(error);
       }
     }
     return Promise.reject(error);

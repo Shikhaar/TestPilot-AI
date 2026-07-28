@@ -72,7 +72,10 @@ export default function Repositories() {
       setSelectedRepo("");
       setIsCustom(false);
     } catch (err: any) {
-      const msg = err?.response?.data?.detail || err?.response?.data?.message || err.message || "Failed to connect repository";
+      const msg =
+        err?.response?.status === 401
+          ? "Please sign in with GitHub to connect repositories."
+          : err?.response?.data?.detail || err?.response?.data?.message || err.message || "Failed to connect repository";
       setError(msg);
     } finally {
       setConnecting(false);
