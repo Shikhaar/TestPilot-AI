@@ -482,7 +482,7 @@ async def create_test_pr(
                 "body": (
                     "## 🤖 TestPilot AI — Generated Unit Test Suite\n\n"
                     f"This Pull Request adds automated unit tests generated for `{repo.full_name}`.\n\n"
-                    "### 📊 Test Suite Details\n"
+                    "### Test Suite Details\n"
                     f"- **Target Test File**: `{payload.file_path}`\n"
                     f"- **Language / Framework**: `{repo.language or 'Automated Test Suite'}`\n"
                     "- **Engine**: Tree-Sitter AST & Gemini LLM\n\n"
