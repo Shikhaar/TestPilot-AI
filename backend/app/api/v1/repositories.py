@@ -86,20 +86,46 @@ async def _auto_detect_repo_language(db: AsyncSession, repo: Any) -> str | None:
     return repo.language
 
 
-def _extract_readme_description(repo_path: Path) -> str | None:
+async def _extract_readme_description(repo_path: Path | None = None, full_name: str | None = None) -> str | None:
     import re
-    readme_candidates = [
-        repo_path / "README.md",
-        repo_path / "readme.md",
-        repo_path / "README.rst",
-        repo_path / "README.txt",
-        repo_path / "README",
-    ]
-    readme_path = next((p for p in readme_candidates if p.exists() and p.is_file()), None)
-    if not readme_path:
+    content = None
+
+    # 1. Try reading from local cloned repository folder
+    if repo_path and repo_path.exists():
+        readme_candidates = [
+            repo_path / "README.md",
+            repo_path / "readme.md",
+            repo_path / "README.rst",
+            repo_path / "README.txt",
+            repo_path / "README",
+        ]
+        readme_path = next((p for p in readme_candidates if p.exists() and p.is_file()), None)
+        if readme_path:
+            try:
+                content = readme_path.read_text(encoding="utf-8", errors="ignore")
+            except Exception:
+                pass
+
+    # 2. Fallback to fetching directly from GitHub API if not on local disk
+    if not content and full_name and "/" in full_name:
+        try:
+            import base64
+            import httpx
+            async with httpx.AsyncClient(timeout=8.0) as client:
+                res = await client.get(
+                    f"https://api.github.com/repos/{full_name}/readme",
+                    headers={"User-Agent": "TestPilot-AI"},
+                )
+                if res.status_code == 200:
+                    encoded = res.json().get("content", "")
+                    content = base64.b64decode(encoded).decode("utf-8", errors="ignore")
+        except Exception:
+            pass
+
+    if not content:
         return None
+
     try:
-        content = readme_path.read_text(encoding="utf-8", errors="ignore")
         lines = []
         for line in content.splitlines():
             line_str = line.strip()
@@ -121,16 +147,15 @@ def _extract_readme_description(repo_path: Path) -> str | None:
     return None
 
 
-def _format_description(r: Any, repo_path: Path | None = None) -> str:
+async def _format_description(r: Any, repo_path: Path | None = None) -> str:
     # 1. If repo has a custom description (not generic placeholder), return it
     if r.description and not r.description.startswith("Automated test generation") and not r.description.endswith("indexed for AST analysis."):
         return r.description
 
-    # 2. Try parsing description dynamically from local cloned README.md
-    if repo_path and repo_path.exists():
-        readme_desc = _extract_readme_description(repo_path)
-        if readme_desc:
-            return readme_desc
+    # 2. Try parsing description dynamically from local cloned README.md or GitHub API
+    readme_desc = await _extract_readme_description(repo_path=repo_path, full_name=r.full_name)
+    if readme_desc:
+        return readme_desc
 
     # 3. Dynamic AST summary fallback (Zero hardcoded names)
     lang = r.language or "Multi-language"
@@ -174,7 +199,7 @@ async def list_repositories(
     for r in repos:
         await _auto_detect_repo_language(db, r)
         repo_path = settings.repo_storage_path / r.id
-        r.description = _format_description(r, repo_path=repo_path)
+        r.description = await _format_description(r, repo_path=repo_path)
         await db.commit()
 
     items = [RepositoryResponse.model_validate(r) for r in repos]
@@ -388,7 +413,7 @@ async def get_repository(
     await _auto_detect_repo_language(db, repo)
 
     repo_path = settings.repo_storage_path / repo.id
-    repo.description = _format_description(repo, repo_path=repo_path)
+    repo.description = await _format_description(repo, repo_path=repo_path)
     await db.commit()
 
     # Fetch parsed AST file records to calculate dynamic layer nodes
