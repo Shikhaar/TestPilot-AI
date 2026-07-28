@@ -108,7 +108,10 @@ export default function RepositoryDetail({ params }: { params: any }) {
     if (!repo) return;
     setDisconnecting(true);
     try {
-      await repositoriesApi.disconnect(repo.id);
+      await repositoriesApi
+        .disconnect(repo.id)
+        .catch(() => repositoriesApi.disconnect(repo.full_name))
+        .catch(() => repositoriesApi.disconnect(id));
       window.location.href = "/repositories";
     } catch (err) {
       console.error("Failed to disconnect repository", err);

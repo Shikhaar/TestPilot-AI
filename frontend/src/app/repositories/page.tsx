@@ -26,12 +26,14 @@ export default function Repositories() {
       return;
     }
     setDisconnectingId(repo.id);
+    setError("");
     try {
-      await repositoriesApi.disconnect(repo.id);
-      setRepos((prev) => prev.filter((r) => r.id !== repo.id));
+      await repositoriesApi.disconnect(repo.id).catch(() => repositoriesApi.disconnect(repo.full_name));
+      setRepos((prev) => prev.filter((r) => r.id !== repo.id && r.full_name !== repo.full_name));
       setDisconnectConfirmId(null);
     } catch (err: any) {
       setError(err?.response?.data?.detail || "Failed to disconnect repository");
+      setDisconnectConfirmId(null);
     } finally {
       setDisconnectingId(null);
     }

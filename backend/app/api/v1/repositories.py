@@ -36,6 +36,33 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
+async def _find_repository(db: Any, repo_id: str) -> Repository | None:
+    """Find a repository safely by full_name, name, or UUID id."""
+    if not repo_id:
+        return None
+    # 1. Match full_name first (e.g. 'Shikhaar/TestPilot-AI')
+    res = await db.execute(select(Repository).where(Repository.full_name == repo_id))
+    repo = res.scalar_one_or_none()
+    if repo:
+        return repo
+
+    # 2. Match repository name (e.g. 'TestPilot-AI')
+    res = await db.execute(select(Repository).where(Repository.name == repo_id))
+    repo = res.scalar_one_or_none()
+    if repo:
+        return repo
+
+    # 3. Match UUID ID if valid UUID format
+    try:
+        uuid.UUID(repo_id)
+        res = await db.execute(select(Repository).where(Repository.id == repo_id))
+        return res.scalar_one_or_none()
+    except (ValueError, TypeError, Exception):
+        pass
+
+    return None
+
+
 # Language alias lookup table
 _KNOWN_LANGUAGES: dict[str, str] = {
     "ts": "TypeScript",
@@ -329,10 +356,7 @@ async def trigger_reindex(
     current_user: CurrentUser,
 ) -> TaskResponse:
     """Trigger re-indexing of a repository."""
-    result = await db.execute(
-        select(Repository).where((Repository.id == repo_id) | (Repository.full_name == repo_id))
-    )
-    repo = result.scalar_one_or_none()
+    repo = await _find_repository(db, repo_id)
     if not repo:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Repository not found")
 
@@ -385,10 +409,7 @@ async def list_repository_branches(
     current_user: CurrentUser,
 ) -> APIResponse[list[str]]:
     """Fetch active git branches for a specific connected repository."""
-    result = await db.execute(
-        select(Repository).where((Repository.id == repo_id) | (Repository.full_name == repo_id))
-    )
-    repo = result.scalar_one_or_none()
+    repo = await _find_repository(db, repo_id)
     if not repo:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Repository not found")
 
@@ -407,10 +428,7 @@ async def get_repository(
 ) -> APIResponse[RepositoryDetailResponse]:
     """Get a specific repository by ID with real AST metrics and architecture breakdown."""
     settings = get_settings()
-    result = await db.execute(
-        select(Repository).where((Repository.id == repo_id) | (Repository.full_name == repo_id))
-    )
-    repo = result.scalar_one_or_none()
+    repo = await _find_repository(db, repo_id)
     if not repo:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Repository not found")
 
@@ -681,10 +699,7 @@ async def create_test_pr(
     current_user: CurrentUser,
 ) -> APIResponse[dict[str, Any]]:
     """Create a real branch and Pull Request on GitHub with the AI-generated unit test suite."""
-    result = await db.execute(
-        select(Repository).where((Repository.id == repo_id) | (Repository.full_name == repo_id))
-    )
-    repo = result.scalar_one_or_none()
+    repo = await _find_repository(db, repo_id)
     if not repo:
         raise HTTPException(status_code=404, detail="Repository not found")
 
@@ -799,10 +814,7 @@ async def disconnect_repository(
     current_user: CurrentUser,
 ) -> APIResponse[dict[str, Any]]:
     """Disconnect and remove a repository from TestPilot AI."""
-    result = await db.execute(
-        select(Repository).where((Repository.id == repo_id) | (Repository.full_name == repo_id))
-    )
-    repo = result.scalar_one_or_none()
+    repo = await _find_repository(db, repo_id)
     if not repo:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
