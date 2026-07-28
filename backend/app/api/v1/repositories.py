@@ -418,7 +418,7 @@ async def create_test_pr(
         "User-Agent": "TestPilot-AI",
     }
 
-    async with httpx.AsyncClient(timeout=15.0) as client:
+    async with httpx.AsyncClient(timeout=30.0) as client:
         # 1. Fetch default branch head SHA
         default_branch = repo.default_branch or "main"
         ref_resp = await client.get(

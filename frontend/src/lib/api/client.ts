@@ -5,6 +5,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/a
 export const client = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true, // Crucial for sending HTTP-only cookies
+  timeout: 60000, // 60 seconds timeout for AI generation and GitHub PR creation
   headers: {
     "Content-Type": "application/json",
   },
