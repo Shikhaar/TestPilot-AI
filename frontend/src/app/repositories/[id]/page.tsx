@@ -451,6 +451,26 @@ async def test_health_score_calculation():
                   <pre className="p-4 rounded-xl bg-[#050608] border border-white/10 text-xs font-mono text-emerald-300 overflow-x-auto max-h-80">
                     <code>{generatedCode}</code>
                   </pre>
+
+                  {/* Developer Guidance Banner */}
+                  <div className="p-3.5 rounded-xl bg-purple-950/20 border border-purple-500/20 text-xs text-purple-200 space-y-2">
+                    <div className="font-semibold flex items-center gap-1.5 text-purple-300">
+                      <svg className="w-4 h-4 text-purple-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>How to use this generated test suite:</span>
+                    </div>
+                    <ul className="space-y-1.5 text-gray-300 pl-1">
+                      <li className="flex items-start gap-1.5">
+                        <span className="text-purple-400 font-bold">•</span>
+                        <span><strong>Option 1 — Automatic Pull Request:</strong> Click <em className="text-purple-300">Create PR on GitHub</em> above. TestPilot AI will create a new branch and open a PR on your GitHub repository.</span>
+                      </li>
+                      <li className="flex items-start gap-1.5">
+                        <span className="text-purple-400 font-bold">•</span>
+                        <span><strong>Option 2 — Copy & Run Locally:</strong> Click <em className="text-purple-300">Copy Code</em>, paste it into your local project file at <code className="font-mono text-purple-300 bg-white/10 px-1 py-0.5 rounded">{repo?.language?.toLowerCase().includes("typescript") ? "test/component.test.tsx" : "tests/test_indexing.py"}</code>, and execute <code className="font-mono text-emerald-400 bg-white/10 px-1.5 py-0.5 rounded">{repo?.language?.toLowerCase().includes("typescript") ? "npm test" : "pytest"}</code> in your terminal.</span>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               )}
             </div>
