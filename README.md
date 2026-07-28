@@ -1,15 +1,26 @@
-#  TestPilot AI
+# TestPilot AI
 
 [![CD Build Status](https://github.com/Shikhaar/TestPilot-AI/actions/workflows/cd.yml/badge.svg)](https://github.com/Shikhaar/TestPilot-AI/actions)
 [![CI Check Status](https://github.com/Shikhaar/TestPilot-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/Shikhaar/TestPilot-AI/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Shikhaar/TestPilot-AI/pulls)
 
-> **AI-Powered Regression Testing Platform for Modern Software Engineering Teams**
+> **AI-Powered Regression Testing & AST Code Indexing Platform for Modern Software Engineering Teams**
 
 ![TestPilot AI Platform Overview](docs/images/dashboard.png)
 
-TestPilot AI is a production-grade AI platform that automatically analyzes GitHub Pull Requests, maps codebase impact trees, discovers existing test structures, writes missing tests using LLMs, and posts code reviews back to GitHub.
+TestPilot AI is a production-grade AI platform that automatically parses GitHub repositories, indexes Tree-sitter AST symbol graphs, tracks dynamic test coverage, analyzes PR regression risks, generates unit test suites, and opens pull requests on GitHub.
+
+---
+
+##  Core Features
+
+-  **Tree-Sitter AST Code Indexing**: Automatically parses functions, classes, imports, and API routes across TypeScript, JavaScript, Python, Go, Java, and Rust codebases.
+-  **Dynamic README & Description Extraction**: Dynamically extracts repository metadata and documentation directly from local disk clones or GitHub APIs without hardcoded fallbacks.
+-  **Real-Time Indexing Progress & Auto-Polling**: Interactive progress indicators and automatic UI polling keep users informed while repositories are being cloned and parsed.
+-  **AI Unit Test Generation**: Generates production-ready unit test suites tailored to the codebase's specific language framework (PyTest, Vitest/Jest, JUnit, Go Test).
+-  **One-Click GitHub PR Creation**: Automatically commits generated test files to a dedicated feature branch and opens a Pull Request on GitHub.
+-  **Multi-Agent Risk Analysis**: LangGraph multi-agent pipeline analyzes PR diffs, builds dependency graphs, and scores regression risk.
 
 ---
 
@@ -18,7 +29,7 @@ TestPilot AI is a production-grade AI platform that automatically analyzes GitHu
 ```
                     ┌───────────────────────────┐
                     │      Next.js Frontend     │
-                    │   (React + Tailwind)      │
+                    │   (React 19 + Tailwind)   │
                     └─────────────┬─────────────┘
                                   │ REST / WebSockets / SSE
                                   │
@@ -35,27 +46,27 @@ TestPilot AI is a production-grade AI platform that automatically analyzes GitHu
    └─────────────┘         └─────────────┘         └─────────────┘
 ```
 
-The core engine uses a state-of-the-art **multi-agent orchestration workflow** powered by **LangGraph**, consisting of 11 specialized agent nodes:
+The engine uses a **multi-agent orchestration workflow** powered by **LangGraph**, consisting of 11 specialized agent nodes:
 
-1. **Planner Agent**: Orchestrates the pipeline entry and validates input parameters.
+1. **Planner Agent**: Orchestrates pipeline entry and validates input parameters.
 2. **Diff Agent**: Parses the Git diff and extracts modified AST symbols (functions, classes, variables).
 3. **Dependency Agent**: Computes the dependency imports graph for affected symbols.
 4. **Impact Agent**: Graph-traverses imported models/APIs to map regression scope.
 5. **Search Agent**: Queries semantic embeddings in Qdrant to find contextually relevant codebase samples.
 6. **Test Discovery Agent**: Discovers and indexes existing test structures.
-7. **Test Generator Agent**: Synthesizes custom PyTest test code to cover modified blocks.
+7. **Test Generator Agent**: Synthesizes custom PyTest / Vitest test code to cover modified blocks.
 8. **Execution Agent**: Executes test suites in insulated subprocesses.
 9. **Failure Analysis Agent**: Explains test failures with actionable code patches.
 10. **Review Agent**: Compiles code changes, quality risk metrics, and generated tests into a markdown review.
-11. **Documentation Agent**: Identifies missing API docs and creates updates matching the code changes.
+11. **Documentation Agent**: Identifies missing API docs and creates updates matching code changes.
 
 ---
 
 ##  Technology Stack
 
 * **Frontend**: Next.js 15 (React 19, TailwindCSS, CSS Variables)
-* **Backend**: FastAPI, SQLAlchemy 2, Alembic, Poetry
-* **Agent Flow & Orchestration**: LangGraph, LiteLLM, Instructor, Sentence-Transformers
+* **Backend**: FastAPI, SQLAlchemy 2, Alembic, Poetry, Pydantic v2
+* **Agent Flow & Orchestration**: LangGraph, Tree-sitter, LiteLLM, Instructor, Sentence-Transformers
 * **Background Tasks**: Celery, Redis, Kombu
 * **Vector Storage**: Qdrant Vector DB
 * **Observability & Infrastructure**: Docker, Docker Compose, Nginx, Prometheus, Grafana, OpenTelemetry
@@ -161,7 +172,7 @@ Visit **`http://localhost:3000`** in your browser!
 
 ---
 
-## CLI Developer Commands (Makefile)
+##  CLI Developer Commands (Makefile)
 
 A `Makefile` is provided with helpful shortcuts for local execution:
 
@@ -205,10 +216,11 @@ Once running (`make dev`), you can access different platform dashboards:
 | **Backend API** | [http://localhost:8000/docs](http://localhost:8000/docs) | FastAPI interactive Swagger documentation. |
 | **Qdrant Console** | [http://localhost:6333/dashboard](http://localhost:6333/dashboard) | Semantic Vector database admin UI. |
 | **Celery Flower** | [http://localhost:5555](http://localhost:5555) | Asynchronous task queues and workers metrics. |
-| **Grafana** | [http://localhost:3001](http://localhost:3001) | Promethus logs and system health telemetry. |
+| **Grafana** | [http://localhost:3001](http://localhost:3001) | Prometheus logs and system health telemetry. |
 
 ---
 
-## License
+##  License
 
 Distributed under the **MIT License**. See `LICENSE` for more information.
+
