@@ -467,7 +467,7 @@ async def test_health_score_calculation():
                       </li>
                       <li className="flex items-start gap-1.5">
                         <span className="text-purple-400 font-bold">•</span>
-                        <span><strong>Option 2 — Copy & Run Locally:</strong> Click <em className="text-purple-300">Copy Code</em>, paste it into your local project file at <code className="font-mono text-purple-300 bg-white/10 px-1 py-0.5 rounded">{repo?.language?.toLowerCase().includes("typescript") ? "test/component.test.tsx" : "tests/test_indexing.py"}</code>, and execute <code className="font-mono text-emerald-400 bg-white/10 px-1.5 py-0.5 rounded">{repo?.language?.toLowerCase().includes("typescript") ? "npm test" : "pytest"}</code> in your terminal.</span>
+                        <span><strong>Option 2 — Copy & Run Locally:</strong> Click <em className="text-purple-300">Copy Code</em>, paste it into your local project file at <code className="font-mono text-purple-300 bg-white/10 px-1 py-0.5 rounded">{repo?.language?.toLowerCase().includes("typescript") ? "test/component.test.tsx" : "tests/test_indexing.py"}</code>, and execute <code className="font-mono text-emerald-400 bg-white/10 px-1.5 py-0.5 rounded">{repo?.language?.toLowerCase().includes("typescript") ? "npm test" : "pytest tests/test_indexing.py"}</code> in your terminal.</span>
                       </li>
                     </ul>
                   </div>
