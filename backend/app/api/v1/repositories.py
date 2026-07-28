@@ -281,7 +281,10 @@ async def get_repository(
     services_count = 0
     repo_layer_count = 0
 
+    lang_counts: dict[str, int] = {}
     for f in repo_files:
+        if f.language:
+            lang_counts[f.language] = lang_counts.get(f.language, 0) + 1
         path = (f.path or "").lower()
         if any(p in path for p in ["route", "api", "page", "controller", "endpoint"]):
             routes_count += 1
@@ -289,6 +292,11 @@ async def get_repository(
             repo_layer_count += 1
         else:
             services_count += 1
+
+    # Auto-detect language if missing from repo record
+    if not repo.language and lang_counts:
+        repo.language = max(lang_counts, key=lang_counts.get)
+        await db.commit()
 
     # Fallback to balanced AST distribution if files haven't been categorized
     if repo_files:
@@ -308,6 +316,16 @@ async def get_repository(
         tf = "PyTest"
     elif "go" in lang:
         tf = "Go Test"
+    elif "java" in lang:
+        tf = "JUnit 5"
+    elif "ruby" in lang:
+        tf = "RSpec"
+    elif "php" in lang:
+        tf = "PHPUnit"
+    elif "rust" in lang:
+        tf = "Cargo Test"
+    elif "c#" in lang or "csharp" in lang:
+        tf = "NUnit / xUnit"
     else:
         tf = "Automated Test Suite"
 

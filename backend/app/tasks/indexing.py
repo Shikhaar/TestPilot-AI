@@ -218,6 +218,28 @@ async def _persist_index_results(
             db.add_all([DependencyEdge(**r) for r in batch])
             await db.flush()
 
+        # Auto-update Repository primary language if missing
+        from sqlalchemy import select
+        from app.models.repository import Repository
+
+        repo_res = await db.execute(select(Repository).where(Repository.id == repository_id))
+        repo = repo_res.scalar_one_or_none()
+        if repo:
+            repo.total_files = len(file_records)
+            repo.total_functions = total_functions
+            repo.total_classes = total_classes
+            repo.index_status = "indexed"
+
+            if not repo.language and file_records:
+                lang_counts: dict[str, int] = {}
+                for r in file_records:
+                    l = r.get("language")
+                    if l:
+                        lang_counts[l] = lang_counts.get(l, 0) + 1
+                if lang_counts:
+                    repo.language = max(lang_counts, key=lang_counts.get)
+            await db.commit()
+
     test_files_count = sum(1 for r in file_records if r.get("is_test_file"))
     return {
         "files": len(file_records),

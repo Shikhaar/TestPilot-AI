@@ -405,7 +405,11 @@ async def test_health_score_calculation():
                               setPrCreated(true);
                             }
                           } catch (err: any) {
-                            alert(err?.response?.data?.detail || err?.message || "Failed to create PR on GitHub");
+                            const msg =
+                              err?.response?.status === 401
+                                ? "Please sign in with GitHub to create a Pull Request on GitHub."
+                                : err?.response?.data?.detail || err?.message || "Failed to create PR on GitHub";
+                            alert(msg);
                           } finally {
                             setPrCreating(false);
                           }
