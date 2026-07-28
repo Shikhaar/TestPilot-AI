@@ -29,7 +29,7 @@ LANGUAGE_EXTENSIONS: dict[str, str] = {
     ".js": "javascript",
     ".jsx": "javascript",
     ".ts": "typescript",
-    ".tsx": "tsx",
+    ".tsx": "typescript",
     ".java": "java",
     ".go": "go",
     ".rs": "rust",

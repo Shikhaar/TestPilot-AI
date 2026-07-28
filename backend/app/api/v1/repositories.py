@@ -20,6 +20,129 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
+def _normalize_lang(l: str | None) -> str | None:
+    if not l:
+        return None
+    l_lower = l.lower().strip()
+    if l_lower in ["typescript", "ts", "tsx"]:
+        return "TypeScript"
+    if l_lower in ["javascript", "js", "jsx"]:
+        return "JavaScript"
+    if l_lower in ["python", "py"]:
+        return "Python"
+    if l_lower in ["go", "golang"]:
+        return "Go"
+    if l_lower == "java":
+        return "Java"
+    if l_lower in ["rust", "rs"]:
+        return "Rust"
+    if l_lower in ["ruby", "rb"]:
+        return "Ruby"
+    if l_lower == "php":
+        return "PHP"
+    if l_lower in ["c#", "csharp", "cs"]:
+        return "C#"
+    if l_lower in ["cpp", "c++"]:
+        return "C++"
+    return l.title()
+
+
+async def _auto_detect_repo_language(db: AsyncSession, repo: Any) -> str | None:
+    from sqlalchemy import select
+    from app.models.repository_file import RepositoryFile
+
+    # If repo already has a normalized language, return it
+    if repo.language and repo.language.lower() not in ["unknown", "tsx", "jsx", "ts", "js"]:
+        norm = _normalize_lang(repo.language)
+        if norm and repo.language != norm:
+            repo.language = norm
+            await db.commit()
+        return repo.language
+
+    # Auto-detect language dynamically from parsed RepositoryFile records
+    files_res = await db.execute(
+        select(RepositoryFile.language).where(
+            RepositoryFile.repository_id == repo.id,
+            RepositoryFile.language.isnot(None),
+        )
+    )
+    langs = files_res.scalars().all()
+    lang_counts: dict[str, int] = {}
+    for l in langs:
+        norm = _normalize_lang(l)
+        if norm:
+            lang_counts[norm] = lang_counts.get(norm, 0) + 1
+
+    if lang_counts:
+        detected = max(lang_counts, key=lang_counts.get)
+        repo.language = detected
+        await db.commit()
+        return detected
+
+    if repo.language:
+        repo.language = _normalize_lang(repo.language)
+        await db.commit()
+
+    return repo.language
+
+
+def _extract_readme_description(repo_path: Path) -> str | None:
+    import re
+    readme_candidates = [
+        repo_path / "README.md",
+        repo_path / "readme.md",
+        repo_path / "README.rst",
+        repo_path / "README.txt",
+        repo_path / "README",
+    ]
+    readme_path = next((p for p in readme_candidates if p.exists() and p.is_file()), None)
+    if not readme_path:
+        return None
+    try:
+        content = readme_path.read_text(encoding="utf-8", errors="ignore")
+        lines = []
+        for line in content.splitlines():
+            line_str = line.strip()
+            if not line_str or line_str.startswith(("[!", "![", "<", "---", "===")):
+                continue
+            line_str = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', line_str)
+            line_str = re.sub(r'^#+\s*', '', line_str).strip()
+            if line_str and len(line_str) > 10:
+                lines.append(line_str)
+            if len(" ".join(lines)) >= 140:
+                break
+        if lines:
+            summary = " ".join(lines)[:180].strip()
+            if not summary.endswith("."):
+                summary += "."
+            return summary
+    except Exception:
+        pass
+    return None
+
+
+def _format_description(r: Any, repo_path: Path | None = None) -> str:
+    # 1. If repo has a custom description (not generic placeholder), return it
+    if r.description and not r.description.startswith("Automated test generation") and not r.description.endswith("indexed for AST analysis."):
+        return r.description
+
+    # 2. Try parsing description dynamically from local cloned README.md
+    if repo_path and repo_path.exists():
+        readme_desc = _extract_readme_description(repo_path)
+        if readme_desc:
+            return readme_desc
+
+    # 3. Dynamic AST summary fallback (Zero hardcoded names)
+    lang = r.language or "Multi-language"
+    files = r.total_files or 0
+    funcs = r.total_functions or 0
+    classes = r.total_classes or 0
+
+    if files > 0:
+        return f"{lang} codebase comprising {files} modules, {funcs} functions, and {classes} classes indexed for AST analysis."
+    return f"{lang} repository indexed for automated AST code analysis and unit test generation."
+
+
 @router.get("", response_model=PaginatedResponse[RepositoryResponse])
 async def list_repositories(
     db: DBSession,
@@ -30,8 +153,10 @@ async def list_repositories(
     """List all repositories connected by the current user."""
     from sqlalchemy import func, select
 
+    from app.core.config import get_settings
     from app.models.repository import Repository
 
+    settings = get_settings()
     offset = (page - 1) * page_size
 
     total_result = await db.execute(
@@ -47,13 +172,10 @@ async def list_repositories(
     )
     repos = repos_result.scalars().all()
     for r in repos:
-        if not r.description:
-            if "testpilot" in r.full_name.lower():
-                r.description = "AI-powered test generation, AST parsing, and PR risk analysis platform for multi-language codebases."
-            elif "portfolio" in r.full_name.lower():
-                r.description = "Modern portfolio web application showcasing AI projects, full-stack systems, and interactive UI design."
-            else:
-                r.description = f"Automated test generation and AST code indexing for {r.name} ({r.language or 'Codebase'})."
+        await _auto_detect_repo_language(db, r)
+        repo_path = settings.repo_storage_path / r.id
+        r.description = _format_description(r, repo_path=repo_path)
+        await db.commit()
 
     items = [RepositoryResponse.model_validate(r) for r in repos]
     return PaginatedResponse.create(items, total, page, page_size)
@@ -263,13 +385,11 @@ async def get_repository(
     if not repo:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Repository not found")
 
-    if not repo.description:
-        if "testpilot" in repo.full_name.lower():
-            repo.description = "AI-powered test generation, AST parsing, and PR risk analysis platform for multi-language codebases."
-        elif "portfolio" in repo.full_name.lower():
-            repo.description = "Modern portfolio web application showcasing AI projects, full-stack systems, and interactive UI design."
-        else:
-            repo.description = f"Automated test generation and AST code indexing for {repo.name} ({repo.language or 'Codebase'})."
+    await _auto_detect_repo_language(db, repo)
+
+    repo_path = settings.repo_storage_path / repo.id
+    repo.description = _format_description(repo, repo_path=repo_path)
+    await db.commit()
 
     # Fetch parsed AST file records to calculate dynamic layer nodes
     files_res = await db.execute(
@@ -281,10 +401,35 @@ async def get_repository(
     services_count = 0
     repo_layer_count = 0
 
+    def _normalize_lang(l: str) -> str:
+        l_lower = (l or "").lower()
+        if "tsx" in l_lower or "typescript" in l_lower or l_lower == "ts":
+            return "TypeScript"
+        if "jsx" in l_lower or "javascript" in l_lower or l_lower == "js":
+            return "JavaScript"
+        if "python" in l_lower or l_lower == "py":
+            return "Python"
+        if "go" in l_lower:
+            return "Go"
+        if "java" in l_lower:
+            return "Java"
+        if "rust" in l_lower or l_lower == "rs":
+            return "Rust"
+        if "ruby" in l_lower or l_lower == "rb":
+            return "Ruby"
+        if "php" in l_lower:
+            return "PHP"
+        if "c#" in l_lower or "csharp" in l_lower or l_lower == "cs":
+            return "C#"
+        if "cpp" in l_lower or "c++" in l_lower:
+            return "C++"
+        return l.capitalize() if l else "Unknown"
+
     lang_counts: dict[str, int] = {}
     for f in repo_files:
         if f.language:
-            lang_counts[f.language] = lang_counts.get(f.language, 0) + 1
+            normalized = _normalize_lang(f.language)
+            lang_counts[normalized] = lang_counts.get(normalized, 0) + 1
         path = (f.path or "").lower()
         if any(p in path for p in ["route", "api", "page", "controller", "endpoint"]):
             routes_count += 1
@@ -293,10 +438,12 @@ async def get_repository(
         else:
             services_count += 1
 
-    # Auto-detect language if missing from repo record
-    if not repo.language and lang_counts:
+    # Auto-detect language if missing or un-normalized in repo record
+    if (not repo.language or repo.language.lower() in ["unknown", "tsx", "jsx", "ts", "js"]) and lang_counts:
         repo.language = max(lang_counts, key=lang_counts.get)
         await db.commit()
+    elif repo.language:
+        repo.language = _normalize_lang(repo.language)
 
     # Fallback to balanced AST distribution if files haven't been categorized
     if repo_files:
@@ -310,9 +457,9 @@ async def get_repository(
 
     # Detect test framework from primary language
     lang = (repo.language or "").lower()
-    if "typescript" in lang or "javascript" in lang:
+    if "typescript" in lang or "javascript" in lang or "tsx" in lang or "jsx" in lang:
         tf = "Jest / Vitest"
-    elif "python" in lang:
+    elif "python" in lang or lang == "py":
         tf = "PyTest"
     elif "go" in lang:
         tf = "Go Test"
