@@ -62,7 +62,7 @@ The core engine uses a state-of-the-art **multi-agent orchestration workflow** p
 
 ---
 
-## 📊 Observability & Task Telemetry
+##  Observability & Task Telemetry
 
 TestPilot AI comes out-of-the-box with production-grade monitoring dashboards for system metrics, HTTP request latencies, and distributed background worker queues.
 
@@ -79,20 +79,85 @@ TestPilot AI comes out-of-the-box with production-grade monitoring dashboards fo
 ### Prerequisites
 
 * **Docker & Docker Compose** (WSL2 backend enabled if running on Windows)
-* **Node.js v18+** (for local frontend hacking)
-* **Python 3.12** (for local backend hacking)
+* **Node.js v18+** (for frontend development)
+* **Python 3.12** & **Poetry** (for backend development)
 
-### Configuration (`.env`)
+---
 
-Clone the template and configure your API tokens:
+### Step 1: Clone & Configure Environment
+
+Clone the repository and copy the environment template:
+
 ```bash
+git clone https://github.com/Shikhaar/TestPilot-AI.git
+cd TestPilot-AI
 cp .env.example .env
 ```
 
-Ensure the following variables are set in `.env`:
-* `OPENAI_API_KEY`: Your OpenAI/LLM provider API key (processed via LiteLLM).
-* `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`: For GitHub OAuth integration.
-* `GITHUB_APP_ID` / `GITHUB_APP_PRIVATE_KEY_PATH`: For GitHub App webhook events.
+Ensure the following variables are set in your `.env` file:
+* `GEMINI_API_KEY` or `OPENAI_API_KEY`: Your AI provider API key (LiteLLM automatically routes to Gemini or OpenAI).
+* `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`: Generated from your GitHub App (see Step 2 below).
+* `GITHUB_APP_ID` / `GITHUB_APP_PRIVATE_KEY_PATH`: From your GitHub App settings.
+
+---
+
+### Step 2: Create Your Local GitHub App (2 Minutes)
+
+To enable GitHub OAuth login and repository integration:
+
+1. Go to **[GitHub App Registration](https://github.com/settings/apps/new)**.
+2. Fill in the required fields:
+   * **GitHub App name**: `TestPilot-AI-YourName`
+   * **Homepage URL**: `http://localhost:3000`
+   * **User authorization callback URL**: `http://localhost:3000/auth/callback`
+   * **Webhooks**: Uncheck **Active** (Webhooks are optional for local development).
+3. Under **Permissions**, grant:
+   * **Contents**: Read & Write (for creating test branches and files)
+   * **Pull requests**: Read & Write (for posting PR code reviews)
+   * **Metadata**: Read-only
+4. Click **Create GitHub App**.
+5. Copy the generated **App ID**, **Client ID**, and generate a **Client Secret** and **Private Key** (`.pem` file), then update your `.env` file.
+
+---
+
+### Step 3: Local Webhook Relay with Smee.io (Optional)
+
+If you want to test real-time GitHub `push` or `pull_request` webhooks on your local machine:
+
+1. Go to **[smee.io](https://smee.io)** and click **Start a new channel**.
+2. Copy your unique Smee URL (e.g. `https://smee.io/abc123xyz`).
+3. In your GitHub App settings, check **Active** under Webhooks and paste your Smee URL as the **Webhook URL**.
+4. Run the Smee client in a terminal to proxy incoming webhooks to your local FastAPI backend:
+
+```bash
+npx smee -u https://smee.io/YOUR_SMEE_CHANNEL_ID -t http://localhost:8000/api/v1/github/webhook
+```
+
+---
+
+### Step 4: Launch Local Services
+
+Start local infrastructure (PostgreSQL, Redis, Qdrant Vector DB):
+
+```bash
+docker compose up -d
+```
+
+#### Running Backend
+```bash
+cd backend
+poetry install
+poetry run uvicorn app.main:app --port 8000 --reload
+```
+
+#### Running Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Visit **`http://localhost:3000`** in your browser!
 
 ---
 
