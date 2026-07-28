@@ -134,23 +134,45 @@ async def test_health_score_calculation():
           </div>
         ) : (
           <div className="space-y-8">
+            {/* Indexing Progress Banner */}
+            {(repo?.index_status === "indexing" || repo?.index_status === "pending" || (!repo?.is_indexed && repo)) && (
+              <div className="relative overflow-hidden rounded-2xl border border-purple-500/30 bg-purple-500/5 p-5">
+                <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-purple-500 to-transparent" style={{ animation: 'shimmer 1.5s linear infinite' }} />
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0">
+                    <div className="w-5 h-5 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-purple-200 font-semibold text-sm mb-1">
+                      TestPilot AI is analyzing <span className="text-purple-300">{repo?.full_name}</span>
+                    </p>
+                    <p className="text-gray-400 text-xs mb-3">
+                      Cloning repository → Parsing AST graph → Building dependency graph → Generating embeddings
+                    </p>
+                    <div className="w-full bg-white/5 rounded-full h-1.5">
+                      <div className="h-1.5 rounded-full bg-gradient-to-r from-purple-600 to-blue-500 animate-pulse" style={{ width: '65%' }} />
+                    </div>
+                    <p className="text-gray-500 text-[11px] mt-2">This typically takes 1–2 minutes. This page will update automatically.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Header */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
                 <div className="flex items-center space-x-3 mb-2">
                   <h1 className="text-2xl font-bold tracking-tight">{repo?.full_name}</h1>
-                  <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded border border-blue-500/20 bg-blue-500/5 text-blue-400`}>
+                  <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded border ${
+                    repo?.index_status === "indexing" || repo?.index_status === "pending"
+                      ? "border-purple-500/20 bg-purple-500/5 text-purple-400"
+                      : "border-blue-500/20 bg-blue-500/5 text-blue-400"
+                  }`}>
                     {repo?.index_status}
                   </span>
                 </div>
                 <p className="text-gray-500 text-sm max-w-2xl">
-                  {repo?.description || (
-                    (repo?.full_name || "").toLowerCase().includes("testpilot")
-                      ? "AI-powered test generation, AST parsing, and PR risk analysis platform for multi-language codebases."
-                      : (repo?.full_name || "").toLowerCase().includes("portfolio")
-                      ? "Modern portfolio web application showcasing AI projects, full-stack systems, and interactive UI design."
-                      : `Automated test generation and AST code indexing for ${repo?.name || "this codebase"}.`
-                  )}
+                  {repo?.description || `${repo?.language || "Multi-language"} repository indexed for automated AST analysis.`}
                 </p>
               </div>
 

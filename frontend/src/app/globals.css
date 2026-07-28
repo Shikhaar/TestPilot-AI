@@ -110,6 +110,12 @@ body {
   animation: pulse-slow 6s ease-in-out infinite;
 }
 
+/* Shimmer sweep animation for indexing progress */
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
 /* Custom Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;

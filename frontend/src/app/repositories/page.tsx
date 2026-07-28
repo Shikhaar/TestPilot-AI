@@ -23,6 +23,18 @@ export default function Repositories() {
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState("");
 
+  const isIndexing = (repo: Repository) =>
+    repo.index_status === "indexing" || repo.index_status === "pending" || !repo.is_indexed;
+
+  const fetchRepos = async () => {
+    try {
+      const res = await repositoriesApi.list().catch(() => null);
+      if (res && res.items) setRepos(res.items);
+    } catch (e) {
+      console.error("Failed to refresh repositories", e);
+    }
+  };
+
   useEffect(() => {
     async function loadData() {
       try {
@@ -45,6 +57,14 @@ export default function Repositories() {
     }
     loadData();
   }, []);
+
+  // Auto-poll every 5 seconds while any repo is still indexing
+  useEffect(() => {
+    const hasIndexing = repos.some(isIndexing);
+    if (!hasIndexing) return;
+    const interval = setInterval(fetchRepos, 5000);
+    return () => clearInterval(interval);
+  }, [repos]);
 
   const handleConnect = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -179,42 +199,65 @@ export default function Repositories() {
         ) : (
           <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {repos.map((repo) => (
-              <div key={repo.id} className="glass-card p-6 flex flex-col justify-between h-56">
+              <div key={repo.id} className={`glass-card p-6 flex flex-col justify-between h-56 relative overflow-hidden ${
+                isIndexing(repo) ? "border border-purple-500/30" : ""
+              }`}>
+                {/* Indexing shimmer bar */}
+                {isIndexing(repo) && (
+                  <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-purple-500 to-transparent animate-[shimmer_1.5s_ease-in-out_infinite]" style={{ backgroundSize: '200% 100%', animation: 'shimmer 1.5s linear infinite' }} />
+                )}
                 <div>
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="text-base font-bold text-gray-100 hover:text-purple-400 transition">
                       <Link href={`/repositories/${repo.id}`}>{repo.full_name}</Link>
                     </h3>
-                    <span className={`text-[10px] px-2 py-0.5 rounded border ${
-                      repo.is_private
-                        ? "text-orange-400 border-orange-500/20 bg-orange-500/5"
-                        : "text-green-400 border-green-500/20 bg-green-500/5"
-                    }`}>
-                      {repo.is_private ? "Private" : "Public"}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {isIndexing(repo) && (
+                        <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded border text-purple-300 border-purple-500/30 bg-purple-500/10">
+                          <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+                          Indexing…
+                        </span>
+                      )}
+                      <span className={`text-[10px] px-2 py-0.5 rounded border ${
+                        repo.is_private
+                          ? "text-orange-400 border-orange-500/20 bg-orange-500/5"
+                          : "text-green-400 border-green-500/20 bg-green-500/5"
+                      }`}>
+                        {repo.is_private ? "Private" : "Public"}
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-gray-400 text-xs line-clamp-2 mb-4">
-                    {repo.description || (
-                      repo.full_name.toLowerCase().includes("testpilot")
-                        ? "AI-powered test generation, AST parsing, and PR risk analysis platform for multi-language codebases."
-                        : repo.full_name.toLowerCase().includes("portfolio")
-                        ? "Modern portfolio web application showcasing AI projects, full-stack systems, and interactive UI design."
-                        : `Automated test generation and AST code indexing for ${repo.name}.`
-                    )}
-                  </p>
+                  {isIndexing(repo) ? (
+                    <div className="space-y-1.5 mb-4">
+                      <p className="text-purple-300/70 text-xs">
+                        🔍 TestPilot AI is cloning and parsing this repository's AST graph. This usually takes 1–2 minutes.
+                      </p>
+                      <div className="w-full bg-white/5 rounded-full h-1">
+                        <div className="bg-purple-500 h-1 rounded-full animate-pulse" style={{ width: '60%' }} />
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-gray-400 text-xs line-clamp-2 mb-4">
+                      {repo.description || `${repo.language || "Multi-language"} repository indexed for automated AST analysis.`}
+                    </p>
+                  )}
                 </div>
 
                 <div className="border-t border-white/5 pt-4 flex justify-between items-center text-xs text-gray-500">
-                  <div className="flex space-x-4">
-                    <span>Lang: <strong className="text-gray-300">{repo.language || "Unknown"}</strong></span>
-                    <span>Health: <strong className="text-purple-400">{repo.health_score ? repo.health_score.toFixed(1) : "N/A"}</strong></span>
-                    <span>Cov: <strong className="text-gray-300">{repo.coverage_percentage ? `${repo.coverage_percentage}%` : "N/A"}</strong></span>
-                  </div>
+                  {isIndexing(repo) ? (
+                    <span className="text-gray-500 italic">Metrics available after indexing completes…</span>
+                  ) : (
+                    <div className="flex space-x-4">
+                      <span>Lang: <strong className="text-gray-300">{repo.language || "Unknown"}</strong></span>
+                      <span>Health: <strong className="text-purple-400">{repo.health_score ? repo.health_score.toFixed(1) : "N/A"}</strong></span>
+                      <span>Cov: <strong className="text-gray-300">{repo.coverage_percentage ? `${repo.coverage_percentage}%` : "N/A"}</strong></span>
+                    </div>
+                  )}
                   <Link
                     href={`/repositories/${repo.id}`}
                     className="text-purple-400 hover:text-purple-300 font-semibold"
                   >
-                    View Details →
+                    {isIndexing(repo) ? "View Progress →" : "View Details →"}
                   </Link>
                 </div>
               </div>
