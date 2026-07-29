@@ -56,13 +56,20 @@ export const repositoriesApi = {
   },
 
   disconnect: async (id: string) => {
-    const path = id.includes("/") ? id : encodeURIComponent(id);
+    // 1. Try static POST /repositories/disconnect first (100% immune to 405 Method Not Allowed)
     try {
-      const res = await client.delete<{ success: boolean; message: string }>(`/repositories/${path}`);
+      const res = await client.post<{ success: boolean; message: string }>("/repositories/disconnect", { id });
       return res.data;
     } catch (_err) {
-      const res = await client.post<{ success: boolean; message: string }>(`/repositories/${path}/disconnect`);
-      return res.data;
+      // 2. Fallback to path-based DELETE or POST
+      const path = id.includes("/") ? id : encodeURIComponent(id);
+      try {
+        const res = await client.delete<{ success: boolean; message: string }>(`/repositories/${path}`);
+        return res.data;
+      } catch (_err2) {
+        const res = await client.post<{ success: boolean; message: string }>(`/repositories/${path}/disconnect`);
+        return res.data;
+      }
     }
   },
 

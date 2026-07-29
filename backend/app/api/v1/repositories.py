@@ -552,8 +552,27 @@ async def get_repository(
     return APIResponse(data=detail_data)
 
 
-@router.post("/{repo_id:path}/disconnect", response_model=APIResponse[dict[str, Any]])
+from pydantic import BaseModel
+
+
+class RepositoryDisconnectRequest(BaseModel):
+    id: str | None = None
+    full_name: str | None = None
+
+
+@router.post("/disconnect", response_model=APIResponse[dict[str, Any]])
+async def disconnect_repository_body(
+    payload: RepositoryDisconnectRequest,
+    db: DBSession,
+    current_user: CurrentUser,
+) -> APIResponse[dict[str, Any]]:
+    """Disconnect repository via POST body."""
+    target_id = payload.id or payload.full_name or ""
+    return await disconnect_repository(repo_id=target_id, db=db, current_user=current_user)
+
+
 @router.delete("/{repo_id:path}", response_model=APIResponse[dict[str, Any]])
+@router.post("/{repo_id:path}/disconnect", response_model=APIResponse[dict[str, Any]])
 async def disconnect_repository(
     repo_id: str,
     db: DBSession,
@@ -567,33 +586,47 @@ async def disconnect_repository(
             detail=f"Repository '{repo_id}' not found",
         )
 
-    # 1. Clean up local clone directory on disk
+    # 1. Clean up local clone directory on disk safely
     settings = get_settings()
     repo_path = settings.repo_storage_path / repo.id
     if repo_path.exists() and repo_path.is_dir():
+        import os
         import shutil
+        import stat
+
+        def _on_rm_error(func: Any, path: str, exc_info: Any) -> None:
+            with contextlib.suppress(Exception):
+                os.chmod(path, stat.S_IWRITE)
+                func(path)
 
         with contextlib.suppress(Exception):
-            shutil.rmtree(repo_path)
+            shutil.rmtree(repo_path, onerror=_on_rm_error)
 
-    # 2. Clean up Qdrant vector points
+    # 2. Clean up Qdrant vector points in non-blocking background thread
     with contextlib.suppress(Exception):
-        qdrant = get_qdrant_client()
-        from qdrant_client.http import models as qmodels
+        import asyncio
 
-        qdrant.delete(
-            collection_name="code_symbols",
-            points_selector=qmodels.FilterSelector(
-                filter=qmodels.Filter(
-                    must=[
-                        qmodels.FieldCondition(
-                            key="repository_id",
-                            match=qmodels.MatchValue(value=repo.id),
+        def _clean_qdrant() -> None:
+            with contextlib.suppress(Exception):
+                qdrant = get_qdrant_client()
+                from qdrant_client.http import models as qmodels
+
+                qdrant.delete(
+                    collection_name="code_symbols",
+                    points_selector=qmodels.FilterSelector(
+                        filter=qmodels.Filter(
+                            must=[
+                                qmodels.FieldCondition(
+                                    key="repository_id",
+                                    match=qmodels.MatchValue(value=repo.id),
+                                )
+                            ]
                         )
-                    ]
+                    ),
                 )
-            ),
-        )
+
+        loop = asyncio.get_running_loop()
+        loop.run_in_executor(None, _clean_qdrant)
 
     repo_info = {"id": repo.id, "full_name": repo.full_name}
 
