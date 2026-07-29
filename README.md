@@ -27,7 +27,7 @@ Modern software engineering teams face significant friction verifying regression
 
 ## Connected Repositories
 
-![Connected Repositories](docs/images/repositories.png)
+![Connected Repositories]
 
 > **Repository Management** — Connect GitHub repositories, track AST indexing progress, monitor health scores, and manage connected codebases from a unified view.
 
@@ -35,7 +35,7 @@ Modern software engineering teams face significant friction verifying regression
 
 ## System Architecture
 
-![TestPilot AI Architecture Diagram](docs/images/architecture.png)
+![TestPilot AI Architecture Diagram]
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
