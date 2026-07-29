@@ -159,9 +159,9 @@ QDRANT_URL=http://localhost:6333
 cd backend
 poetry install
 poetry run alembic upgrade head
-poetry run uvicorn app.main:app --port 8005 --reload
+poetry run uvicorn app.main:app --port 8000 --reload
 ```
-FastAPI Swagger documentation will be available at `http://localhost:8005/docs`.
+FastAPI Swagger documentation will be available at `http://localhost:8000/docs`.
 
 #### 4. Run Frontend Web App
 ```bash
@@ -188,7 +188,7 @@ Frontend interface will be available at `http://localhost:3000`.
 | Service | Endpoint | Purpose |
 | :--- | :--- | :--- |
 | **Web Interface** | `http://localhost:3000` | Application frontend dashboard |
-| **Backend OpenAPI Docs** | `http://localhost:8005/docs` | Interactive Swagger API specification |
+| **Backend OpenAPI Docs** | `http://localhost:8000/docs` | Interactive Swagger API specification |
 | **Qdrant Vector Console** | `http://localhost:6333/dashboard` | Vector storage & collection management |
 | **Celery Flower** | `http://localhost:5555` | Worker queue and task execution monitor |
 | **Grafana Telemetry** | `http://localhost:3001` | Prometheus metric visualization dashboard |
