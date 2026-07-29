@@ -13,7 +13,7 @@ TestPilot AI is an enterprise-grade AI software engineering platform designed to
 
 ## Platform Overview
 
-![TestPilot AI Dashboard](docs/images/dashboard.png)
+[TestPilot AI Dashboard](docs/images/dashboard.png)
 
 > **Platform Overview** — Automated regression testing, vector AST indexing, and risk impact analysis dashboard showing repository health metrics, live AI agent telemetry, and quality token analytics.
 
@@ -27,7 +27,7 @@ Modern software engineering teams face significant friction verifying regression
 
 ## Connected Repositories
 
-![Connected Repositories]
+[Connected Repositories]
 
 > **Repository Management** — Connect GitHub repositories, track AST indexing progress, monitor health scores, and manage connected codebases from a unified view.
 
@@ -35,7 +35,7 @@ Modern software engineering teams face significant friction verifying regression
 
 ## System Architecture
 
-![TestPilot AI Architecture Diagram]
+[TestPilot AI Architecture Diagram]
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
