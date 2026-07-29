@@ -39,7 +39,7 @@ Modern software engineering teams face significant friction verifying regression
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                           Next.js 15 Frontend                           │
+│                           Next.js 16 Frontend                           │
 │                        (React 19, TailwindCSS)                          │
 └────────────────────────────────────┬────────────────────────────────────┘
                                      │ REST / WebSockets / SSE
@@ -89,11 +89,17 @@ Built with FastAPI async endpoints, Redis Pub/Sub, and WebSockets to push live i
 ### One-Click GitHub Pull Request Creation
 Provides automated branch creation and commit generation via the GitHub API, allowing developers to push generated unit tests directly to active Pull Requests.
 
+### GitHub Linguist Language Detection
+Automatically detects the primary programming language of each connected repository by querying the GitHub Linguist API, providing accurate language metadata without requiring manual configuration.
+
+### Repository Disconnect & Storage Cleanup
+Provides a one-click disconnect feature from the repository dashboard. Disconnecting a repository removes the database record, deletes the local cloned storage directory, and purges all associated AST vector embeddings from Qdrant — freeing up disk space and vector storage instantly.
+
 ---
 
 ## Technology Stack
 
-* **Frontend**: Next.js 15, React 19, TailwindCSS, CSS Modules
+* **Frontend**: Next.js 16, React 19, TailwindCSS, CSS Modules
 * **Backend**: Python 3.12, FastAPI, SQLAlchemy 2 (AsyncIO), Alembic, Pydantic v2, Poetry
 * **AI & Agent Orchestration**: LangGraph, Tree-sitter, LiteLLM, Instructor, Sentence-Transformers
 * **Asynchronous Infrastructure**: Celery, Redis, Kombu
@@ -163,9 +169,9 @@ QDRANT_URL=http://localhost:6333
 cd backend
 poetry install
 poetry run alembic upgrade head
-poetry run uvicorn app.main:app --port 8000 --reload
+poetry run uvicorn app.main:app --port 8005 --reload
 ```
-FastAPI Swagger documentation will be available at `http://localhost:8000/docs`.
+FastAPI Swagger documentation will be available at `http://localhost:8005/docs`.
 
 #### 4. Run Frontend Web App
 ```bash
@@ -180,9 +186,10 @@ Frontend interface will be available at `http://localhost:3000`.
 ## Usage Workflow
 
 1. **Access the Dashboard**: Open `http://localhost:3000`.
-2. **Connect a Repository**: Select a pre-configured repository or enter any public GitHub repository (e.g., `expressjs/express` or `psf/requests`).
+2. **Connect a Repository**: Select a repository from your linked GitHub account or enter any public GitHub repository URL (e.g., `expressjs/express` or `psf/requests`).
 3. **Observe AST Indexing**: Track progress as the backend clones the target repository, parses AST symbols, and computes health and coverage metrics.
 4. **Generate Unit Tests**: Open the repository detail page, click **Generate Tests**, inspect the synthesized test file, and click **Create PR on GitHub** to push changes directly to the remote repository.
+5. **Disconnect a Repository**: Click the **Disconnect** button on any repository card to remove it from TestPilot AI, free up local disk storage, and purge all associated vector embeddings.
 
 ---
 
@@ -191,7 +198,7 @@ Frontend interface will be available at `http://localhost:3000`.
 | Service | Endpoint | Purpose |
 | :--- | :--- | :--- |
 | **Web Interface** | `http://localhost:3000` | Application frontend dashboard |
-| **Backend OpenAPI Docs** | `http://localhost:8000/docs` | Interactive Swagger API specification |
+| **Backend OpenAPI Docs** | `http://localhost:8005/docs` | Interactive Swagger API specification |
 | **Qdrant Vector Console** | `http://localhost:6333/dashboard` | Vector storage & collection management |
 | **Celery Flower** | `http://localhost:5555` | Worker queue and task execution monitor |
 | **Grafana Telemetry** | `http://localhost:3001` | Prometheus metric visualization dashboard |
