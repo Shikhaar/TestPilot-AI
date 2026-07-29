@@ -552,6 +552,7 @@ async def get_repository(
     return APIResponse(data=detail_data)
 
 
+@router.post("/{repo_id:path}/disconnect", response_model=APIResponse[dict[str, Any]])
 @router.delete("/{repo_id:path}", response_model=APIResponse[dict[str, Any]])
 async def disconnect_repository(
     repo_id: str,

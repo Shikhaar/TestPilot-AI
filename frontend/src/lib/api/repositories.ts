@@ -57,8 +57,13 @@ export const repositoriesApi = {
 
   disconnect: async (id: string) => {
     const path = id.includes("/") ? id : encodeURIComponent(id);
-    const res = await client.delete<{ success: boolean; message: string }>(`/repositories/${path}`);
-    return res.data;
+    try {
+      const res = await client.delete<{ success: boolean; message: string }>(`/repositories/${path}`);
+      return res.data;
+    } catch (_err) {
+      const res = await client.post<{ success: boolean; message: string }>(`/repositories/${path}/disconnect`);
+      return res.data;
+    }
   },
 
   triggerReindex: async (id: string, force = false, branch?: string) => {
