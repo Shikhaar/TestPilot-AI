@@ -4,8 +4,11 @@
 [![CI Check Status](https://github.com/Shikhaar/TestPilot-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/Shikhaar/TestPilot-AI/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Shikhaar/TestPilot-AI/pulls)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-testpilot--ai--pi.vercel.app-000000?style=flat&logo=vercel)](https://testpilot-ai-pi.vercel.app)
 
 **Automated Regression Testing & Tree-Sitter AST Code Indexing Platform**
+
+Live Application: [https://testpilot-ai-pi.vercel.app](https://testpilot-ai-pi.vercel.app)
 
 TestPilot AI is an enterprise-grade AI software engineering platform designed to automate regression analysis, map codebase dependency impact trees, discover existing test structures, synthesize unit test suites using Large Language Models (LLMs), and automate Pull Request reviews on GitHub.
 
@@ -13,7 +16,7 @@ TestPilot AI is an enterprise-grade AI software engineering platform designed to
 
 ## Platform Overview
 
-[TestPilot AI Dashboard](docs/images/dashboard.png)
+![TestPilot AI Dashboard](docs/images/dashboard.png)
 
 > **Platform Overview** — Automated regression testing, vector AST indexing, and risk impact analysis dashboard showing repository health metrics, live AI agent telemetry, and quality token analytics.
 
