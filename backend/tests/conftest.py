@@ -86,11 +86,23 @@ async def db_session(test_engine) -> AsyncGenerator[AsyncSession, None]:
 
 
 @pytest.fixture
-def test_app(db_session: AsyncSession):
+def test_app(db_session: AsyncSession, test_engine):
     """Create a test FastAPI application with test DB."""
+    import app.database.session as session_module
+
+    session_factory = async_sessionmaker(
+        bind=test_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autoflush=False,
+    )
+    old_session_local = session_module.AsyncSessionLocal
+    session_module.AsyncSessionLocal = session_factory
+
     app.dependency_overrides[get_db] = lambda: db_session
     app.dependency_overrides[get_settings] = get_test_settings
     yield app
+    session_module.AsyncSessionLocal = old_session_local
     app.dependency_overrides.clear()
 
 

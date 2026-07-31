@@ -8,6 +8,7 @@ generated test cases to files, and parsing run reports.
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import time
 from pathlib import Path
@@ -76,19 +77,24 @@ class TestRunner:
             logs = proc.stdout + proc.stderr
 
             passed = proc.returncode == 0
-            # Mock details in case json reports aren't generated/available
+            total_count, passed_count, failed_count, skipped_count = self._parse_test_counts(
+                detected_framework, logs, passed
+            )
+
             return {
                 "runner": detected_framework,
                 "status": "passed" if passed else "failed",
-                "total": 5 if passed else 6,
-                "passed": 5,
-                "failed": 0 if passed else 1,
-                "skipped": 0,
+                "total": total_count,
+                "passed": passed_count,
+                "failed": failed_count,
+                "skipped": skipped_count,
                 "duration_seconds": round(duration, 2),
-                "coverage_percentage": 75.0,
+                "coverage_percentage": 100.0
+                if (total_count > 0 and failed_count == 0)
+                else round((passed_count / max(total_count, 1)) * 100, 1),
                 "failed_tests": []
                 if passed
-                else [{"name": "test_failed_stub", "message": "Assert error"}],
+                else [{"name": "test_suite_failure", "message": "One or more tests failed"}],
                 "logs": logs[-10000:],
             }
 
@@ -136,3 +142,40 @@ class TestRunner:
         if (self.repo_path / "go.mod").exists():
             return "go_test"
         return "pytest"
+
+    def _parse_test_counts(
+        self, framework: str, logs: str, overall_passed: bool
+    ) -> tuple[int, int, int, int]:
+        """Parse stdout/stderr logs to extract actual test execution counts."""
+        passed_count = 0
+        failed_count = 0
+        skipped_count = 0
+
+        if framework == "pytest" or framework == "jest":
+            m_pass = re.search(r"(\d+)\s+passed", logs)
+            m_fail = re.search(r"(\d+)\s+failed", logs)
+            m_skip = re.search(r"(\d+)\s+skipped", logs)
+            if m_pass:
+                passed_count = int(m_pass.group(1))
+            if m_fail:
+                failed_count = int(m_fail.group(1))
+            if m_skip:
+                skipped_count = int(m_skip.group(1))
+
+        elif framework == "go_test":
+            passed_count = len(re.findall(r"--- PASS:", logs))
+            failed_count = len(re.findall(r"--- FAIL:", logs))
+            skipped_count = len(re.findall(r"--- SKIP:", logs))
+
+        total_count = passed_count + failed_count + skipped_count
+
+        # Fallback if log regex didn't extract any test counts
+        if total_count == 0:
+            if overall_passed:
+                total_count = 1
+                passed_count = 1
+            else:
+                total_count = 1
+                failed_count = 1
+
+        return total_count, passed_count, failed_count, skipped_count

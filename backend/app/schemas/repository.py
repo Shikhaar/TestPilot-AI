@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from enum import StrEnum
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from app.schemas.common import BaseSchema
 
@@ -31,6 +32,16 @@ class RepositoryConnectRequest(BaseSchema):
         default=None,
         description="GitHub App installation ID (for private repos)",
     )
+
+    @field_validator("full_name")
+    @classmethod
+    def validate_full_name(cls, v: str) -> str:
+        v = v.strip()
+        if not re.match(r"^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$", v):
+            raise ValueError(
+                "full_name must be in 'owner/repository' format (e.g. 'octocat/Hello-World')"
+            )
+        return v
 
 
 class RepositoryIndexRequest(BaseSchema):

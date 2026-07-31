@@ -18,7 +18,9 @@ def sign_payload(payload: bytes, secret: str) -> str:
 
 from app.core.config import get_settings
 
-WEBHOOK_SECRET = get_settings().github_webhook_secret
+
+def get_webhook_secret() -> str:
+    return get_settings().github_webhook_secret
 
 
 @pytest.mark.asyncio
@@ -26,7 +28,7 @@ WEBHOOK_SECRET = get_settings().github_webhook_secret
 async def test_webhook_ping(client: AsyncClient) -> None:
     """Test GitHub webhook ping event."""
     payload = json.dumps({"zen": "Keep it logically awesome."}).encode()
-    signature = sign_payload(payload, WEBHOOK_SECRET)
+    signature = sign_payload(payload, get_webhook_secret())
 
     response = await client.post(
         "/api/v1/webhooks/github",
@@ -99,7 +101,7 @@ async def test_webhook_pr_opened_unregistered_repo(client: AsyncClient) -> None:
         }
     ).encode()
 
-    signature = sign_payload(payload, WEBHOOK_SECRET)
+    signature = sign_payload(payload, get_webhook_secret())
 
     response = await client.post(
         "/api/v1/webhooks/github",

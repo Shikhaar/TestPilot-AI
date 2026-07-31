@@ -10,8 +10,9 @@ from __future__ import annotations
 import json
 from functools import lru_cache
 from pathlib import Path
+from typing import Self
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -215,6 +216,23 @@ class Settings(BaseSettings):
     def is_development(self) -> bool:
         """Check if running in development."""
         return self.app_env == "development"
+
+    @model_validator(mode="after")
+    def validate_production_secrets(self) -> Self:
+        """Enforce strong secret keys when running in production."""
+        if self.app_env == "production":
+            weak_secret_defaults = {
+                "change-me-to-a-long-random-string",
+                "change-me-to-another-long-random-key",
+                "",
+            }
+            if self.secret_key in weak_secret_defaults:
+                raise ValueError("SECRET_KEY must be set to a strong unique secret in production.")
+            if self.jwt_secret_key in weak_secret_defaults:
+                raise ValueError(
+                    "JWT_SECRET_KEY must be set to a strong unique secret in production."
+                )
+        return self
 
 
 @lru_cache(maxsize=1)

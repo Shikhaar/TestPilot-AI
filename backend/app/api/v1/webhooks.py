@@ -5,7 +5,7 @@ from sqlalchemy import select
 
 from app.core.logging import get_logger
 from app.core.security import verify_github_webhook_signature
-from app.database.session import get_session
+from app.database import session
 from app.models.pull_request import PullRequest
 from app.models.repository import Repository
 from app.tasks.pr_pipeline import run_pr_analysis
@@ -126,7 +126,7 @@ async def _handle_pull_request_event(
         return
 
     # Look up or create the PR record and trigger analysis
-    async with get_session() as db:
+    async with session.AsyncSessionLocal() as db:
         repo_result = await db.execute(
             select(Repository).where(Repository.full_name == repo_data.get("full_name"))
         )
@@ -171,22 +171,29 @@ async def _handle_pull_request_event(
             await db.flush()
 
     # Enqueue the analysis task
-    run_pr_analysis.delay(
-        pr_id=pr.id,
-        repository_id=repo.id,
-        repo_full_name=repo.full_name,
-        pr_number=pr.pr_number,
-        head_sha=pr.head_sha,
-        base_sha=pr.base_sha,
-        installation_id=str(installation.get("id")) if installation else None,
-    )
-
-    logger.info(
-        "PR analysis task enqueued",
-        pr_id=pr.id,
-        pr_number=pr.pr_number,
-        repo=repo.full_name,
-    )
+    try:
+        run_pr_analysis.delay(
+            pr_id=pr.id,
+            repository_id=repo.id,
+            repo_full_name=repo.full_name,
+            pr_number=pr.pr_number,
+            head_sha=pr.head_sha,
+            base_sha=pr.base_sha,
+            installation_id=str(installation.get("id")) if installation else None,
+        )
+        logger.info(
+            "PR analysis task enqueued",
+            pr_id=pr.id,
+            pr_number=pr.pr_number,
+            repo=repo.full_name,
+        )
+    except Exception as e:
+        logger.error(
+            "Failed to enqueue PR analysis task (broker connection failed)",
+            error=str(e),
+            pr_id=pr.id,
+            repo=repo.full_name,
+        )
 
 
 async def _handle_pr_merged(pr_data: dict, repo_data: dict) -> None:
