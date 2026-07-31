@@ -128,12 +128,12 @@ async def github_callback(
 
     settings = get_settings()
 
-    # Set HTTP-only cookie for refresh token
+    # Set HTTP-only cookie for refresh token (secure=False in development for HTTP compatibility)
     response.set_cookie(
         key="refresh_token",
         value=jwt_refresh,
         httponly=True,
-        secure=True,
+        secure=settings.is_production,
         samesite="lax",
         max_age=settings.jwt_refresh_token_expire_days * 86400,
         path="/api/v1/auth",
@@ -220,7 +220,7 @@ async def dev_login(db: DBSession, response: Response) -> TokenResponse:
         key="refresh_token",
         value=jwt_refresh,
         httponly=True,
-        secure=False,
+        secure=settings.is_production,
         samesite="lax",
         max_age=settings.jwt_refresh_token_expire_days * 86400,
         path="/api/v1/auth",
