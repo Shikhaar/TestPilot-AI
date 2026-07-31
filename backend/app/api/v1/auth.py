@@ -30,14 +30,13 @@ async def github_login_url(redirect_uri: str | None = None) -> dict[str, str]:
 
     cb_uri = redirect_uri or "http://localhost:3000/auth/callback"
 
-    # If using a GitHub App (Client ID starting with 'Iv'), try OAuth authorize with explicit redirect_uri first
+    # GitHub Apps (client ID starts with 'Iv') do NOT support OAuth scopes.
+    # Permissions are defined at installation time. Only OAuth Apps use scope=.
     if settings.github_client_id.startswith("Iv"):
-        # Provide fallback installation URL if OAuth authorize fails
         url = (
             f"https://github.com/login/oauth/authorize"
             f"?client_id={settings.github_client_id}"
             f"&redirect_uri={cb_uri}"
-            f"&scope=repo,read:user,user:email"
             f"&state={state}"
         )
     else:
