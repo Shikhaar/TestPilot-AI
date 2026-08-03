@@ -4,12 +4,12 @@ import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { authApi } from "@/lib/api/auth";
+import Logo from "@/components/Logo";
 
 export default function Login() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [devLoading, setDevLoading] = useState(false);
   const [error, setError] = useState("");
   const [showGoogleModal, setShowGoogleModal] = useState(false);
   const [gmailInput, setGmailInput] = useState("");
@@ -88,10 +88,8 @@ export default function Login() {
       {/* Main Glassmorphism Card */}
       <div className="relative z-10 w-full max-w-md p-8 sm:p-10 rounded-2xl bg-black/60 border border-white/10 shadow-2xl backdrop-blur-xl text-center space-y-8">
         {/* Brand Icon & Heading */}
-        <div className="space-y-3">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400 font-black text-xl mb-1 shadow-lg shadow-purple-500/10">
-            ⚡
-          </div>
+        <div className="space-y-3 flex flex-col items-center">
+          <Logo variant="icon" size="xl" className="mb-1" />
           <h1 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
             Sign in to <span className="bg-gradient-to-r from-purple-400 via-indigo-300 to-blue-400 bg-clip-text text-transparent">TestPilot AI</span>
           </h1>
@@ -105,7 +103,7 @@ export default function Login() {
           {/* GitHub OAuth Button */}
           <button
             onClick={handleGitHubLogin}
-            disabled={loading || googleLoading || devLoading}
+            disabled={loading || googleLoading}
             className="w-full flex justify-center items-center gap-3 px-5 py-3.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl border border-purple-400/30 disabled:opacity-50 transition-all duration-200 text-sm shadow-lg shadow-purple-900/30 hover:shadow-purple-700/40 active:scale-[0.98]"
           >
             <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -124,7 +122,7 @@ export default function Login() {
           {/* Google / Gmail Sign In Button */}
           <button
             onClick={() => setShowGoogleModal(true)}
-            disabled={loading || googleLoading || devLoading}
+            disabled={loading || googleLoading}
             className="w-full flex justify-center items-center gap-3 px-5 py-3.5 bg-zinc-900/90 hover:bg-zinc-800 text-gray-200 font-medium rounded-xl border border-white/10 hover:border-white/20 disabled:opacity-50 transition-all duration-200 text-sm active:scale-[0.98]"
           >
             {/* Google SVG Icon */}
@@ -144,17 +142,6 @@ export default function Login() {
             {error}
           </div>
         )}
-
-        {/* Developer Instant Test Access */}
-        <div className="pt-2 border-t border-white/5">
-          <button
-            onClick={handleDevLogin}
-            disabled={loading || googleLoading || devLoading}
-            className="text-xs text-gray-500 hover:text-purple-400 transition-colors font-mono underline underline-offset-4"
-          >
-            {devLoading ? "Logging in..." : "⚡ Quick Developer Bypass (Local Testing)"}
-          </button>
-        </div>
       </div>
 
       {/* Google / Gmail Modal */}
