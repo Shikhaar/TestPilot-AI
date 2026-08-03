@@ -3,6 +3,7 @@ import uuid
 
 from fastapi import APIRouter, Cookie, HTTPException, Response, status
 from jose import JWTError
+from pydantic import BaseModel
 from sqlalchemy import select
 
 from app.api.deps import CurrentUser, DBSession
