@@ -29,9 +29,11 @@ client.interceptors.response.use(
       originalRequest._retry = true;
       try {
         // Hits /auth/refresh — browser automatically attaches HTTP-only cookie
+        // Send no body so FastAPI treats the optional RefreshTokenRequest as None
+        // and falls through to reading the refresh_token from the HTTP-only cookie
         const res = await axios.post(
           `${API_BASE_URL}/auth/refresh`,
-          {},
+          undefined,
           { withCredentials: true }
         );
         const { access_token } = res.data;
