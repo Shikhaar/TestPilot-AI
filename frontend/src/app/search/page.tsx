@@ -1,41 +1,48 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import { aiApi, CodeSearchResult } from "@/lib/api/ai";
+import { repositoriesApi, Repository } from "@/lib/api/repositories";
 
 export default function Search() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<CodeSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
+  const [repositories, setRepositories] = useState<Repository[]>([]);
+  const [selectedRepoId, setSelectedRepoId] = useState<string>("");
+  const [loadingRepos, setLoadingRepos] = useState(true);
+
+  useEffect(() => {
+    async function loadRepos() {
+      try {
+        const data = await repositoriesApi.list();
+        const repos = data.items || [];
+        setRepositories(repos);
+        if (repos.length > 0) {
+          setSelectedRepoId(repos[0].id);
+        }
+      } catch (err) {
+        console.error("Failed to load repositories for search", err);
+      } finally {
+        setLoadingRepos(false);
+      }
+    }
+    loadRepos();
+  }, []);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!query) return;
+    if (!query || !selectedRepoId) return;
 
     setSearching(true);
     try {
-      // Connects to RAG semantic query
-      const data = await aiApi.search("repo-1", query);
-      setResults(data.results);
+      // Query selected repository via Qdrant semantic search engine
+      const data = await aiApi.search(selectedRepoId, query);
+      setResults(data.results || []);
     } catch (err) {
-      console.error("Failed to run code search, using mock fallback", err);
-      setResults([
-        {
-          file_path: "app/core/security.py",
-          language: "Python",
-          snippet: `def create_refresh_token(subject: str | int) -> str:
-    now = datetime.now(tz=timezone.utc)
-    expire = now + timedelta(days=settings.jwt_refresh_token_expire_days)
-    payload = {"sub": str(subject), "type": "refresh"}
-    return jwt.encode(payload, settings.jwt_secret_key)`,
-          score: 0.89,
-          function_name: "create_refresh_token",
-          class_name: null,
-          line_start: 100,
-          line_end: 118,
-        },
-      ]);
+      console.error("Failed to run code search", err);
+      setResults([]);
     } finally {
       setSearching(false);
     }
@@ -52,6 +59,26 @@ export default function Search() {
         </header>
 
         <form onSubmit={handleSearch} className="flex gap-4 mb-8">
+          {/* Repository Selector Dropdown */}
+          <select
+            value={selectedRepoId}
+            onChange={(e) => setSelectedRepoId(e.target.value)}
+            disabled={loadingRepos || repositories.length === 0}
+            className="px-4 py-2.5 glass-input text-sm bg-black/60 text-gray-200 border border-white/10 rounded-lg outline-none focus:border-purple-500 max-w-xs cursor-pointer"
+          >
+            {loadingRepos ? (
+              <option value="">Loading repositories...</option>
+            ) : repositories.length === 0 ? (
+              <option value="">No repositories connected</option>
+            ) : (
+              repositories.map((repo) => (
+                <option key={repo.id} value={repo.id} className="bg-gray-900 text-gray-200">
+                  {repo.full_name} {repo.is_indexed ? "✓" : "(Not Indexed)"}
+                </option>
+              ))
+            )}
+          </select>
+
           <input
             type="text"
             value={query}
@@ -61,13 +88,22 @@ export default function Search() {
           />
           <button
             type="submit"
-            className="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-semibold transition"
+            disabled={searching || !selectedRepoId}
+            className="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white rounded-lg text-sm font-semibold transition"
           >
             {searching ? "Searching..." : "Search"}
           </button>
         </form>
 
         <section className="space-y-6">
+          {results.length === 0 && !searching && (
+            <div className="glass-panel p-8 text-center text-gray-500 text-sm">
+              {repositories.length === 0
+                ? "Connect a repository first to start searching code."
+                : "Type a query and hit Search to view semantic code results."}
+            </div>
+          )}
+
           {results.map((res, idx) => (
             <div key={idx} className="glass-panel p-6">
               <div className="flex justify-between items-start mb-4">
@@ -77,7 +113,7 @@ export default function Search() {
                 </div>
                 <span className="text-xs text-gray-500 font-mono">Score: {(res.score * 100).toFixed(0)}%</span>
               </div>
-              <div className="p-4 border border-white/5 rounded bg-black/40 font-mono text-xs text-gray-300 whitespace-pre">
+              <div className="p-4 border border-white/5 rounded bg-black/40 font-mono text-xs text-gray-300 whitespace-pre overflow-x-auto">
                 {res.snippet}
               </div>
             </div>

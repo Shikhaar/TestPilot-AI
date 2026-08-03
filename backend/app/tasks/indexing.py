@@ -310,7 +310,7 @@ async def _generate_and_store_embeddings(
                 )
 
         if points:
-            qdrant.upsert_points(collection_name="code_symbols", points=points)  # type: ignore[attr-defined]
+            qdrant.upsert(collection_name="code_symbols", points=points)
             logger.info(
                 "Embeddings stored in Qdrant", repository_id=repository_id, count=len(points)
             )
