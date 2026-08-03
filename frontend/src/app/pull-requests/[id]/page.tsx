@@ -34,8 +34,10 @@ export default function PRDetailPage({ params }: { params: Promise<{ id: string 
         ]);
         setPr(prData);
         setGeneratedTests(testData.items);
+        setIsUsingMock(false);
       } catch (err) {
         console.error("Failed to load PR details, using mock fallback", err);
+        setIsUsingMock(true);
         setPr({
           id,
           repository_id: "repo-1",
@@ -132,6 +134,15 @@ def test_secure_cookie_refresh(client, test_user):
                 Post Review to GitHub
               </button>
             </header>
+
+            {isUsingMock && (
+              <div className="mb-6 p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-between text-amber-300 text-sm">
+                <div className="flex items-center gap-3">
+                  <span className="px-2 py-0.5 rounded bg-amber-500/20 font-semibold text-xs text-amber-400">Sample PR Analysis</span>
+                  <span>PR analysis details could not be retrieved from the backend. Displaying sample analysis preview data.</span>
+                </div>
+              </div>
+            )}
 
             {/* Navigation Tabs (Suggestion #5) */}
             <nav className="flex space-x-1 border-b border-white/5 pb-px">

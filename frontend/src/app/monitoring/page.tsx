@@ -7,14 +7,17 @@ import { dashboardApi, DetailedMetrics } from "@/lib/api/dashboard";
 export default function Monitoring() {
   const [detailed, setDetailed] = useState<DetailedMetrics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isUsingMock, setIsUsingMock] = useState(false);
 
   useEffect(() => {
     async function loadData() {
       try {
         const data = await dashboardApi.getDetailedMetrics();
         setDetailed(data);
+        setIsUsingMock(false);
       } catch (err) {
         console.error("Failed to load metrics, using mock fallback", err);
+        setIsUsingMock(true);
         setDetailed({
           ai_usage: { total_tokens: 450200, estimated_cost_usd: 1.84 },
           coverage: { average_percentage: 82.4 },
@@ -31,12 +34,21 @@ export default function Monitoring() {
       <Sidebar />
       
       <main className="flex-1 overflow-y-auto px-10 py-8">
-        <header className="flex justify-between items-center mb-8">
+        <header className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">System Monitoring</h1>
             <p className="text-gray-500 text-sm">Real-time API performance, Celery queues, and LLM telemetry</p>
           </div>
         </header>
+
+        {isUsingMock && (
+          <div className="mb-6 p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-between text-amber-300 text-sm">
+            <div className="flex items-center gap-3">
+              <span className="px-2 py-0.5 rounded bg-amber-500/20 font-semibold text-xs text-amber-400">Sample Telemetry</span>
+              <span>Live Celery queue telemetry unavailable or backend metrics offline. Displaying sample monitoring data for preview.</span>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="flex justify-center py-24">

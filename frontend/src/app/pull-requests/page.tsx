@@ -12,6 +12,7 @@ export default function PullRequestsPage() {
   const [filterState, setFilterState] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
+  const [isUsingMock, setIsUsingMock] = useState(false);
   const pageSize = 15;
 
   useEffect(() => {
@@ -20,15 +21,15 @@ export default function PullRequestsPage() {
       try {
         // Fetch all PRs from API
         const data = await pullRequestsApi.list(undefined, filterState || undefined, page, pageSize).catch(() => null);
-        if (data && data.items) {
-          setPrs(data.items || []);
-          setTotal(data.total || 0);
+        if (data && data.items && data.items.length > 0) {
+          setPrs(data.items);
+          setTotal(data.total || data.items.length);
+          setIsUsingMock(false);
         } else {
-          throw new Error("Backend offline - using mock PRs");
+          throw new Error("Backend returned empty or offline - using mock PRs");
         }
       } catch {
         // Fallback mock data for preview mode
-        // Fallback mock data
         const mockPRs: PullRequest[] = [
           {
             id: "pr-1",
@@ -58,12 +59,12 @@ export default function PullRequestsPage() {
             base_branch: "main",
             head_branch: "bugfix/race-condition",
             analysis_status: "running",
-            risk_level: "critical",
-            risk_score: 8.5,
-            coverage_delta: -0.8,
+            risk_level: "low",
+            risk_score: 2.1,
+            coverage_delta: 0.5,
             files_changed: 2,
             lines_added: 45,
-            lines_removed: 12,
+            lines_removed: 8,
             created_at: new Date().toISOString(),
           },
           {
@@ -87,6 +88,7 @@ export default function PullRequestsPage() {
         ];
         setPrs(mockPRs);
         setTotal(mockPRs.length);
+        setIsUsingMock(true);
       } finally {
         setLoading(false);
       }
@@ -108,12 +110,21 @@ export default function PullRequestsPage() {
 
       <main className="flex-1 overflow-y-auto px-10 py-8">
         {/* Header */}
-        <header className="flex justify-between items-center mb-8">
+        <header className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Pull Requests</h1>
             <p className="text-gray-500 text-sm">Monitor analysis history and code risk ratings</p>
           </div>
         </header>
+
+        {isUsingMock && (
+          <div className="mb-6 p-4 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-between text-amber-300 text-sm">
+            <div className="flex items-center gap-3">
+              <span className="px-2 py-0.5 rounded bg-amber-500/20 font-semibold text-xs text-amber-400">Sample Preview</span>
+              <span>No live PR analysis records found for connected repositories. Displaying sample PR preview data.</span>
+            </div>
+          </div>
+        )}
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
