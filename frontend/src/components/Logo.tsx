@@ -26,38 +26,27 @@ export default function Logo({ variant = "full", size = "md", className = "" }: 
           viewBox="0 0 100 100"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className="w-full h-full drop-shadow-md"
+          className="w-full h-full drop-shadow-sm"
         >
-          {/* Left Speed Lines */}
-          <path d="M 10 38 H 28" stroke="#2563EB" strokeWidth="5" strokeLinecap="round" />
-          <path d="M 4 52 H 28" stroke="#2563EB" strokeWidth="5" strokeLinecap="round" />
-          <path d="M 12 66 H 28" stroke="#2563EB" strokeWidth="5" strokeLinecap="round" />
+          {/* 3 Left Speed Lines (Blue) */}
+          <path d="M 23 37 H 36" stroke="#2563EB" strokeWidth="6" strokeLinecap="round" />
+          <path d="M 19 50 H 36" stroke="#2563EB" strokeWidth="6" strokeLinecap="round" />
+          <path d="M 23 63 H 36" stroke="#2563EB" strokeWidth="6" strokeLinecap="round" />
 
-          {/* Blue 'T' Top Bar & Diagonal Stem */}
-          <path d="M 32 26 H 76" stroke="#2563EB" strokeWidth="11" strokeLinecap="round" />
-          <circle cx="46" cy="38" r="4.5" fill="#2563EB" />
-          <path d="M 58 26 L 44 84" stroke="#2563EB" strokeWidth="11" strokeLinecap="round" />
+          {/* Slanted Blue 'T' */}
+          <path d="M 33 24 H 47" stroke="#2563EB" strokeWidth="12" strokeLinecap="round" />
+          <path d="M 45 24 L 40 82" stroke="#2563EB" strokeWidth="12" strokeLinecap="round" />
 
-          {/* Dark Charcoal/Navy 'P' Loop & Leg */}
+          {/* Slate Grey 'P' Loop & Leg */}
           <path
-            d="M 54 26 H 74 C 90 26 90 60 74 60 H 54"
-            stroke="#334155"
-            strokeWidth="11"
+            d="M 46 24 H 58 C 74 24 74 54 58 54 H 46"
+            stroke="#5C708D"
+            strokeWidth="12"
             fill="none"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
-          <path d="M 58 60 L 50 86" stroke="#334155" strokeWidth="11" strokeLinecap="round" />
-
-          {/* Checkmark inside 'P' loop */}
-          <path
-            d="M 62 44 L 70 52 L 83 36"
-            stroke="#2563EB"
-            strokeWidth="5.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-          />
+          <path d="M 46 54 L 41 82" stroke="#5C708D" strokeWidth="12" strokeLinecap="round" />
         </svg>
       </div>
 
