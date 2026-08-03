@@ -31,6 +31,14 @@ export const authApi = {
     return res.data;
   },
 
+  googleLogin: async (email?: string) => {
+    const res = await client.post<AuthResponse>("/auth/google-login", { email });
+    if (res.data.access_token) {
+      localStorage.setItem("access_token", res.data.access_token);
+    }
+    return res.data;
+  },
+
   handleCallback: async (code: string, state?: string) => {
     const res = await client.post<AuthResponse>("/auth/github/callback", {
       code,

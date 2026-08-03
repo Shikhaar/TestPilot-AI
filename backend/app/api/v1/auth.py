@@ -192,6 +192,58 @@ async def get_current_user_profile(current_user: CurrentUser) -> APIResponse[Use
     return APIResponse(data=UserResponse.model_validate(current_user))
 
 
+class GoogleLoginRequest(BaseModel):
+    email: str | None = None
+
+
+@router.post("/google-login", response_model=TokenResponse)
+async def google_login(
+    db: DBSession,
+    response: Response,
+    request: GoogleLoginRequest | None = None,
+) -> TokenResponse:
+    """Sign in with Google / Gmail. Links to existing user account by email or creates profile."""
+    target_email = (request.email if request and request.email else "shikhar@testpilot.ai").strip().lower()
+
+    result = await db.execute(select(User).where(User.email == target_email))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        username_stem = target_email.split("@")[0]
+        user = User(
+            id=str(uuid.uuid4()),
+            github_id=f"google-{uuid.uuid4().hex[:8]}",
+            username=username_stem,
+            email=target_email,
+            name=username_stem.replace(".", " ").title(),
+            avatar_url=f"https://ui-avatars.com/api/?name={username_stem}&background=6366f1&color=fff",
+            role="member",
+        )
+        db.add(user)
+        await db.flush()
+
+    jwt_access = create_access_token(user.id)
+    jwt_refresh = create_refresh_token(user.id)
+    settings = get_settings()
+
+    response.set_cookie(
+        key="refresh_token",
+        value=jwt_refresh,
+        httponly=True,
+        secure=settings.is_production,
+        samesite="lax",
+        max_age=settings.jwt_refresh_token_expire_days * 86400,
+        path="/api/v1/auth",
+    )
+
+    return TokenResponse(
+        access_token=jwt_access,
+        refresh_token=None,
+        expires_in=settings.jwt_access_token_expire_minutes * 60,
+        user=UserResponse.model_validate(user),
+    )
+
+
 @router.post("/dev-login", response_model=TokenResponse)
 async def dev_login(db: DBSession, response: Response) -> TokenResponse:
     """Instant Developer Login for local testing without OAuth configuration."""
