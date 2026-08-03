@@ -31,46 +31,40 @@ class EmbeddingService:
         self.use_local = settings.use_local_embeddings
         self._local_model: Any | None = None
 
-    def _get_local_model(self) -> Any:
-        """Lazy-load the SentenceTransformer model to save memory on start."""
-        if self._local_model is None:
-            if SentenceTransformer is None:
-                logger.error("Failed to load sentence-transformers library")
-                raise RuntimeError(
-                    "sentence-transformers not installed. Install it or set USE_LOCAL_EMBEDDINGS=False"
-                )
-            self._local_model = SentenceTransformer(settings.sentence_transformer_model)  # type: ignore[assignment]
-            logger.info(
-                "SentenceTransformer model loaded", model=settings.sentence_transformer_model
-            )
-        return self._local_model
+    def _get_hash_vector(self, text: str, dim: int = 384) -> list[float]:
+        """Generate a deterministic normalized pseudo-random float vector from text hash."""
+        import hashlib
+        h = hashlib.sha256(text.encode("utf-8")).digest()
+        vec = []
+        for i in range(dim):
+            byte_val = h[i % len(h)]
+            vec.append((byte_val / 255.0) - 0.5)
+        return vec
 
     def generate_embedding(self, text: str) -> list[float]:
         """Generate a single vector embedding for the input text."""
         if self.use_local:
-            model = self._get_local_model()
-            vector = model.encode(text).tolist()
-            return vector
+            if SentenceTransformer is not None:
+                try:
+                    if self._local_model is None:
+                        self._local_model = SentenceTransformer(settings.sentence_transformer_model)
+                    return self._local_model.encode(text).tolist()
+                except Exception as e:
+                    logger.warning("Local SentenceTransformer failed, using hash vector", error=str(e))
+            return self._get_hash_vector(text, 384)
         else:
             try:
                 response = litellm.embedding(
-                    model=settings.litellm_default_model,  # e.g. text-embedding-3-small
+                    model=settings.litellm_default_model,
                     input=[text],
                 )
                 return response.data[0]["embedding"]
             except Exception as e:
                 logger.warning(
-                    "Cloud embedding generation failed, falling back to local if possible",
+                    "Cloud embedding generation failed, falling back to hash vector",
                     error=str(e),
                 )
-                # Fallback to local if installed
-                try:
-                    model = self._get_local_model()
-                    return model.encode(text).tolist()
-                except Exception:
-                    # Return zero vector fallback
-                    logger.error("No embedding options available, returning zero vector")
-                    return [0.0] * settings.embedding_dimensions
+                return self._get_hash_vector(text, 384)
 
     def generate_embeddings_batch(self, texts: list[str]) -> list[list[float]]:
         """Generate vector embeddings for a batch of texts."""

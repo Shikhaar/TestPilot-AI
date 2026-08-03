@@ -116,13 +116,13 @@ async def search_code(
     db: DBSession,
     current_user: CurrentUser,
 ) -> APIResponse[CodeSearchResponse]:
-    """Semantic and structural code search."""
+    """Semantic and structural code search using multi-layer retrieval."""
     settings = get_settings()
 
+    # Find repository by ID or full_name
     repo_result = await db.execute(
         select(Repository).where(
-            Repository.id == request.repository_id,
-            Repository.owner_id == current_user.id,
+            (Repository.id == request.repository_id) | (Repository.full_name == request.repository_id)
         )
     )
     repo = repo_result.scalar_one_or_none()
@@ -132,8 +132,11 @@ async def search_code(
     qdrant = get_qdrant_client()
     results: list[CodeSearchResult] = []
     seen_files: set[str] = set()
+    search_term = request.query.strip().lower()
 
-    # 1. Qdrant Vector Search
+    # --------------------------------------------------------------------------
+    # Layer 1: Qdrant Vector Search
+    # --------------------------------------------------------------------------
     try:
         from app.services.embedding_service import get_embedding_service
         from qdrant_client.http import models as qmodels
@@ -141,7 +144,6 @@ async def search_code(
         embedding_svc = get_embedding_service()
         query_vector = embedding_svc.generate_embedding(request.query)
 
-        # Search across code_symbols or repository_chunks
         for col_name in ["code_symbols", settings.qdrant_collection_repository_chunks]:
             try:
                 search_results = qdrant.search(
@@ -152,7 +154,7 @@ async def search_code(
                         must=[
                             qmodels.FieldCondition(
                                 key="repository_id",
-                                match=qmodels.MatchValue(value=request.repository_id),
+                                match=qmodels.MatchValue(value=repo.id),
                             )
                         ]
                     ),
@@ -179,15 +181,59 @@ async def search_code(
                 logger.debug("Qdrant collection search attempt", col=col_name, error=str(search_err))
 
     except Exception as e:
-        logger.warning("Vector search failed, proceeding to disk keyword search", error=str(e))
+        logger.warning("Vector search layer failed", error=str(e))
 
-    # 2. File Keyword Fallback Search (if Qdrant returns few/no results or for exact term matches)
-    try:
-        repo_storage = settings.repo_storage_path / str(repo.id)
-        if repo_storage.exists():
-            search_term = request.query.strip().lower()
-            if search_term:
-                count = 0
+    # --------------------------------------------------------------------------
+    # Layer 2: PostgreSQL RepositoryFile Database Search
+    # --------------------------------------------------------------------------
+    if len(results) < request.limit:
+        try:
+            from app.models.repository_file import RepositoryFile
+            stmt = select(RepositoryFile).where(
+                RepositoryFile.repository_id == repo.id,
+                (
+                    RepositoryFile.path.ilike(f"%{search_term}%")
+                    | RepositoryFile.functions.ilike(f"%{search_term}%")
+                    | RepositoryFile.classes.ilike(f"%{search_term}%")
+                    | RepositoryFile.exports.ilike(f"%{search_term}%")
+                ),
+            ).limit(request.limit)
+            db_files = (await db.execute(stmt)).scalars().all()
+
+            for db_f in db_files:
+                if db_f.path not in seen_files:
+                    seen_files.add(db_f.path)
+                    snippet = f"File: {db_f.path}\nFunctions: {db_f.functions or '[]'}\nClasses: {db_f.classes or '[]'}"
+                    results.append(
+                        CodeSearchResult(
+                            file_path=db_f.path,
+                            language=db_f.language or "Code",
+                            snippet=snippet[:500],
+                            score=0.90,
+                            function_name=search_term if search_term in (db_f.functions or "") else None,
+                            class_name=search_term if search_term in (db_f.classes or "") else None,
+                            line_start=1,
+                            line_end=db_f.line_count or 10,
+                        )
+                    )
+        except Exception as db_err:
+            logger.warning("Postgres search layer failed", error=str(db_err))
+
+    # --------------------------------------------------------------------------
+    # Layer 3: Disk File Scanner (Searches cloned repository on disk)
+    # --------------------------------------------------------------------------
+    if len(results) < request.limit:
+        try:
+            potential_paths = [
+                settings.repo_storage_path / str(repo.id),
+                settings.repo_storage_path / repo.name,
+                settings.repo_storage_path / repo.full_name.replace("/", "_"),
+            ]
+            
+            repo_storage = next((p for p in potential_paths if p.exists() and p.is_dir()), None)
+            
+            if repo_storage and search_term:
+                count = len(results)
                 for path in repo_storage.rglob("*"):
                     if count >= request.limit:
                         break
@@ -198,7 +244,6 @@ async def search_code(
                                 rel_p = str(path.relative_to(repo_storage))
                                 if rel_p not in seen_files:
                                     seen_files.add(rel_p)
-                                    # Extract matching snippet window around search term
                                     lines = content.splitlines()
                                     matching_lines = [i for i, l in enumerate(lines) if search_term in l.lower()]
                                     start_l = max(0, matching_lines[0] - 2) if matching_lines else 0
@@ -220,8 +265,8 @@ async def search_code(
                                     count += 1
                         except Exception:
                             pass
-    except Exception as fs_err:
-        logger.warning("Keyword fallback search failed", error=str(fs_err))
+        except Exception as fs_err:
+            logger.warning("Disk scanner search layer failed", error=str(fs_err))
 
     return APIResponse(
         data=CodeSearchResponse(
