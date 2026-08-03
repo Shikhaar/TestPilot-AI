@@ -281,7 +281,7 @@ async def _generate_and_store_embeddings(
 
         points = []
         for result in parse_results[:500]:  # Limit to first 500 files
-            if result.error or not result.functions:
+            if result.error:
                 continue
 
             try:
@@ -289,8 +289,8 @@ async def _generate_and_store_embeddings(
             except ValueError:
                 rel_path = result.file_path
 
-            # Embed each function
-            for fn in result.functions[:20]:  # Max 20 functions per file
+            # Embed functions
+            for fn in (result.functions or [])[:20]:
                 text = f"function {fn.name} in {rel_path} language:{result.language}"
                 embedding = model.encode(text).tolist() if model is not None else [0.0] * 384
 
@@ -309,8 +309,56 @@ async def _generate_and_store_embeddings(
                     }
                 )
 
+            # Embed classes
+            for cls in (result.classes or [])[:10]:
+                text = f"class {cls.name} in {rel_path} language:{result.language}"
+                embedding = model.encode(text).tolist() if model is not None else [0.0] * 384
+
+                points.append(
+                    {
+                        "id": str(uuid.uuid4()),
+                        "vector": embedding,
+                        "payload": {
+                            "repository_id": repository_id,
+                            "file_path": rel_path,
+                            "language": result.language,
+                            "class_name": cls.name,
+                            "content": text,
+                            "type": "class",
+                        },
+                    }
+                )
+
+            # Embed file content snippet if file exists
+            try:
+                abs_file = repo_path / rel_path
+                if abs_file.is_file():
+                    content = abs_file.read_text(encoding="utf-8", errors="ignore")[:1000]
+                    if content.strip():
+                        text = f"file {rel_path}\n{content}"
+                        embedding = model.encode(text[:500]).tolist() if model is not None else [0.0] * 384
+                        points.append(
+                            {
+                                "id": str(uuid.uuid4()),
+                                "vector": embedding,
+                                "payload": {
+                                    "repository_id": repository_id,
+                                    "file_path": rel_path,
+                                    "language": result.language,
+                                    "content": content[:500],
+                                    "type": "file_chunk",
+                                },
+                            }
+                        )
+            except Exception:
+                pass
+
         if points:
             qdrant.upsert(collection_name="code_symbols", points=points)
+            try:
+                qdrant.upsert(collection_name=settings.qdrant_collection_repository_chunks, points=points)
+            except Exception:
+                pass
             logger.info(
                 "Embeddings stored in Qdrant", repository_id=repository_id, count=len(points)
             )

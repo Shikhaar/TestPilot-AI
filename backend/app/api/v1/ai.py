@@ -125,37 +125,103 @@ async def search_code(
             Repository.owner_id == current_user.id,
         )
     )
-    if not repo_result.scalar_one_or_none():
+    repo = repo_result.scalar_one_or_none()
+    if not repo:
         raise HTTPException(status_code=404, detail="Repository not found")
 
     qdrant = get_qdrant_client()
-    results = []
+    results: list[CodeSearchResult] = []
+    seen_files: set[str] = set()
 
+    # 1. Qdrant Vector Search
     try:
-        search_results = qdrant.search(  # type: ignore[attr-defined]
-            collection_name=settings.qdrant_collection_repository_chunks,
-            query_text=request.query,
-            limit=request.limit,
-            query_filter={
-                "must": [{"key": "repository_id", "match": {"value": request.repository_id}}]
-            },
-        )
+        from app.services.embedding_service import get_embedding_service
+        from qdrant_client.http import models as qmodels
 
-        for r in search_results:
-            results.append(
-                CodeSearchResult(
-                    file_path=r.payload.get("file_path", ""),
-                    language=r.payload.get("language", ""),
-                    snippet=r.payload.get("content", "")[:300],
-                    score=r.score,
-                    function_name=r.payload.get("function_name"),
-                    class_name=r.payload.get("class_name"),
-                    line_start=r.payload.get("line_start"),
-                    line_end=r.payload.get("line_end"),
+        embedding_svc = get_embedding_service()
+        query_vector = embedding_svc.generate_embedding(request.query)
+
+        # Search across code_symbols or repository_chunks
+        for col_name in ["code_symbols", settings.qdrant_collection_repository_chunks]:
+            try:
+                search_results = qdrant.search(
+                    collection_name=col_name,
+                    query_vector=query_vector,
+                    limit=request.limit,
+                    query_filter=qmodels.Filter(
+                        must=[
+                            qmodels.FieldCondition(
+                                key="repository_id",
+                                match=qmodels.MatchValue(value=request.repository_id),
+                            )
+                        ]
+                    ),
                 )
-            )
+
+                for r in search_results:
+                    payload = r.payload or {}
+                    file_path = payload.get("file_path", "")
+                    if file_path and file_path not in seen_files:
+                        seen_files.add(file_path)
+                        results.append(
+                            CodeSearchResult(
+                                file_path=file_path,
+                                language=payload.get("language") or "code",
+                                snippet=payload.get("content", "")[:500],
+                                score=round(float(r.score), 2),
+                                function_name=payload.get("function_name"),
+                                class_name=payload.get("class_name"),
+                                line_start=payload.get("line_start", 1),
+                                line_end=payload.get("line_end", 20),
+                            )
+                        )
+            except Exception as search_err:
+                logger.debug("Qdrant collection search attempt", col=col_name, error=str(search_err))
+
     except Exception as e:
-        logger.warning("Code search failed", error=str(e))
+        logger.warning("Vector search failed, proceeding to disk keyword search", error=str(e))
+
+    # 2. File Keyword Fallback Search (if Qdrant returns few/no results or for exact term matches)
+    try:
+        repo_storage = settings.repo_storage_path / str(repo.id)
+        if repo_storage.exists():
+            search_term = request.query.strip().lower()
+            if search_term:
+                count = 0
+                for path in repo_storage.rglob("*"):
+                    if count >= request.limit:
+                        break
+                    if path.is_file() and not any(part.startswith(".") or part in settings.ignored_directories for part in path.parts):
+                        try:
+                            content = path.read_text(encoding="utf-8", errors="ignore")
+                            if search_term in content.lower():
+                                rel_p = str(path.relative_to(repo_storage))
+                                if rel_p not in seen_files:
+                                    seen_files.add(rel_p)
+                                    # Extract matching snippet window around search term
+                                    lines = content.splitlines()
+                                    matching_lines = [i for i, l in enumerate(lines) if search_term in l.lower()]
+                                    start_l = max(0, matching_lines[0] - 2) if matching_lines else 0
+                                    end_l = min(len(lines), start_l + 10)
+                                    snippet_text = "\n".join(lines[start_l:end_l])
+
+                                    results.append(
+                                        CodeSearchResult(
+                                            file_path=rel_p,
+                                            language=path.suffix.lstrip(".").upper() or "Code",
+                                            snippet=snippet_text[:500],
+                                            score=0.95,
+                                            function_name=search_term,
+                                            class_name=None,
+                                            line_start=start_l + 1,
+                                            line_end=end_l,
+                                        )
+                                    )
+                                    count += 1
+                        except Exception:
+                            pass
+    except Exception as fs_err:
+        logger.warning("Keyword fallback search failed", error=str(fs_err))
 
     return APIResponse(
         data=CodeSearchResponse(

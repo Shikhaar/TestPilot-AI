@@ -33,8 +33,12 @@ def get_qdrant_client() -> QdrantClient:
 
 # Collection configurations
 COLLECTIONS: dict[str, dict[str, Any]] = {
+    "code_symbols": {
+        "size": 384,
+        "distance": Distance.COSINE,
+    },
     settings.qdrant_collection_repository_chunks: {
-        "size": settings.embedding_dimensions,
+        "size": 384,
         "distance": Distance.COSINE,
     },
     settings.qdrant_collection_functions: {
