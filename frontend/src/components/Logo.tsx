@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 
 interface LogoProps {
   variant?: "full" | "icon";
@@ -21,34 +22,16 @@ export default function Logo({ variant = "full", size = "md", className = "" }: 
 
   return (
     <div className={`inline-flex items-center ${currentSize.gap} ${className}`}>
-      {/* Exact Brand Icon SVG */}
+      {/* Exact Brand Icon PNG Image */}
       <div className={`relative flex items-center justify-center ${currentSize.icon}`}>
-        <svg
-          viewBox="0 0 100 100"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-full h-full"
-        >
-          {/* 3 Left Speed Lines (Blue #2463EB) */}
-          <path d="M 21 36 H 36" stroke="#2463EB" strokeWidth="6.5" strokeLinecap="round" />
-          <path d="M 13 50 H 36" stroke="#2463EB" strokeWidth="6.5" strokeLinecap="round" />
-          <path d="M 21 64 H 36" stroke="#2463EB" strokeWidth="6.5" strokeLinecap="round" />
-
-          {/* Slanted Blue 'T' (#2463EB) */}
-          <path d="M 33 23 H 47" stroke="#2463EB" strokeWidth="13" strokeLinecap="round" />
-          <path d="M 45 23 L 39 84" stroke="#2463EB" strokeWidth="13" strokeLinecap="round" />
-
-          {/* Slate Grey 'P' Loop & Leg (#5A6E85) */}
-          <path
-            d="M 46 23 H 59 C 77 23 77 54 59 54 H 46"
-            stroke="#5A6E85"
-            strokeWidth="13"
-            fill="none"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path d="M 46 54 L 41 84" stroke="#5A6E85" strokeWidth="13" strokeLinecap="round" />
-        </svg>
+        <Image
+          src="/images/logo.png"
+          alt="TestPilot AI Logo"
+          fill
+          priority
+          sizes="(max-width: 768px) 100vw, 50vw"
+          className="object-contain filter drop-shadow-sm"
+        />
       </div>
 
       {/* Brand Text */}
