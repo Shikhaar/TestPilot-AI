@@ -172,7 +172,7 @@ export default function Login() {
                   className="w-full px-4 py-3 rounded-xl bg-zinc-900 border border-white/10 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors"
                 />
                 <p className="text-[11px] text-gray-500 mt-2 leading-relaxed">
-                  If this email is associated with your GitHub account, your workspace will be linked automatically.
+                  Enter the email linked to your GitHub account to connect your workspace.
                 </p>
               </div>
 

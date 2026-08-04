@@ -210,18 +210,10 @@ async def google_login(
     user = result.scalar_one_or_none()
 
     if not user:
-        username_stem = target_email.split("@")[0]
-        user = User(
-            id=str(uuid.uuid4()),
-            github_id=f"google-{uuid.uuid4().hex[:8]}",
-            username=username_stem,
-            email=target_email,
-            name=username_stem.replace(".", " ").title(),
-            avatar_url=f"https://ui-avatars.com/api/?name={username_stem}&background=6366f1&color=fff",
-            role="member",
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No GitHub account found matching this email address. Please sign in with GitHub first to create your account.",
         )
-        db.add(user)
-        await db.flush()
 
     jwt_access = create_access_token(user.id)
     jwt_refresh = create_refresh_token(user.id)
