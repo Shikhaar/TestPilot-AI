@@ -204,7 +204,9 @@ async def google_login(
     request: GoogleLoginRequest | None = None,
 ) -> TokenResponse:
     """Sign in with Google / Gmail. Links to existing user account by email or creates profile."""
-    target_email = (request.email if request and request.email else "shikhar@testpilot.ai").strip().lower()
+    target_email = (
+        (request.email if request and request.email else "shikhar@testpilot.ai").strip().lower()
+    )
 
     result = await db.execute(select(User).where(User.email == target_email))
     user = result.scalar_one_or_none()

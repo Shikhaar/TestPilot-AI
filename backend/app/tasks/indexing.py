@@ -12,6 +12,7 @@ Handles the full repository indexing workflow:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import shutil
 import time
@@ -336,7 +337,9 @@ async def _generate_and_store_embeddings(
                     content = abs_file.read_text(encoding="utf-8", errors="ignore")[:1000]
                     if content.strip():
                         text = f"file {rel_path}\n{content}"
-                        embedding = model.encode(text[:500]).tolist() if model is not None else [0.0] * 384
+                        embedding = (
+                            model.encode(text[:500]).tolist() if model is not None else [0.0] * 384
+                        )
                         points.append(
                             {
                                 "id": str(uuid.uuid4()),
@@ -353,12 +356,15 @@ async def _generate_and_store_embeddings(
             except Exception:
                 pass
 
+        with contextlib.suppress(Exception):
+            qdrant.delete_collection(collection_name=settings.qdrant_collection_repository_chunks)
+
         if points:
             qdrant.upsert(collection_name="code_symbols", points=points)
-            try:
-                qdrant.upsert(collection_name=settings.qdrant_collection_repository_chunks, points=points)
-            except Exception:
-                pass
+            with contextlib.suppress(Exception):
+                qdrant.upsert(
+                    collection_name=settings.qdrant_collection_repository_chunks, points=points
+                )
             logger.info(
                 "Embeddings stored in Qdrant", repository_id=repository_id, count=len(points)
             )

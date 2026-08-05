@@ -122,7 +122,8 @@ async def search_code(
     # Find repository by ID or full_name
     repo_result = await db.execute(
         select(Repository).where(
-            (Repository.id == request.repository_id) | (Repository.full_name == request.repository_id)
+            (Repository.id == request.repository_id)
+            | (Repository.full_name == request.repository_id)
         )
     )
     repo = repo_result.scalar_one_or_none()
@@ -138,8 +139,9 @@ async def search_code(
     # Layer 1: Qdrant Vector Search
     # --------------------------------------------------------------------------
     try:
-        from app.services.embedding_service import get_embedding_service
         from qdrant_client.http import models as qmodels
+
+        from app.services.embedding_service import get_embedding_service
 
         embedding_svc = get_embedding_service()
         query_vector = embedding_svc.generate_embedding(request.query)
@@ -178,7 +180,9 @@ async def search_code(
                             )
                         )
             except Exception as search_err:
-                logger.debug("Qdrant collection search attempt", col=col_name, error=str(search_err))
+                logger.debug(
+                    "Qdrant collection search attempt", col=col_name, error=str(search_err)
+                )
 
     except Exception as e:
         logger.warning("Vector search layer failed", error=str(e))
@@ -189,15 +193,20 @@ async def search_code(
     if len(results) < request.limit:
         try:
             from app.models.repository_file import RepositoryFile
-            stmt = select(RepositoryFile).where(
-                RepositoryFile.repository_id == repo.id,
-                (
-                    RepositoryFile.path.ilike(f"%{search_term}%")
-                    | RepositoryFile.functions.ilike(f"%{search_term}%")
-                    | RepositoryFile.classes.ilike(f"%{search_term}%")
-                    | RepositoryFile.exports.ilike(f"%{search_term}%")
-                ),
-            ).limit(request.limit)
+
+            stmt = (
+                select(RepositoryFile)
+                .where(
+                    RepositoryFile.repository_id == repo.id,
+                    (
+                        RepositoryFile.path.ilike(f"%{search_term}%")
+                        | RepositoryFile.functions.ilike(f"%{search_term}%")
+                        | RepositoryFile.classes.ilike(f"%{search_term}%")
+                        | RepositoryFile.exports.ilike(f"%{search_term}%")
+                    ),
+                )
+                .limit(request.limit)
+            )
             db_files = (await db.execute(stmt)).scalars().all()
 
             for db_f in db_files:
@@ -210,7 +219,9 @@ async def search_code(
                             language=db_f.language or "Code",
                             snippet=snippet[:500],
                             score=0.90,
-                            function_name=search_term if search_term in (db_f.functions or "") else None,
+                            function_name=search_term
+                            if search_term in (db_f.functions or "")
+                            else None,
                             class_name=search_term if search_term in (db_f.classes or "") else None,
                             line_start=1,
                             line_end=db_f.line_count or 10,
@@ -229,15 +240,18 @@ async def search_code(
                 settings.repo_storage_path / repo.name,
                 settings.repo_storage_path / repo.full_name.replace("/", "_"),
             ]
-            
+
             repo_storage = next((p for p in potential_paths if p.exists() and p.is_dir()), None)
-            
+
             if repo_storage and search_term:
                 count = len(results)
                 for path in repo_storage.rglob("*"):
                     if count >= request.limit:
                         break
-                    if path.is_file() and not any(part.startswith(".") or part in settings.ignored_directories for part in path.parts):
+                    if path.is_file() and not any(
+                        part.startswith(".") or part in settings.ignored_directories
+                        for part in path.parts
+                    ):
                         try:
                             content = path.read_text(encoding="utf-8", errors="ignore")
                             if search_term in content.lower():
@@ -245,7 +259,11 @@ async def search_code(
                                 if rel_p not in seen_files:
                                     seen_files.add(rel_p)
                                     lines = content.splitlines()
-                                    matching_lines = [i for i, l in enumerate(lines) if search_term in l.lower()]
+                                    matching_lines = [
+                                        i
+                                        for i, line_text in enumerate(lines)
+                                        if search_term in line_text.lower()
+                                    ]
                                     start_l = max(0, matching_lines[0] - 2) if matching_lines else 0
                                     end_l = min(len(lines), start_l + 10)
                                     snippet_text = "\n".join(lines[start_l:end_l])

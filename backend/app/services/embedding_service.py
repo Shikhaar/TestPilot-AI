@@ -34,6 +34,7 @@ class EmbeddingService:
     def _get_hash_vector(self, text: str, dim: int = 384) -> list[float]:
         """Generate a deterministic normalized pseudo-random float vector from text hash."""
         import hashlib
+
         h = hashlib.sha256(text.encode("utf-8")).digest()
         vec = []
         for i in range(dim):
@@ -50,7 +51,9 @@ class EmbeddingService:
                         self._local_model = SentenceTransformer(settings.sentence_transformer_model)
                     return self._local_model.encode(text).tolist()
                 except Exception as e:
-                    logger.warning("Local SentenceTransformer failed, using hash vector", error=str(e))
+                    logger.warning(
+                        "Local SentenceTransformer failed, using hash vector", error=str(e)
+                    )
             return self._get_hash_vector(text, 384)
         else:
             try:

@@ -10,6 +10,7 @@ export default function PRDetailPage({ params }: { params: Promise<{ id: string 
   const [pr, setPr] = useState<PRDetail | null>(null);
   const [generatedTests, setGeneratedTests] = useState<GeneratedTest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isUsingMock, setIsUsingMock] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "review" | "graph" | "tests" | "failures" | "logs">("overview");
   
   // Real-time timeline states (Suggestion #12)
