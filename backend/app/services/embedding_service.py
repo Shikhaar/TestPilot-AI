@@ -75,9 +75,14 @@ class EmbeddingService:
             return []
 
         if self.use_local:
-            model = self._get_local_model()
-            vectors = model.encode(texts).tolist()
-            return vectors
+            if SentenceTransformer is not None:
+                try:
+                    if self._local_model is None:
+                        self._local_model = SentenceTransformer(settings.sentence_transformer_model)
+                    return self._local_model.encode(texts).tolist()  # type: ignore[no-any-return]
+                except Exception:
+                    pass
+            return [self._get_hash_vector(t, 384) for t in texts]
         else:
             try:
                 response = litellm.embedding(

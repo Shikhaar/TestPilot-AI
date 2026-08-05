@@ -148,7 +148,7 @@ async def search_code(
 
         for col_name in ["code_symbols", settings.qdrant_collection_repository_chunks]:
             try:
-                search_results = qdrant.search(
+                search_results = qdrant.search(  # type: ignore[attr-defined]
                     collection_name=col_name,
                     query_vector=query_vector,
                     limit=request.limit,
