@@ -22,15 +22,15 @@ export default function Logo({ variant = "full", size = "md", className = "" }: 
 
   return (
     <div className={`inline-flex items-center ${currentSize.gap} ${className}`}>
-      {/* Exact Brand Icon PNG Image */}
+      {/* Isolated Transparent Brand Icon Image */}
       <div className={`relative flex items-center justify-center ${currentSize.icon}`}>
         <Image
-          src="/images/logo.png"
+          src="/images/logo.png?v=3"
           alt="TestPilot AI Logo"
           fill
           priority
-          sizes="(max-width: 768px) 100vw, 50vw"
-          className="object-contain filter drop-shadow-sm"
+          unoptimized
+          className="object-contain bg-transparent"
         />
       </div>
 
