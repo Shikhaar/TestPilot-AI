@@ -4,7 +4,7 @@ TestPilot AI is structured as an enterprise-grade, decoupled web application wit
 
 ---
 
-## 🏗️ Architecture Diagram
+## Architecture Diagram
 
 ```mermaid
 graph TD
@@ -25,7 +25,7 @@ graph TD
 
 ---
 
-## 🧩 Core Architecture Components
+## Core Architecture Components
 
 ### 1. Web Client (`frontend/src`)
 - Built with Next.js 14, TailwindCSS, and Lucide icons.

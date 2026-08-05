@@ -4,7 +4,7 @@ TestPilot AI is a **GitHub-native platform**. Authentication and repository acce
 
 ---
 
-## 🔒 Authentication Flow
+## Authentication Flow
 
 ```
  ┌──────────────┐         1. Redirect to GitHub OAuth         ┌──────────────────┐

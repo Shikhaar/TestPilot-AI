@@ -4,7 +4,7 @@ TestPilot AI features a high-performance **3-Layer Hybrid Code Search Engine** p
 
 ---
 
-## 🏗️ 3-Layer Search Architecture
+## 3-Layer Search Architecture
 
 When a user submits a code search query (e.g. `mockStreamResponse`), TestPilot AI evaluates three complementary retrieval layers in parallel to ensure 100% recall accuracy:
 
@@ -44,6 +44,6 @@ When a user submits a code search query (e.g. `mockStreamResponse`), TestPilot A
 
 ---
 
-## 🎯 Repository Scoping & Selector
+##  Repository Scoping & Selector
 - Users can scope search queries strictly to a selected repository (e.g., `Shikhaar/Portfolio2.0`).
 - The frontend dynamically loads user connected repositories via `/api/v1/repositories`.

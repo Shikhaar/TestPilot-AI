@@ -85,7 +85,7 @@ The goal is to replace direct user exposure of Celery Flower and Grafana with a 
 
 ---
 
-## 🔌 FastAPI Metrics Service (`backend/app/monitoring/`)
+## FastAPI Metrics Service (`backend/app/monitoring/`)
 
 Create endpoints that query the Prometheus API, parse results, and format it into clean JSON responses for the UI:
 

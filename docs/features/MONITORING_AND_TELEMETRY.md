@@ -4,7 +4,7 @@ TestPilot AI includes real-time telemetry and task queue monitoring to ensure sy
 
 ---
 
-## 📊 System Metrics & Monitoring
+## System Metrics & Monitoring
 
 ### Monitored Indicators:
 - **Celery Task Queue Latency**: Real-time worker task queue processing times via Redis.
@@ -13,7 +13,7 @@ TestPilot AI includes real-time telemetry and task queue monitoring to ensure sy
 
 ---
 
-## ⚠️ Graceful Data Fallbacks & Preview Banners
+## Graceful Data Fallbacks & Preview Banners
 
 When metrics services or background workers are initializing or offline:
 - **Sample Data Previews**: The monitoring dashboard renders sample metrics cards so the UI design can be evaluated without disruption.
