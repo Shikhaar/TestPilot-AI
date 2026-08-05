@@ -25,7 +25,7 @@ Modern software engineering teams face significant friction verifying regression
 
 ---
 
-## 📚 Engineering & System Documentation
+## Engineering & System Documentation
 
 For technical recruiters, engineering leaders, and open-source contributors, comprehensive system specifications and feature deep-dives are organized in the [`docs/`](docs/) directory:
 
@@ -45,24 +45,24 @@ For technical recruiters, engineering leaders, and open-source contributors, com
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                           Next.js 14 Frontend                           │
-│                        (React 19, TailwindCSS)                          │
+│ Next.js 14 Frontend │
+│ (React 19, TailwindCSS) │
 └────────────────────────────────────┬────────────────────────────────────┘
-                                     │ REST / WebSockets / SSE
+ │ REST / WebSockets / SSE
 ┌────────────────────────────────────▼────────────────────────────────────┐
-│                             FastAPI Backend                             │
-│                      (Python 3.12, Async SQLAlchemy)                    │
+│ FastAPI Backend │
+│ (Python 3.12, Async SQLAlchemy) │
 └──────┬─────────────────────────────┬─────────────────────────────┬──────┘
-       │                             │                             │
-┌──────▼──────┐               ┌──────▼──────┐               ┌──────▼──────┐
-│ PostgreSQL  │               │    Redis    │               │   Qdrant    │
-│ (Relational)│               │ (Broker/WS) │               │ (Vector DB) │
-└─────────────┘               └──────┬──────┘               └─────────────┘
-                                     │
-                              ┌──────▼──────┐
-                              │Celery Worker│
-                              │(LangGraph)  │
-                              └─────────────┘
+ │ │ │
+┌──────▼──────┐ ┌──────▼──────┐ ┌──────▼──────┐
+│ PostgreSQL │ │ Redis │ │ Qdrant │
+│ (Relational)│ │ (Broker/WS) │ │ (Vector DB) │
+└─────────────┘ └──────┬──────┘ └─────────────┘
+ │
+ ┌──────▼──────┐
+ │Celery Worker│
+ │(LangGraph) │
+ └─────────────┘
 ```
 
 The core engine uses a stateful **multi-agent orchestration workflow** powered by **LangGraph**, consisting of 11 specialized agent nodes:
@@ -81,7 +81,7 @@ The core engine uses a stateful **multi-agent orchestration workflow** powered b
 
 ---
 
-## ⚡ Tech Stack & Capabilities
+## Tech Stack & Capabilities
 
 * **Frontend**: Next.js 14, React 19, TailwindCSS, CSS Modules
 * **Backend**: Python 3.12, FastAPI, Async SQLAlchemy 2, Alembic, Pydantic v2, Poetry
@@ -92,32 +92,30 @@ The core engine uses a stateful **multi-agent orchestration workflow** powered b
 
 ---
 
-## 🚀 Quickstart Guide
+## Quickstart Guide
 
 ### Option 1: 60-Second Containerized Deployment (Recommended for New Users & Reviewers)
 
-> **Why Option 1?** Option 1 spins up the complete microservice architecture (FastAPI, PostgreSQL, Redis, Qdrant, Celery) in a single command with zero dependency setup or local configuration required.
-
 1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/Shikhaar/TestPilot-AI.git
-   cd TestPilot-AI
-   ```
+ ```bash
+ git clone https://github.com/Shikhaar/TestPilot-AI.git
+ cd TestPilot-AI
+ ```
 
 2. **Copy the environment configuration**:
-   ```bash
-   cp .env.example .env
-   ```
+ ```bash
+ cp .env.example .env
+ ```
 
 3. **Spin up containerized services**:
-   ```bash
-   docker compose up -d
-   ```
+ ```bash
+ docker compose up -d
+ ```
 
 4. **Execute database migrations**:
-   ```bash
-   docker compose exec backend poetry run alembic upgrade head
-   ```
+ ```bash
+ docker compose exec backend poetry run alembic upgrade head
+ ```
 
 5. **Access the Web Dashboard** at `http://localhost:3000`.
 

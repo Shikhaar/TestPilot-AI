@@ -13,7 +13,7 @@ This plan integrates the user's recommendations for a production-grade SaaS expe
 > 3. Backend sets the long-lived Refresh Token in a `Set-Cookie` header (`HttpOnly; Secure; SameSite=Lax; Path=/api/v1/auth/refresh`).
 > 4. Next.js dashboard interceptor intercepts `401 Unauthorized` and hits `POST /api/v1/auth/refresh` (which automatically forwards the cookie) to get a new Access Token.
 > **Dependency Graph Layering**:
-> * Instead of individual files, React Flow will render grouped cluster nodes representing codebase architectural layers: **Controllers/Routes** ➔ **Services/Agents** ➔ **Repositories/Models** ➔ **Databases/External API Calls**.
+> * Instead of individual files, React Flow will render grouped cluster nodes representing codebase architectural layers: **Controllers/Routes** **Services/Agents** **Repositories/Models** **Databases/External API Calls**.
 
 ---
 
@@ -29,42 +29,42 @@ This plan integrates the user's recommendations for a production-grade SaaS expe
 
 ### 3. Dashboard Page (`frontend/src/app/page.tsx`)
 * Developer-focused dashboard cards showing:
-  * Repositories connected & indexed.
-  * Pull Requests awaiting review.
-  * Total AI-generated test count.
-  * Average risk score.
-  * Codebase coverage percentage.
-  * Current AI cost in USD.
-  * Celery task queue length & worker processing success rate.
+ * Repositories connected & indexed.
+ * Pull Requests awaiting review.
+ * Total AI-generated test count.
+ * Average risk score.
+ * Codebase coverage percentage.
+ * Current AI cost in USD.
+ * Celery task queue length & worker processing success rate.
 
 ### 4. Repository Detail Page (`frontend/src/app/repositories/[id]/page.tsx`)
 * Insights-style overview showcasing:
-  * Architecture summary (layered structure mapping).
-  * Grouped dependency graph nodes.
-  * Language distribution ratios & test framework detections.
-  * Repository health scores.
-  * List of recent PR reviews and test run histories.
+ * Architecture summary (layered structure mapping).
+ * Grouped dependency graph nodes.
+ * Language distribution ratios & test framework detections.
+ * Repository health scores.
+ * List of recent PR reviews and test run histories.
 
 ### 5. Pull Request Page (`frontend/src/app/pull-requests/[id]/page.tsx`)
 * Tab-oriented view structure:
-  1. **Overview**: Displaying PR details, commit lists, and the **PR Timeline** ( webhook received ➔ cloned ➔ graph built ➔ generated tests ➔ test results ➔ review posted).
-  2. **Review**: Markdown code review draft with actions to post or update the GitHub check runs.
-  3. **Dependency Graph**: Layered node flow (Controller ➔ Service ➔ Repository ➔ DB).
-  4. **Generated Tests**: Side-by-side Monaco comparison editor with a workflow bar (`[Accept] [Edit] [Copy] [Commit to Branch] [Open PR]`).
-  5. **Failures**: Test failures showing tracebacks alongside AI-generated fix recommendations.
-  6. **Logs & Coverage**: Complete execution logs and coverage delta charts.
+ 1. **Overview**: Displaying PR details, commit lists, and the **PR Timeline** ( webhook received cloned graph built generated tests test results review posted).
+ 2. **Review**: Markdown code review draft with actions to post or update the GitHub check runs.
+ 3. **Dependency Graph**: Layered node flow (Controller Service Repository DB).
+ 4. **Generated Tests**: Side-by-side Monaco comparison editor with a workflow bar (`[Accept] [Edit] [Copy] [Commit to Branch] [Open PR]`).
+ 5. **Failures**: Test failures showing tracebacks alongside AI-generated fix recommendations.
+ 6. **Logs & Coverage**: Complete execution logs and coverage delta charts.
 
 ### 6. Monitoring & Metrics (`backend/app/main.py`)
 * Collect and expose to Prometheus:
-  * API endpoints latency.
-  * Celery queue wait times.
-  * Embedding chunk computation speeds.
-  * LiteLLM response durations.
-  * Agent run execution step durations, retries, and errors.
+ * API endpoints latency.
+ * Celery queue wait times.
+ * Embedding chunk computation speeds.
+ * LiteLLM response durations.
+ * Agent run execution step durations, retries, and errors.
 * Pre-configured Grafana JSON layout at `infra/grafana/dashboards/testpilot.json` mapping:
-  * Repository indexing duration histograms.
-  * PR analysis times.
-  * Active Celery worker throughput and Redis queue depths.
+ * Repository indexing duration histograms.
+ * PR analysis times.
+ * Active Celery worker throughput and Redis queue depths.
 
 ---
 

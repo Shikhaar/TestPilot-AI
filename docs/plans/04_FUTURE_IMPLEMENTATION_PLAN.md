@@ -8,17 +8,17 @@ Transforming **TestPilot AI** from a linear test generator into an **Autonomous 
 
 ```
 Task 1: Self-Healing Pipeline + Dedicated Patch Agent + Modular AgentState
-  │
-  ▼
+ │
+ ▼
 Task 2: Repository Memory (Regression Memory + Hybrid RAG)
-  │
-  ▼
+ │
+ ▼
 Task 3: Deterministic Risk & Mathematical Confidence Scoring Engine
-  │
-  ▼
+ │
+ ▼
 Task 4: Commercial-Grade GitHub PR Bot
-  │
-  ▼
+ │
+ ▼
 Task 5: Full Reasoning Pipeline MCP Server
 ```
 
@@ -47,8 +47,8 @@ Split the monolithic state in `app/agents/state.py` into clean TypedDict sub-sta
 - Register `test_patch_agent` node.
 - Flow: `planner` $\rightarrow$ `diff` $\rightarrow$ `dependency` $\rightarrow$ `impact` $\rightarrow$ `search` $\rightarrow$ `test_discovery` $\rightarrow$ `test_generator` $\rightarrow$ `execution` $\rightarrow$ `failure_analysis` $\rightarrow$ **`test_patch_agent`** $\rightarrow$ **`execution`** (Loop) $\rightarrow$ `review` $\rightarrow$ `END`.
 - Conditional edge `should_continue_self_healing`:
-  - If `failed > 0` and `repair_attempt < max_repair_attempts`: route to `test_patch_agent`.
-  - Else: route to `review_agent`.
+ - If `failed > 0` and `repair_attempt < max_repair_attempts`: route to `test_patch_agent`.
+ - Else: route to `review_agent`.
 
 #### 4. Metrics Recording (`execution_agent.py`)
 - Record iteration progression in `iteration_telemetry` (e.g., `Iteration 1: 63%` $\rightarrow$ `Iteration 2: 100%`).
@@ -58,14 +58,14 @@ Split the monolithic state in `app/agents/state.py` into clean TypedDict sub-sta
 ### Task 2: Repository Memory (Regression Memory & Hybrid RAG)
 - Parse and index test fixtures (`conftest.py`, `jest.setup.js`) and mock helpers.
 - Implement **Regression Memory**: Automatically embed and store passing AI-generated tests into vector storage (Qdrant/ChromaDB) mapped to:
-  $$\text{PR} \rightarrow \text{Changed Function} \rightarrow \text{Generated Test} \rightarrow \text{Execution Result} \rightarrow \text{Repaired Version}$$
+ $$\text{PR} \rightarrow \text{Changed Function} \rightarrow \text{Generated Test} \rightarrow \text{Execution Result} \rightarrow \text{Repaired Version}$$
 - Implement Hybrid Retrieval: Combine semantic search over embeddings with BM25 sparse keyword search to retrieve matching test patterns for similar functions.
 
 ---
 
 ### Task 3: Deterministic Risk & Mathematical Confidence Scoring Engine
 - Compute per-test **Confidence Scores** ($0.0 - 1.0$) using a mathematical formula based on measurable signals:
-  $$\text{Confidence} = 0.25 \cdot \text{Execution Success} + 0.25 \cdot \text{Retrieval Similarity} + 0.20 \cdot \text{AST Coverage} + 0.15 \cdot \text{Dependency Coverage} + 0.15 \cdot \text{Complexity Score}$$
+ $$\text{Confidence} = 0.25 \cdot \text{Execution Success} + 0.25 \cdot \text{Retrieval Similarity} + 0.20 \cdot \text{AST Coverage} + 0.15 \cdot \text{Dependency Coverage} + 0.15 \cdot \text{Complexity Score}$$
 - Compute **PR Risk Score** based on AST dependency graph centrality, code complexity, code churn, missing test coverage, and critical services touched (Auth, Payment, caching).
 - Let the LLM generate natural language explanations of the score, but keep scoring calculation deterministic.
 
@@ -73,19 +73,19 @@ Split the monolithic state in `app/agents/state.py` into clean TypedDict sub-sta
 
 ### Task 4: Commercial-Grade GitHub PR Bot
 - Extend `github_service.py` to post highly structured, interactive PR reviews:
-  * Regression Risk Level & Score
-  * Mathematical Confidence Metrics
-  * Breakdown of Critical Paths (e.g. Authentication, Payments)
-  * Missing Coverage Alerts
-  * Option to commit passing generated tests directly to the PR branch.
+ * Regression Risk Level & Score
+ * Mathematical Confidence Metrics
+ * Breakdown of Critical Paths (e.g. Authentication, Payments)
+ * Missing Coverage Alerts
+ * Option to commit passing generated tests directly to the PR branch.
 
 ---
 
 ### Task 5: Model Context Protocol (MCP) Server Integration
 - Create an MCP server (`app/mcp/server.py`) exposing the full reasoning pipeline to IDEs (Cursor, VS Code, Antigravity) via tools:
-  * `testpilot.analyze_pr(pr_id)`
-  * `testpilot.predict_risk(pr_id)`
-  * `testpilot.generate_tests(file_path)`
-  * `testpilot.heal_tests(file_path)`
-  * `testpilot.get_metrics()`
-  * `testpilot.show_dependency_graph()`
+ * `testpilot.analyze_pr(pr_id)`
+ * `testpilot.predict_risk(pr_id)`
+ * `testpilot.generate_tests(file_path)`
+ * `testpilot.heal_tests(file_path)`
+ * `testpilot.get_metrics()`
+ * `testpilot.show_dependency_graph()`

@@ -4,32 +4,32 @@ This document records all components developed and verified during **Phase 1 (Ba
 
 ---
 
-## 🛠️ Components Developed
+## ️ Components Developed
 
 ### 1. Database & ORM Layer (`backend/app/models/`)
 * **ORM Tables**:
-  * `base.py`: Declares Base with custom mixins (`TimestampMixin`, `UUIDMixin`).
-  * `user.py`: Holds user accounts, GitHub profiles, and tokens.
-  * `repository.py`: Holds connected code repositories and indexing status.
-  * `pull_request.py`: Holds pull request analysis status, files changed, and risk levels.
-  * `commit.py`: Tracks commits pushed.
-  * `repository_file.py`: Records AST-parsed code structures (functions, classes, routes) per file.
-  * `dependency_graph.py`: Maps directed file-to-file import dependencies.
-  * `generated_test.py`: Houses AI-generated test files and execution records.
-  * `test_run.py` & `test_result.py`: Audits regression execution status and root causes.
-  * `review_comment.py`: Stores finalized code review comment text.
-  * `ai_log.py`: Audits LLM prompt/completion tokens, costs, and request latencies.
-  * `agent_run.py`: Audits individual LangGraph agent runtime steps, retries, and errors.
-  * `bug_history.py`: Stores historical regressions with Qdrant vector references.
+ * `base.py`: Declares Base with custom mixins (`TimestampMixin`, `UUIDMixin`).
+ * `user.py`: Holds user accounts, GitHub profiles, and tokens.
+ * `repository.py`: Holds connected code repositories and indexing status.
+ * `pull_request.py`: Holds pull request analysis status, files changed, and risk levels.
+ * `commit.py`: Tracks commits pushed.
+ * `repository_file.py`: Records AST-parsed code structures (functions, classes, routes) per file.
+ * `dependency_graph.py`: Maps directed file-to-file import dependencies.
+ * `generated_test.py`: Houses AI-generated test files and execution records.
+ * `test_run.py` & `test_result.py`: Audits regression execution status and root causes.
+ * `review_comment.py`: Stores finalized code review comment text.
+ * `ai_log.py`: Audits LLM prompt/completion tokens, costs, and request latencies.
+ * `agent_run.py`: Audits individual LangGraph agent runtime steps, retries, and errors.
+ * `bug_history.py`: Stores historical regressions with Qdrant vector references.
 * **Database Repositories (`backend/app/repositories/`)**:
-  * `base.py`: Generic CRUD class (`get_by_id`, `get_all`, `create`, `update`, `delete`, `bulk_create`).
-  * `user_repository.py`: Profile lookup by github ID, username, or email.
-  * `repository_repo.py`: Connected repository query helpers.
-  * `pull_request_repo.py`: PR lookups.
-  * `test_run_repo.py`: PR test run history lookup.
+ * `base.py`: Generic CRUD class (`get_by_id`, `get_all`, `create`, `update`, `delete`, `bulk_create`).
+ * `user_repository.py`: Profile lookup by github ID, username, or email.
+ * `repository_repo.py`: Connected repository query helpers.
+ * `pull_request_repo.py`: PR lookups.
+ * `test_run_repo.py`: PR test run history lookup.
 * **Database Configuration**:
-  * Configured `session.py` for fully asynchronous SQLAlchemy database engine and sessions.
-  * Initialized Alembic migration environment: configured `alembic.ini`, `alembic/env.py` (configured with `asyncpg` and imports of all models), and `alembic/script.py.mako`.
+ * Configured `session.py` for fully asynchronous SQLAlchemy database engine and sessions.
+ * Initialized Alembic migration environment: configured `alembic.ini`, `alembic/env.py` (configured with `asyncpg` and imports of all models), and `alembic/script.py.mako`.
 
 ### 2. Pydantic Schemas (`backend/app/schemas/`)
 * `common.py`: Standard API wrappers, pagination envelopes, error payloads, health structures.
@@ -64,8 +64,8 @@ This document records all components developed and verified during **Phase 1 (Ba
 * Configured v1 REST endpoints inside `backend/app/api/v1/` for auth, repositories, PRs, tests, chat, search, webhooks, and dashboard.
 * **WebSocket Streams (`backend/app/api/websocket.py`)**: Progress streams for PR analysis and indexing updates.
 * **Middlewares (`backend/app/middleware/`)**:
-  * `request_id.py`: Correlates log transactions.
-  * `rate_limit.py`: Sliding window rate limiter.
+ * `request_id.py`: Correlates log transactions.
+ * `rate_limit.py`: Sliding window rate limiter.
 * **Qdrant Client (`backend/app/utils/qdrant_client.py`)**: Collection management tools.
 
 ### 7. Test Suite (`backend/tests/`)

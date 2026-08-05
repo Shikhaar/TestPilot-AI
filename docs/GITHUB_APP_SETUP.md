@@ -11,13 +11,13 @@ Since GitHub needs to send webhook payloads to your local environment, you must 
 We recommend using **`ngrok`**:
 
 1. Install ngrok (via npm or download):
-   ```bash
-   npm install -g ngrok
-   ```
+ ```bash
+ npm install -g ngrok
+ ```
 2. Start a tunnel pointing to port 80:
-   ```bash
-   ngrok http 80
-   ```
+ ```bash
+ ngrok http 80
+ ```
 3. Copy the forwarding HTTPS URL generated (e.g., `https://a1b2-34-56-78.ngrok-free.app`).
 
 ---
@@ -28,11 +28,11 @@ Go to **GitHub Developer Settings** -> **GitHub Apps** -> **`TestPilot-AI-Shikha
 
 1. **Homepage URL**: Set to your public HTTPS URL (e.g., `https://a1b2-34-56-78.ngrok-free.app`).
 2. **Identifying and authorizing users**:
-   - **Callback URL**: `https://a1b2-34-56-78.ngrok-free.app/auth/callback`
+ - **Callback URL**: `https://a1b2-34-56-78.ngrok-free.app/auth/callback`
 3. **Webhooks**:
-   - Check **Active**.
-   - **Webhook URL**: `https://a1b2-34-56-78.ngrok-free.app/api/v1/webhooks/github`
-   - **Webhook secret**: Copy your configured `GITHUB_WEBHOOK_SECRET` from your `.env` file (currently: `testpilot-webhook-secret-2026-7f4a91d3`).
+ - Check **Active**.
+ - **Webhook URL**: `https://a1b2-34-56-78.ngrok-free.app/api/v1/webhooks/github`
+ - **Webhook secret**: Copy your configured `GITHUB_WEBHOOK_SECRET` from your `.env` file (currently: `testpilot-webhook-secret-2026-7f4a91d3`).
 
 ### Repository Permissions Required:
 Ensure your GitHub App has the following permissions enabled:
@@ -76,17 +76,17 @@ GITHUB_APP_PRIVATE_KEY_PATH=/app/private-key.pem
 4. GitHub will fire a `pull_request.opened` event to your ngrok URL.
 5. The `testpilot-backend` will verify the signature, create records in Postgres, and dispatch the Celery task (`run_pr_analysis`).
 6. Celery workers will execute the LangGraph multi-agent flow:
-   - Clone the PR code
-   - Build AST dependency graph
-   - Run AI regression test generation
-   - Post results back to the GitHub PR comments!
+ - Clone the PR code
+ - Build AST dependency graph
+ - Run AI regression test generation
+ - Post results back to the GitHub PR comments!
 
 ---
 
 ## Troubleshooting Webhooks
 
 - Check Celery worker logs:
-  ```bash
-  docker compose logs celery-worker -f
-  ```
+ ```bash
+ docker compose logs celery-worker -f
+ ```
 - Check GitHub Developer Settings under **Advanced** -> **Recent Deliveries** to see payload delivery status and responses.

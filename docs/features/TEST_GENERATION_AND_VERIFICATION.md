@@ -40,10 +40,10 @@ When a test fails, `execution_agent` forwards a structured failure report to `fa
 
 ```json
 {
-  "test_name": "test_auth_header",
-  "error": "ModuleNotFoundError: No module named 'app.utils.crypto'",
-  "stack_trace": "File 'tests/test_auth.py', line 12...",
-  "source_code": "from app.utils.crypto import hash_token"
+ "test_name": "test_auth_header",
+ "error": "ModuleNotFoundError: No module named 'app.utils.crypto'",
+ "stack_trace": "File 'tests/test_auth.py', line 12...",
+ "source_code": "from app.utils.crypto import hash_token"
 }
 ```
 

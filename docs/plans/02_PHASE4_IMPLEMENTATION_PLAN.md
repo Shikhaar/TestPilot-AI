@@ -27,38 +27,38 @@ This plan details the design, structure, and execution steps for **Phase 4: Next
 
 #### [NEW] [api.ts](file:///c:/Shikhar/TestPilot%20AI/frontend/src/lib/api.ts)
 * Create HTTP request client using Fetch API wrapper supporting Authorization headers, automatic refresh tokens, and basic REST wrappers for endpoints:
-  * `/auth/github/login`
-  * `/auth/github/callback`
-  * `/repositories`
-  * `/pr`
-  * `/tests`
-  * `/ai/chat`
-  * `/ai/search`
-  * `/dashboard`
+ * `/auth/github/login`
+ * `/auth/github/callback`
+ * `/repositories`
+ * `/pr`
+ * `/tests`
+ * `/ai/chat`
+ * `/ai/search`
+ * `/dashboard`
 
 #### [NEW] [layout.tsx](file:///c:/Shikhar/TestPilot%20AI/frontend/src/app/layout.tsx)
 * Setup base glassmorphism layout, fonts (Inter), toast alerts provider, and global dashboard headers/sidebars.
 
 #### [NEW] [page.tsx](file:///c:/Shikhar/TestPilot%20AI/frontend/src/app/page.tsx)
 * Implement Dashboard Overview panel:
-  * Connection stats (total repositories, indexed file counts).
-  * Recent Pull Requests table showing analysis status, risk scores, and commit details.
-  * AI token usage graphs and cost meters.
+ * Connection stats (total repositories, indexed file counts).
+ * Recent Pull Requests table showing analysis status, risk scores, and commit details.
+ * AI token usage graphs and cost meters.
 
 #### [NEW] [repositories/[id]/page.tsx](file:///c:/Shikhar/TestPilot%20AI/frontend/src/app/repositories/[id]/page.tsx)
 * Implement Repository Detail panel:
-  * File list, health metrics, test framework type.
-  * Indexing status progress bar connected to the Repository WebSocket.
+ * File list, health metrics, test framework type.
+ * Indexing status progress bar connected to the Repository WebSocket.
 
 #### [NEW] [pull-requests/[id]/page.tsx](file:///c:/Shikhar/TestPilot%20AI/frontend/src/app/pull-requests/[id]/page.tsx)
 * Implement Pull Request Analysis panel:
-  * WebSocket-connected terminal displaying real-time agent pipeline logs.
-  * Risk evaluation metrics (risk score dial, list of warning factors).
-  * Review Comment text area showcasing the synthesized Markdown draft with an action button to "Post to GitHub".
-  * Tabbed views showing:
-    * **Dependency Graph** (React Flow diagram).
-    * **Generated Tests** (Side-by-side Monaco diff-editor display).
-    * **Test Execution Results** (Failing tests and Failure Analysis fix recommendations).
+ * WebSocket-connected terminal displaying real-time agent pipeline logs.
+ * Risk evaluation metrics (risk score dial, list of warning factors).
+ * Review Comment text area showcasing the synthesized Markdown draft with an action button to "Post to GitHub".
+ * Tabbed views showing:
+ * **Dependency Graph** (React Flow diagram).
+ * **Generated Tests** (Side-by-side Monaco diff-editor display).
+ * **Test Execution Results** (Failing tests and Failure Analysis fix recommendations).
 
 #### [NEW] [dependency-graph.tsx](file:///c:/Shikhar/TestPilot%20AI/frontend/src/components/dependency-graph.tsx)
 * Create React Flow visualizer rendering nodes (file pathways) and edges (imports) with interactive hover actions highlighting blast-radius downstream items.
@@ -69,9 +69,9 @@ This plan details the design, structure, and execution steps for **Phase 4: Next
 
 #### [NEW] [testpilot.json](file:///c:/Shikhar/TestPilot%20AI/infra/grafana/dashboards/testpilot.json)
 * Pre-configured Grafana dashboard template mapping:
-  * HTTP request counts and latency distributions.
-  * Celery worker active tasks, queue backlogs, and execution success rates.
-  * LangGraph agent run frequencies and token/cost tracking histograms.
+ * HTTP request counts and latency distributions.
+ * Celery worker active tasks, queue backlogs, and execution success rates.
+ * LangGraph agent run frequencies and token/cost tracking histograms.
 
 ---
 
@@ -79,10 +79,10 @@ This plan details the design, structure, and execution steps for **Phase 4: Next
 
 ### Automated Tests
 * Validate Next.js compile build and check for type warnings:
-  ```bash
-  cd frontend
-  npm run build
-  ```
+ ```bash
+ cd frontend
+ npm run build
+ ```
 
 ### Manual Verification
 1. Run local development container system (`make dev`).

@@ -10,18 +10,18 @@
 
 ```
 [ Frontend (Next.js 15 / React 19) ] 
-                 │
-                 ▼ (REST API / JSON)
-  [ Backend (FastAPI / Async SQLAlchemy) ]
-        │            │                   │
-        ▼            ▼                   ▼
- [ PostgreSQL ]  [ Qdrant Vector DB ]  [ Redis Broker ]
-   (Relational)   (Code Embeddings)      │
-                                         ▼
-                             [ Celery Worker (Async AST Indexing) ]
-                                         │
-                                         ▼
-                             [ Tree-Sitter Parser ]
+ │
+ ▼ (REST API / JSON)
+ [ Backend (FastAPI / Async SQLAlchemy) ]
+ │ │ │
+ ▼ ▼ ▼
+ [ PostgreSQL ] [ Qdrant Vector DB ] [ Redis Broker ]
+ (Relational) (Code Embeddings) │
+ ▼
+ [ Celery Worker (Async AST Indexing) ]
+ │
+ ▼
+ [ Tree-Sitter Parser ]
 ```
 
 ### Core Components
@@ -57,17 +57,17 @@ $$\text{Health Score} = \min\left(99.0, \max\left(70.0, 78.0 + 0.15 \cdot \text{
 ## 3. Key Features & Workflows
 
 1. **GitHub Repositories Dropdown & Custom Repository Connection**:
-   - Automatically populates the top GitHub repositories for the authenticated user.
-   - Provides a clean `-- Select a repository...` default state.
-   - Includes a seamless custom repository input mode supporting both `owner/repo` format and full GitHub URLs (e.g. `https://github.com/Shikhaar/DSA.git`).
+ - Automatically populates the top GitHub repositories for the authenticated user.
+ - Provides a clean `-- Select a repository...` default state.
+ - Includes a seamless custom repository input mode supporting both `owner/repo` format and full GitHub URLs (e.g. `https://github.com/Shikhaar/DSA.git`).
 
 2. **Multi-Branch Selection & Force Re-Index**:
-   - Fetches active branches (`main`, `dev`, `staging`, etc.) via GitHub REST API.
-   - Allows triggering on-demand indexing for any branch.
+ - Fetches active branches (`main`, `dev`, `staging`, etc.) via GitHub REST API.
+ - Allows triggering on-demand indexing for any branch.
 
 3. **Layered Dependency Graph & Active Node Mapping**:
-   - Classifies AST parsed files into **Route Handlers**, **Core Services**, and **Data Repositories**.
-   - Displays real node counts unique to each connected codebase.
+ - Classifies AST parsed files into **Route Handlers**, **Core Services**, and **Data Repositories**.
+ - Displays real node counts unique to each connected codebase.
 
 ---
 

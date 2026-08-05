@@ -9,24 +9,24 @@ TestPilot AI features a high-performance **3-Layer Hybrid Code Search Engine** p
 When a user submits a code search query (e.g. `mockStreamResponse`), TestPilot AI evaluates three complementary retrieval layers in parallel to ensure 100% recall accuracy:
 
 ```
-                          ┌───────────────────────────┐
-                          │   User Search Request     │
-                          └─────────────┬─────────────┘
-                                        │
-                 ┌──────────────────────┼──────────────────────┐
-                 ▼                      ▼                      ▼
-       ┌──────────────────┐   ┌──────────────────┐   ┌──────────────────┐
-       │     Layer 1      │   │     Layer 2      │   │     Layer 3      │
-       │ Vector Search    │   │ Relational ILIKE │   │ Disk File Scanner│
-       │ (Qdrant 384-dim) │   │  (PostgreSQL DB) │   │ (/tmp/repos/...) │
-       └─────────┬────────┘   └─────────┬────────┘   └─────────┬────────┘
-                 │                      │                      │
-                 └──────────────────────┼──────────────────────┘
-                                        │
-                                        ▼
-                          ┌───────────────────────────┐
-                          │ Combined & Scored Results │
-                          └───────────────────────────┘
+ ┌───────────────────────────┐
+ │ User Search Request │
+ └─────────────┬─────────────┘
+ │
+ ┌──────────────────────┼──────────────────────┐
+ ▼ ▼ ▼
+ ┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐
+ │ Layer 1 │ │ Layer 2 │ │ Layer 3 │
+ │ Vector Search │ │ Relational ILIKE │ │ Disk File Scanner│
+ │ (Qdrant 384-dim) │ │ (PostgreSQL DB) │ │ (/tmp/repos/...) │
+ └─────────┬────────┘ └─────────┬────────┘ └─────────┬────────┘
+ │ │ │
+ └──────────────────────┼──────────────────────┘
+ │
+ ▼
+ ┌───────────────────────────┐
+ │ Combined & Scored Results │
+ └───────────────────────────┘
 ```
 
 ### Layer 1: Qdrant Vector DB Search
@@ -44,6 +44,6 @@ When a user submits a code search query (e.g. `mockStreamResponse`), TestPilot A
 
 ---
 
-##  Repository Scoping & Selector
+## Repository Scoping & Selector
 - Users can scope search queries strictly to a selected repository (e.g., `Shikhaar/Portfolio2.0`).
 - The frontend dynamically loads user connected repositories via `/api/v1/repositories`.

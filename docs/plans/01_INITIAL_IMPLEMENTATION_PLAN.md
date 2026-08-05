@@ -48,44 +48,44 @@ TestPilot AI is a distributed, AI-augmented engineering intelligence platform th
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    GitHub                               │
-│  PR Opened → Webhook → GitHub App → PR Review          │
+│ GitHub │
+│ PR Opened → Webhook → GitHub App → PR Review │
 └────────────────────┬────────────────────────────────────┘
-                     │ HTTPS Webhook
-                     ▼
+ │ HTTPS Webhook
+ ▼
 ┌─────────────────────────────────────────────────────────┐
-│                  Nginx (Reverse Proxy)                  │
+│ Nginx (Reverse Proxy) │
 └────────────────────┬────────────────────────────────────┘
-                     │
-           ┌──────────┴──────────┐
-           ▼                     ▼
- ┌──────────────────┐  ┌──────────────────────┐
- │  FastAPI Backend │  │  Next.js 15 Frontend │
- │  (Python 3.12)   │  │  (TypeScript)        │
- └────────┬─────────┘  └──────────────────────┘
-          │
-     ┌────┴─────────────────────────────────────┐
-     │              Redis (Broker)              │
-     └────┬─────────────────────────────────────┘
-          │
-     ┌────▼────────────────────────────────────┐
-     │         Celery Workers                  │
-     │  ┌─────────────────────────────────┐   │
-     │  │     LangGraph Agent Pipeline    │   │
-     │  │  Diff → Impact → TestGen →      │   │
-     │  │  Execute → Analyze → Review     │   │
-     │  └─────────────────────────────────┘   │
-     └─────────────────────────────────────────┘
-          │                   │
-     ┌────▼────┐         ┌────▼────┐
-     │PostgreSQL│        │ Qdrant  │
-     │(primary) │        │(vectors)│
-     └──────────┘        └─────────┘
-          │
-     ┌────▼──────────────────────┐
-     │  Prometheus + Grafana     │
-     │  OpenTelemetry Collector  │
-     └───────────────────────────┘
+ │
+ ┌──────────┴──────────┐
+ ▼ ▼
+ ┌──────────────────┐ ┌──────────────────────┐
+ │ FastAPI Backend │ │ Next.js 15 Frontend │
+ │ (Python 3.12) │ │ (TypeScript) │
+ └────────┬─────────┘ └──────────────────────┘
+ │
+ ┌────┴─────────────────────────────────────┐
+ │ Redis (Broker) │
+ └────┬─────────────────────────────────────┘
+ │
+ ┌────▼────────────────────────────────────┐
+ │ Celery Workers │
+ │ ┌─────────────────────────────────┐ │
+ │ │ LangGraph Agent Pipeline │ │
+ │ │ Diff → Impact → TestGen → │ │
+ │ │ Execute → Analyze → Review │ │
+ │ └─────────────────────────────────┘ │
+ └─────────────────────────────────────────┘
+ │ │
+ ┌────▼────┐ ┌────▼────┐
+ │PostgreSQL│ │ Qdrant │
+ │(primary) │ │(vectors)│
+ └──────────┘ └─────────┘
+ │
+ ┌────▼──────────────────────┐
+ │ Prometheus + Grafana │
+ │ OpenTelemetry Collector │
+ └───────────────────────────┘
 ```
 
 ---
@@ -107,68 +107,68 @@ Clean Architecture layout:
 ```
 backend/
 ├── app/
-│   ├── api/                  # FastAPI routers
-│   │   ├── v1/
-│   │   │   ├── repositories.py
-│   │   │   ├── pull_requests.py
-│   │   │   ├── tests.py
-│   │   │   ├── ai.py
-│   │   │   ├── dashboard.py
-│   │   │   └── webhooks.py
-│   │   └── deps.py           # DI dependencies
-│   ├── core/
-│   │   ├── config.py         # Pydantic Settings
-│   │   ├── security.py       # JWT + GitHub OAuth
-│   │   ├── logging.py        # Structured logging
-│   │   └── telemetry.py      # OpenTelemetry
-│   ├── models/               # SQLAlchemy ORM models
-│   │   ├── user.py
-│   │   ├── repository.py
-│   │   ├── pull_request.py
-│   │   ├── test_run.py
-│   │   ├── agent_run.py
-│   │   └── ...
-│   ├── schemas/              # Pydantic v2 schemas
-│   ├── repositories/         # DB access layer
-│   ├── services/             # Business logic
-│   │   ├── github_service.py
-│   │   ├── repository_indexer.py
-│   │   ├── ast_parser.py
-│   │   ├── dependency_graph.py
-│   │   ├── impact_analyzer.py
-│   │   ├── test_runner.py
-│   │   └── risk_scorer.py
-│   ├── agents/               # LangGraph agents
-│   │   ├── graph.py          # LangGraph supervisor
-│   │   ├── diff_agent.py
-│   │   ├── dependency_agent.py
-│   │   ├── impact_agent.py
-│   │   ├── search_agent.py
-│   │   ├── test_discovery_agent.py
-│   │   ├── test_generator_agent.py
-│   │   ├── execution_agent.py
-│   │   ├── failure_analysis_agent.py
-│   │   ├── review_agent.py
-│   │   ├── documentation_agent.py
-│   │   └── planner_agent.py
-│   ├── tasks/                # Celery tasks
-│   │   ├── pr_pipeline.py
-│   │   ├── indexing.py
-│   │   └── notifications.py
-│   ├── workers/
-│   │   └── celery_app.py
-│   ├── database/
-│   │   ├── base.py
-│   │   └── session.py
-│   ├── middleware/
-│   │   ├── request_id.py
-│   │   └── rate_limit.py
-│   └── utils/
-│       ├── git_utils.py
-│       ├── tree_sitter_utils.py
-│       └── qdrant_client.py
-├── alembic/                  # DB migrations
-├── tests/                    # Pytest suite
+│ ├── api/ # FastAPI routers
+│ │ ├── v1/
+│ │ │ ├── repositories.py
+│ │ │ ├── pull_requests.py
+│ │ │ ├── tests.py
+│ │ │ ├── ai.py
+│ │ │ ├── dashboard.py
+│ │ │ └── webhooks.py
+│ │ └── deps.py # DI dependencies
+│ ├── core/
+│ │ ├── config.py # Pydantic Settings
+│ │ ├── security.py # JWT + GitHub OAuth
+│ │ ├── logging.py # Structured logging
+│ │ └── telemetry.py # OpenTelemetry
+│ ├── models/ # SQLAlchemy ORM models
+│ │ ├── user.py
+│ │ ├── repository.py
+│ │ ├── pull_request.py
+│ │ ├── test_run.py
+│ │ ├── agent_run.py
+│ │ └── ...
+│ ├── schemas/ # Pydantic v2 schemas
+│ ├── repositories/ # DB access layer
+│ ├── services/ # Business logic
+│ │ ├── github_service.py
+│ │ ├── repository_indexer.py
+│ │ ├── ast_parser.py
+│ │ ├── dependency_graph.py
+│ │ ├── impact_analyzer.py
+│ │ ├── test_runner.py
+│ │ └── risk_scorer.py
+│ ├── agents/ # LangGraph agents
+│ │ ├── graph.py # LangGraph supervisor
+│ │ ├── diff_agent.py
+│ │ ├── dependency_agent.py
+│ │ ├── impact_agent.py
+│ │ ├── search_agent.py
+│ │ ├── test_discovery_agent.py
+│ │ ├── test_generator_agent.py
+│ │ ├── execution_agent.py
+│ │ ├── failure_analysis_agent.py
+│ │ ├── review_agent.py
+│ │ ├── documentation_agent.py
+│ │ └── planner_agent.py
+│ ├── tasks/ # Celery tasks
+│ │ ├── pr_pipeline.py
+│ │ ├── indexing.py
+│ │ └── notifications.py
+│ ├── workers/
+│ │ └── celery_app.py
+│ ├── database/
+│ │ ├── base.py
+│ │ └── session.py
+│ ├── middleware/
+│ │ ├── request_id.py
+│ │ └── rate_limit.py
+│ └── utils/
+│ ├── git_utils.py
+│ ├── tree_sitter_utils.py
+│ └── qdrant_client.py
+├── alembic/ # DB migrations
+├── tests/ # Pytest suite
 └── Dockerfile
 ```
 
@@ -177,28 +177,28 @@ Next.js 15 + TypeScript + Tailwind + Shadcn:
 ```
 frontend/
 ├── app/
-│   ├── (auth)/
-│   │   └── login/
-│   ├── dashboard/
-│   ├── repositories/
-│   │   └── [id]/
-│   ├── pull-requests/
-│   │   └── [id]/
-│   │       ├── review/
-│   │       ├── coverage/
-│   │       └── tests/
-│   ├── dependency-graph/
-│   └── settings/
+│ ├── (auth)/
+│ │ └── login/
+│ ├── dashboard/
+│ ├── repositories/
+│ │ └── [id]/
+│ ├── pull-requests/
+│ │ └── [id]/
+│ │ ├── review/
+│ │ ├── coverage/
+│ │ └── tests/
+│ ├── dependency-graph/
+│ └── settings/
 ├── components/
-│   ├── ui/                   # Shadcn components
-│   ├── dashboard/
-│   ├── pr-review/
-│   ├── dependency-graph/     # React Flow
-│   ├── code-viewer/          # Monaco Editor
-│   └── charts/
+│ ├── ui/ # Shadcn components
+│ ├── dashboard/
+│ ├── pr-review/
+│ ├── dependency-graph/ # React Flow
+│ ├── code-viewer/ # Monaco Editor
+│ └── charts/
 ├── lib/
-│   ├── api.ts                # React Query hooks
-│   └── auth.ts
+│ ├── api.ts # React Query hooks
+│ └── auth.ts
 └── Dockerfile
 ```
 
@@ -206,22 +206,22 @@ frontend/
 ```
 infra/
 ├── nginx/
-│   └── nginx.conf
+│ └── nginx.conf
 ├── prometheus/
-│   └── prometheus.yml
+│ └── prometheus.yml
 ├── grafana/
-│   └── dashboards/
+│ └── dashboards/
 └── otel/
-    └── otel-collector.yml
+ └── otel-collector.yml
 ```
 
 #### [NEW] CI/CD: `.github/workflows/`
 ```
 .github/
 └── workflows/
-    ├── ci.yml        # lint, test, security scan
-    ├── docker.yml    # build & push images
-    └── deploy.yml    # deploy to production
+ ├── ci.yml # lint, test, security scan
+ ├── docker.yml # build & push images
+ └── deploy.yml # deploy to production
 ```
 
 ---
@@ -248,36 +248,36 @@ infra/
 **Agent State Schema** (typed TypedDict):
 ```python
 class AgentState(TypedDict):
-    pr_id: str
-    repo_id: str
-    diff: GitDiff
-    changed_nodes: list[CodeNode]
-    dependency_graph: nx.DiGraph
-    affected_modules: list[str]
-    existing_tests: list[TestFile]
-    generated_tests: list[GeneratedTest]
-    execution_results: TestRunResult
-    failures: list[FailureAnalysis]
-    review_comment: PRReview
-    risk_score: RiskScore
-    errors: list[str]
-    retry_count: int
+ pr_id: str
+ repo_id: str
+ diff: GitDiff
+ changed_nodes: list[CodeNode]
+ dependency_graph: nx.DiGraph
+ affected_modules: list[str]
+ existing_tests: list[TestFile]
+ generated_tests: list[GeneratedTest]
+ execution_results: TestRunResult
+ failures: list[FailureAnalysis]
+ review_comment: PRReview
+ risk_score: RiskScore
+ errors: list[str]
+ retry_count: int
 ```
 
 **LangGraph Flow:**
 ```
 START
-  → PlannerAgent (decides which agents to invoke)
-  → DiffAgent (parse PR diff → changed_nodes)
-  → DependencyAgent (load/build dependency graph)
-  → ImpactAgent (traverse graph → affected_modules)
-  → SearchAgent (semantic + structural code retrieval)
-  → TestDiscoveryAgent (find existing tests)
-  → TestGeneratorAgent (GPT-4.1 → new tests, style-aware)
-  → ExecutionAgent (run tests, collect results)
-  → FailureAnalysisAgent (root cause, suggested fix)
-  → ReviewAgent (write structured GitHub review)
-  → DocumentationAgent (optional: update docs)
+ → PlannerAgent (decides which agents to invoke)
+ → DiffAgent (parse PR diff → changed_nodes)
+ → DependencyAgent (load/build dependency graph)
+ → ImpactAgent (traverse graph → affected_modules)
+ → SearchAgent (semantic + structural code retrieval)
+ → TestDiscoveryAgent (find existing tests)
+ → TestGeneratorAgent (GPT-4.1 → new tests, style-aware)
+ → ExecutionAgent (run tests, collect results)
+ → FailureAnalysisAgent (root cause, suggested fix)
+ → ReviewAgent (write structured GitHub review)
+ → DocumentationAgent (optional: update docs)
 END
 ```
 

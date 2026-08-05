@@ -4,7 +4,7 @@ This document records the design decisions, component implementations, and deplo
 
 ---
 
-## 🛠️ Phases Implemented
+## ️ Phases Implemented
 
 ### Phase 1: Backend Foundation & Scaffolding
 * **ORM & Database Schema**: Initialized SQLAlchemy declarative models mapping `users`, `repositories`, `pull_requests`, `commits`, `repository_files`, `dependency_graph`, `generated_tests`, `test_runs`, `test_results`, `review_comments`, `ai_logs`, `agent_runs`, and `bug_history`.

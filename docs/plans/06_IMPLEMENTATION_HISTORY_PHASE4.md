@@ -4,14 +4,14 @@ This document logs all components built and verified during the frontend, monito
 
 ---
 
-## 🛠️ Components Developed
+## ️ Components Developed
 
 ### 1. Secure HTTP-Only Cookie Authentication
 * **Backend Routers (`backend/app/api/v1/auth.py`)**:
-  * Configured `github_callback` to set a secure `HttpOnly` cookie containing the JWT refresh token, passing only the short-lived access token in the JSON body.
-  * Updated `/refresh` endpoint to resolve the refresh token from either the browser cookie or the request body.
+ * Configured `github_callback` to set a secure `HttpOnly` cookie containing the JWT refresh token, passing only the short-lived access token in the JSON body.
+ * Updated `/refresh` endpoint to resolve the refresh token from either the browser cookie or the request body.
 * **API Schemas (`backend/app/schemas/user.py`)**:
-  * Made `refresh_token` optional in `TokenResponse` to support cookie-based flows.
+ * Made `refresh_token` optional in `TokenResponse` to support cookie-based flows.
 
 ### 2. Modular API Client (`frontend/src/lib/api/`)
 * **`client.ts`**: Initialized Axios with automatic authorization header injection and response interceptor that transparently handles refresh tokens on `401 Unauthorized` responses.
@@ -42,11 +42,11 @@ This document logs all components built and verified during the frontend, monito
 
 ---
 
-## 🧪 Verification & Validation
+## Verification & Validation
 
 * Run TypeScript compilation:
-  ```bash
-  cd frontend
-  npx tsc --noEmit
-  ```
-  * **Result**: Compilation completed with exit code 0 (no warnings, errors, or type anomalies).
+ ```bash
+ cd frontend
+ npx tsc --noEmit
+ ```
+ * **Result**: Compilation completed with exit code 0 (no warnings, errors, or type anomalies).
