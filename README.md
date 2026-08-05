@@ -31,7 +31,7 @@ For technical recruiters, engineering leaders, and open-source contributors, com
 
 | Document | Description | Key Technical Concepts |
 | :--- | :--- | :--- |
-| [**System Architecture**](docs/architecture.md) | Decoupled platform topology & component interactions | Next.js 14, FastAPI, PostgreSQL, Qdrant, Celery |
+| [**System Architecture**](docs/architecture.md) | Decoupled platform topology & component interactions | Next.js 16, FastAPI, PostgreSQL, Qdrant, Celery |
 | [**3-Layer Code Search Engine**](docs/features/CODE_SEARCH_AND_INDEXING.md) | Parallel multi-layer code retrieval architecture | Dense 384-dim vectors, PostgreSQL ILIKE, disk scanner |
 | [**Test Generation & Verification**](docs/features/TEST_GENERATION_AND_VERIFICATION.md) | Multi-agent test synthesis & self-healing verification | Exit codes, pytest/jest JSON reports, self-healing loop |
 | [**GitHub OAuth & Session Security**](docs/features/GITHUB_OAUTH_AND_SECURITY.md) | Enterprise authentication & security model | GitHub OAuth 2.0, JWT tokens, zero password storage |
@@ -83,7 +83,7 @@ The core engine uses a stateful **multi-agent orchestration workflow** powered b
 
 ## Tech Stack & Capabilities
 
-* **Frontend**: Next.js 14, React 19, TailwindCSS, CSS Modules
+* **Frontend**: Next.js 16, React 19, TailwindCSS, CSS Modules
 * **Backend**: Python 3.12, FastAPI, Async SQLAlchemy 2, Alembic, Pydantic v2, Poetry
 * **AI & Multi-Agent Engine**: LangGraph, Tree-sitter AST, LiteLLM, Instructor, Sentence-Transformers
 * **Vector & Relational Storage**: Qdrant Vector DB (384-dim dense vectors), PostgreSQL 16

@@ -8,7 +8,7 @@ TestPilot AI is structured as an enterprise-grade, decoupled web application wit
 
 ```mermaid
 graph TD
- Client[Next.js 14 Frontend Client] -->|REST / WebSockets| FastAPI[FastAPI Backend Server]
+ Client[Next.js 16 Frontend Client] -->|REST / WebSockets| FastAPI[FastAPI Backend Server]
  
  FastAPI -->|Async Tasks| Redis[Redis Broker]
  Redis -->|Dispatch Jobs| Celery[Celery Task Worker]
