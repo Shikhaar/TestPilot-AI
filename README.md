@@ -7,7 +7,7 @@
 
 **Automated Regression Testing & Tree-Sitter AST Code Indexing Platform**
 
-TestPilot AI is an open-source AI software engineering platform designed to automate regression analysis, map codebase dependency impact trees, discover existing test structures, synthesize unit test suites using Large Language Models (LLMs), and automate Pull Request reviews on GitHub. Run locally using Docker Compose or local host development.
+TestPilot AI is an open-source AI software engineering platform designed to automate regression analysis, map codebase dependency impact trees, discover existing test structures, synthesize unit test suites using Large Language Models (LLMs), and automate Pull Request reviews on GitHub.
 
 ---
 
@@ -25,19 +25,19 @@ Modern software engineering teams face significant friction verifying regression
 
 ---
 
-## Engineering & System Documentation
+## 📚 Engineering & System Documentation
 
 For technical recruiters, engineering leaders, and open-source contributors, comprehensive system specifications and feature deep-dives are organized in the [`docs/`](docs/) directory:
 
 | Document | Description | Key Technical Concepts |
 | :--- | :--- | :--- |
-|  [**System Architecture**](docs/architecture.md) | Decoupled platform topology & component interactions | Next.js 14, FastAPI, PostgreSQL, Qdrant, Celery |
-|  [**3-Layer Code Search Engine**](docs/features/CODE_SEARCH_AND_INDEXING.md) | Parallel multi-layer code retrieval architecture | Dense 384-dim vectors, PostgreSQL ILIKE, disk scanner |
-|  [**Test Generation & Verification**](docs/features/TEST_GENERATION_AND_VERIFICATION.md) | Multi-agent test synthesis & self-healing verification | Exit codes, pytest/jest JSON reports, self-healing loop |
-|  [**GitHub OAuth & Session Security**](docs/features/GITHUB_OAUTH_AND_SECURITY.md) | Enterprise authentication & security model | GitHub OAuth 2.0, JWT tokens, zero password storage |
-|  [**Monitoring & Telemetry**](docs/features/MONITORING_AND_TELEMETRY.md) | Queue monitoring & graceful fallback UI | Celery queue latency, Prometheus metrics, fallback banners |
-|  [**Developer Setup Guide**](docs/setup.md) | Containerized and local development guide | Docker Compose, environment variables, alembic migrations |
-|  [**Implementation History & Roadmap**](docs/plans/01_INITIAL_IMPLEMENTATION_PLAN.md) | Chronological development roadmap & milestone plans | Phase-by-phase implementation logs |
+| [**System Architecture**](docs/architecture.md) | Decoupled platform topology & component interactions | Next.js 14, FastAPI, PostgreSQL, Qdrant, Celery |
+| [**3-Layer Code Search Engine**](docs/features/CODE_SEARCH_AND_INDEXING.md) | Parallel multi-layer code retrieval architecture | Dense 384-dim vectors, PostgreSQL ILIKE, disk scanner |
+| [**Test Generation & Verification**](docs/features/TEST_GENERATION_AND_VERIFICATION.md) | Multi-agent test synthesis & self-healing verification | Exit codes, pytest/jest JSON reports, self-healing loop |
+| [**GitHub OAuth & Session Security**](docs/features/GITHUB_OAUTH_AND_SECURITY.md) | Enterprise authentication & security model | GitHub OAuth 2.0, JWT tokens, zero password storage |
+| [**Monitoring & Telemetry**](docs/features/MONITORING_AND_TELEMETRY.md) | Queue monitoring & graceful fallback UI | Celery queue latency, Prometheus metrics, fallback banners |
+| [**Developer Setup Guide**](docs/setup.md) | Containerized and local development guide | Docker Compose, environment variables, alembic migrations |
+| [**Implementation Roadmap**](docs/plans/01_INITIAL_IMPLEMENTATION_PLAN.md) | Chronological development roadmap & milestone plans | Phase-by-phase implementation logs |
 
 ---
 
@@ -45,7 +45,7 @@ For technical recruiters, engineering leaders, and open-source contributors, com
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                           Next.js 16 Frontend                           │
+│                           Next.js 14 Frontend                           │
 │                        (React 19, TailwindCSS)                          │
 └────────────────────────────────────┬────────────────────────────────────┘
                                      │ REST / WebSockets / SSE
@@ -81,86 +81,64 @@ The core engine uses a stateful **multi-agent orchestration workflow** powered b
 
 ---
 
-## Key Technical Features
+## ⚡ Tech Stack & Capabilities
 
-### Multi-Language Tree-sitter AST Parsing
-Supports deep AST parsing for TypeScript, JavaScript, Python, Go, Java, and Rust. Extracts function signatures, decorators, class hierarchies, imports, exports, and web route handlers (FastAPI, Express, Spring, Flask).
-
-### Dynamic README & Description Extraction
-Extracts repository documentation directly from local cloned file paths or fallbacks to GitHub REST API endpoints dynamically, avoiding stale or hardcoded fallback data.
-
-### Real-Time Async Architecture
-Built with FastAPI async endpoints, Redis Pub/Sub, and WebSockets to push live indexing progress, AST parsing metrics, and pipeline status updates directly to the Next.js frontend.
-
-### One-Click GitHub Pull Request Creation
-Provides automated branch creation and commit generation via the GitHub API, allowing developers to push generated unit tests directly to active Pull Requests.
-
-### GitHub Linguist Language Detection
-Automatically detects the primary programming language of each connected repository by querying the GitHub Linguist API, providing accurate language metadata without requiring manual configuration.
-
-### Repository Disconnect & Storage Cleanup
-Provides a one-click disconnect feature from the repository dashboard. Disconnecting a repository removes the database record, deletes the local cloned storage directory, and purges all associated AST vector embeddings from Qdrant — freeing up disk space and vector storage instantly.
+* **Frontend**: Next.js 14, React 19, TailwindCSS, CSS Modules
+* **Backend**: Python 3.12, FastAPI, Async SQLAlchemy 2, Alembic, Pydantic v2, Poetry
+* **AI & Multi-Agent Engine**: LangGraph, Tree-sitter AST, LiteLLM, Instructor, Sentence-Transformers
+* **Vector & Relational Storage**: Qdrant Vector DB (384-dim dense vectors), PostgreSQL 16
+* **Async Infrastructure**: Celery 5, Redis 7 (Pub/Sub & Broker)
+* **Observability & Monitoring**: Prometheus, Grafana, OpenTelemetry, Celery Flower
 
 ---
 
-## Technology Stack
+## 🚀 Quickstart Guide
 
-* **Frontend**: Next.js 16, React 19, TailwindCSS, CSS Modules
-* **Backend**: Python 3.12, FastAPI, SQLAlchemy 2 (AsyncIO), Alembic, Pydantic v2, Poetry
-* **AI & Agent Orchestration**: LangGraph, Tree-sitter, LiteLLM, Instructor, Sentence-Transformers
-* **Asynchronous Infrastructure**: Celery, Redis, Kombu
-* **Vector Storage**: Qdrant Vector DB
-* **Observability**: Prometheus, Grafana, OpenTelemetry, Celery Flower, Structlog
+### Option 1: 60-Second Containerized Deployment (Recommended for New Users & Reviewers)
 
----
+> **Why Option 1?** Option 1 spins up the complete microservice architecture (FastAPI, PostgreSQL, Redis, Qdrant, Celery) in a single command with zero dependency setup or local configuration required.
 
-## Quickstart Guide
-
-### Option 1: 60-Second Containerized Deployment (Recommended)
-
-1. Clone the repository:
+1. **Clone the repository**:
    ```bash
    git clone https://github.com/Shikhaar/TestPilot-AI.git
    cd TestPilot-AI
    ```
 
-2. Copy the environment configuration template:
+2. **Copy the environment configuration**:
    ```bash
    cp .env.example .env
    ```
 
-3. Spin up all containerized services (Frontend, Backend, PostgreSQL, Redis, Qdrant, Celery, Grafana):
+3. **Spin up containerized services**:
    ```bash
    docker compose up -d
    ```
 
-4. Execute database migrations:
+4. **Execute database migrations**:
    ```bash
    docker compose exec backend poetry run alembic upgrade head
    ```
 
-5. Access the Web Dashboard at `http://localhost:3000`.
+5. **Access the Web Dashboard** at `http://localhost:3000`.
 
 ---
 
-### Option 2: Native Host Development Setup
+### Option 2: Native Host Development Setup (For Active Core Contributors)
+
+<details>
+<summary>Click to expand Native Host Setup instructions</summary>
 
 #### Prerequisites
 * Python 3.12 & Poetry
 * Node.js v18+ & npm
 * Docker & Docker Compose (for PostgreSQL, Redis, and Qdrant infrastructure)
 
-#### 1. Start Storage Infrastructure
+#### 1. Start Infrastructure
 ```bash
 docker compose up -d postgres redis qdrant
 ```
 
-#### 2. Environment Configuration
-Copy `.env.example` to `.env`:
-```bash
-cp .env.example .env
-```
-Ensure host connection strings are configured for native execution:
+#### 2. Configure Host Connection Strings (`.env`)
 ```env
 POSTGRES_HOST=localhost
 REDIS_HOST=localhost
@@ -170,48 +148,49 @@ REDIS_URL=redis://:redis_secret@localhost:6379/0
 QDRANT_URL=http://localhost:6333
 ```
 
-#### 3. Run Backend API
+#### 3. Start Backend API
 ```bash
 cd backend
 poetry install
 poetry run alembic upgrade head
 poetry run uvicorn app.main:app --port 8000 --reload
 ```
-FastAPI Swagger documentation will be available at `http://localhost:8000/docs`.
 
-#### 4. Run Frontend Web App
+#### 4. Start Frontend Client
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-Frontend interface will be available at `http://localhost:3000`.
+Open `http://localhost:3000`.
+
+</details>
 
 ---
 
 ## Usage Workflow
 
 1. **Access the Dashboard**: Open `http://localhost:3000`.
-2. **Connect a Repository**: Select a repository from your linked GitHub account or enter any public GitHub repository URL (e.g., `expressjs/express` or `psf/requests`).
-3. **Observe AST Indexing**: Track progress as the backend clones the target repository, parses AST symbols, and computes health and coverage metrics.
-4. **Generate Unit Tests**: Open the repository detail page, click **Generate Tests**, inspect the synthesized test file, and click **Create PR on GitHub** to push changes directly to the remote repository.
-5. **Disconnect a Repository**: Click the **Disconnect** button on any repository card to remove it from TestPilot AI, free up local disk storage, and purge all associated vector embeddings.
+2. **Connect a Repository**: Select a repository from your linked GitHub account or enter any public GitHub repository URL.
+3. **Observe AST Indexing**: Track real-time AST parsing progress, health scores, and coverage metrics.
+4. **Code Search & Unit Testing**: Execute 3-layer hybrid code searches or generate automated unit test suites.
+5. **Disconnect a Repository**: Purge storage directories and Qdrant vector collections with one click.
 
 ---
 
-## Infrastructure & Monitoring Endpoints
+## Infrastructure & Endpoints
 
 | Service | Endpoint | Purpose |
 | :--- | :--- | :--- |
 | **Web Interface** | `http://localhost:3000` | Application frontend dashboard |
-| **Backend OpenAPI Docs** | `http://localhost:8000/docs` | Interactive Swagger API specification |
-| **Qdrant Vector Console** | `http://localhost:6333/dashboard` | Vector storage & collection management |
-| **Celery Flower** | `http://localhost:5555` | Worker queue and task execution monitor |
-| **Grafana Telemetry** | `http://localhost:3001` | Prometheus metric visualization dashboard |
+| **Backend Swagger API** | `http://localhost:8000/docs` | Interactive OpenAPI specification |
+| **Qdrant Vector Dashboard** | `http://localhost:6333/dashboard` | Vector storage collection manager |
+| **Celery Flower** | `http://localhost:5555` | Distributed task execution monitor |
+| **Grafana Dashboard** | `http://localhost:3001` | Prometheus telemetry visualization |
 
 ---
 
-## Developer Automation Tools (Makefile)
+## Developer Automation (Makefile)
 
 | Command | Action |
 | :--- | :--- |
@@ -226,4 +205,4 @@ Frontend interface will be available at `http://localhost:3000`.
 
 ## License
 
-Distributed under the **MIT License**. See `LICENSE` for more information.
+Distributed under the **MIT License**. See `LICENSE` for details.
