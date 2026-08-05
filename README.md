@@ -25,19 +25,19 @@ Modern software engineering teams face significant friction verifying regression
 
 ---
 
-## 📚 Engineering & System Documentation
+## Engineering & System Documentation
 
 For technical recruiters, engineering leaders, and open-source contributors, comprehensive system specifications and feature deep-dives are organized in the [`docs/`](docs/) directory:
 
 | Document | Description | Key Technical Concepts |
 | :--- | :--- | :--- |
-| 🏗️ [**System Architecture**](docs/architecture.md) | Decoupled platform topology & component interactions | Next.js 14, FastAPI, PostgreSQL, Qdrant, Celery |
-| 🔍 [**3-Layer Code Search Engine**](docs/features/CODE_SEARCH_AND_INDEXING.md) | Parallel multi-layer code retrieval architecture | Dense 384-dim vectors, PostgreSQL ILIKE, disk scanner |
-| 🧪 [**Test Generation & Verification**](docs/features/TEST_GENERATION_AND_VERIFICATION.md) | Multi-agent test synthesis & self-healing verification | Exit codes, pytest/jest JSON reports, self-healing loop |
-| 🔒 [**GitHub OAuth & Session Security**](docs/features/GITHUB_OAUTH_AND_SECURITY.md) | Enterprise authentication & security model | GitHub OAuth 2.0, JWT tokens, zero password storage |
-| 📊 [**Monitoring & Telemetry**](docs/features/MONITORING_AND_TELEMETRY.md) | Queue monitoring & graceful fallback UI | Celery queue latency, Prometheus metrics, fallback banners |
-| ⚙️ [**Developer Setup Guide**](docs/setup.md) | Containerized and local development guide | Docker Compose, environment variables, alembic migrations |
-| 📋 [**Implementation History & Roadmap**](docs/plans/01_INITIAL_IMPLEMENTATION_PLAN.md) | Chronological development roadmap & milestone plans | Phase-by-phase implementation logs |
+|  [**System Architecture**](docs/architecture.md) | Decoupled platform topology & component interactions | Next.js 14, FastAPI, PostgreSQL, Qdrant, Celery |
+|  [**3-Layer Code Search Engine**](docs/features/CODE_SEARCH_AND_INDEXING.md) | Parallel multi-layer code retrieval architecture | Dense 384-dim vectors, PostgreSQL ILIKE, disk scanner |
+|  [**Test Generation & Verification**](docs/features/TEST_GENERATION_AND_VERIFICATION.md) | Multi-agent test synthesis & self-healing verification | Exit codes, pytest/jest JSON reports, self-healing loop |
+|  [**GitHub OAuth & Session Security**](docs/features/GITHUB_OAUTH_AND_SECURITY.md) | Enterprise authentication & security model | GitHub OAuth 2.0, JWT tokens, zero password storage |
+|  [**Monitoring & Telemetry**](docs/features/MONITORING_AND_TELEMETRY.md) | Queue monitoring & graceful fallback UI | Celery queue latency, Prometheus metrics, fallback banners |
+|  [**Developer Setup Guide**](docs/setup.md) | Containerized and local development guide | Docker Compose, environment variables, alembic migrations |
+|  [**Implementation History & Roadmap**](docs/plans/01_INITIAL_IMPLEMENTATION_PLAN.md) | Chronological development roadmap & milestone plans | Phase-by-phase implementation logs |
 
 ---
 
