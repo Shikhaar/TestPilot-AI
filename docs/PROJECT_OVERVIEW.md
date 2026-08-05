@@ -4,7 +4,7 @@ TestPilot AI is an advanced, production-grade **AI-Powered Regression Testing an
 
 ---
 
-## 🚀 Key Capabilities
+## Key Capabilities
 
 1. **Automated PR Reviews**: Generates senior-engineer-level, structured markdown feedback directly in GitHub PR comments.
 2. **Impact & Dependency Mapping**: Uses Tree-sitter AST parsing to trace exactly which functions, classes, and REST endpoints are impacted by code changes.
@@ -14,22 +14,22 @@ TestPilot AI is an advanced, production-grade **AI-Powered Regression Testing an
 
 ---
 
-## 🛠️ Technology Stack & Core Infrastructure
+## ️ Technology Stack & Core Infrastructure
 
 ```mermaid
 graph TD
-    GitHub[GitHub Webhook / PR] -->|Payload| Proxy[Nginx Reverse Proxy]
-    Proxy -->|API Request| FastAPI[FastAPI Backend]
-    FastAPI -->|Write metadata| DB[(PostgreSQL Database)]
-    FastAPI -->|Trigger task| Redis[(Redis Broker)]
-    Redis -->|Execute worker| Celery[Celery Task Workers]
-    Celery -->|AST Parsing| TreeSitter[Tree-sitter Parser]
-    Celery -->|Vector Embeddings| Qdrant[(Qdrant Vector DB)]
-    Celery -->|LLM Prompts| LiteLLM[LiteLLM + Gemini 2.0]
-    Celery -->|Sandboxed Run| TestRunner[Python Pytest Runner]
-    FastAPI -->|Expose metrics| OTEL[OpenTelemetry Collector]
-    OTEL -->|Metrics| Prometheus[(Prometheus)]
-    Prometheus -->|Dashboard| Grafana[(Grafana)]
+ GitHub[GitHub Webhook / PR] -->|Payload| Proxy[Nginx Reverse Proxy]
+ Proxy -->|API Request| FastAPI[FastAPI Backend]
+ FastAPI -->|Write metadata| DB[(PostgreSQL Database)]
+ FastAPI -->|Trigger task| Redis[(Redis Broker)]
+ Redis -->|Execute worker| Celery[Celery Task Workers]
+ Celery -->|AST Parsing| TreeSitter[Tree-sitter Parser]
+ Celery -->|Vector Embeddings| Qdrant[(Qdrant Vector DB)]
+ Celery -->|LLM Prompts| LiteLLM[LiteLLM + Gemini 2.0]
+ Celery -->|Sandboxed Run| TestRunner[Python Pytest Runner]
+ FastAPI -->|Expose metrics| OTEL[OpenTelemetry Collector]
+ OTEL -->|Metrics| Prometheus[(Prometheus)]
+ Prometheus -->|Dashboard| Grafana[(Grafana)]
 ```
 
 ### 1. Backend Service (`backend/`)
@@ -54,63 +54,63 @@ graph TD
 
 ---
 
-## 📂 Project Directory Structure
+## Project Directory Structure
 
 ```
 TestPilot AI/
-├── .github/workflows/          # GitHub Actions CI/CD pipelines
-│   └── ci.yml                  # Runs Ruff, Mypy, and Pytest on commits
-│   └── cd.yml                  # Builds and pushes Docker images to GHCR
-├── backend/                    # Core Backend codebase
-│   ├── app/
-│   │   ├── agents/             # LangGraph agent state machines & logic
-│   │   ├── api/                # FastAPI routers (webhooks, auth, AI chat, dashboard)
-│   │   ├── core/               # Configuration, logging, telemetry settings
-│   │   ├── database/           # DB session creation and SQLAlchemy base
-│   │   ├── middleware/         # Custom CORS, Request ID, and Rate Limiters
-│   │   ├── models/             # SQLAlchemy ORM definitions (PR, TestRun, User)
-│   │   ├── repositories/       # Data Access Object pattern wrappers
-│   │   ├── schemas/            # Pydantic schemas for request/response bodies
-│   │   ├── services/           # Services (AST parsing, Embedding, GitHub API)
-│   │   ├── tasks/              # Celery background tasks (indexing, pipelines)
-│   │   ├── utils/              # Helper utilities (Git operations, shell run)
-│   │   └── workers/            # Celery initialization configuration
-│   ├── alembic/                # DB migrations configuration & versions
-│   ├── tests/                  # Unit & integration pytest suites
-│   ├── pyproject.toml          # Poetry package dependencies & tools setup
-│   └── Dockerfile              # Docker runtime build instruction
-├── frontend/                   # Next.js Frontend Dashboard code
-│   ├── src/
-│   │   ├── app/                # Next.js App router pages (dashboard, repos, PRs)
-│   │   ├── components/         # Shared dashboard UI widgets
-│   │   └── lib/                # API clients and helpers
-│   └── package.json            # NPM dependencies configuration
-├── infra/                      # Orchestration infrastructure scripts
-│   ├── nginx/                  # Nginx proxy routing configuration & TLS config
-│   ├── prometheus/             # Metrics scrape configurations
-│   └── grafana/                # Grafana data sources & dashboards configurations
-├── docker-compose.yml          # Local multi-service launcher configuration
-└── .env                        # Configuration environment variables
+├── .github/workflows/ # GitHub Actions CI/CD pipelines
+│ └── ci.yml # Runs Ruff, Mypy, and Pytest on commits
+│ └── cd.yml # Builds and pushes Docker images to GHCR
+├── backend/ # Core Backend codebase
+│ ├── app/
+│ │ ├── agents/ # LangGraph agent state machines & logic
+│ │ ├── api/ # FastAPI routers (webhooks, auth, AI chat, dashboard)
+│ │ ├── core/ # Configuration, logging, telemetry settings
+│ │ ├── database/ # DB session creation and SQLAlchemy base
+│ │ ├── middleware/ # Custom CORS, Request ID, and Rate Limiters
+│ │ ├── models/ # SQLAlchemy ORM definitions (PR, TestRun, User)
+│ │ ├── repositories/ # Data Access Object pattern wrappers
+│ │ ├── schemas/ # Pydantic schemas for request/response bodies
+│ │ ├── services/ # Services (AST parsing, Embedding, GitHub API)
+│ │ ├── tasks/ # Celery background tasks (indexing, pipelines)
+│ │ ├── utils/ # Helper utilities (Git operations, shell run)
+│ │ └── workers/ # Celery initialization configuration
+│ ├── alembic/ # DB migrations configuration & versions
+│ ├── tests/ # Unit & integration pytest suites
+│ ├── pyproject.toml # Poetry package dependencies & tools setup
+│ └── Dockerfile # Docker runtime build instruction
+├── frontend/ # Next.js Frontend Dashboard code
+│ ├── src/
+│ │ ├── app/ # Next.js App router pages (dashboard, repos, PRs)
+│ │ ├── components/ # Shared dashboard UI widgets
+│ │ └── lib/ # API clients and helpers
+│ └── package.json # NPM dependencies configuration
+├── infra/ # Orchestration infrastructure scripts
+│ ├── nginx/ # Nginx proxy routing configuration & TLS config
+│ ├── prometheus/ # Metrics scrape configurations
+│ └── grafana/ # Grafana data sources & dashboards configurations
+├── docker-compose.yml # Local multi-service launcher configuration
+└── .env # Configuration environment variables
 ```
 
 ---
 
-## 🤖 The AI Agent Pipeline (LangGraph Workflow)
+## The AI Agent Pipeline (LangGraph Workflow)
 
 When a GitHub PR webhook is received, Celery initiates the **PR Analysis Agent Graph**:
 
 ```mermaid
 stateDiagram-v2
-    [*] --> DiffAgent
-    DiffAgent --> DependencyAgent: Identified changed symbols
-    DependencyAgent --> SearchAgent: Identified affected dependencies
-    SearchAgent --> TestDiscoveryAgent: Found relevant existing tests
-    TestDiscoveryAgent --> ExecutionAgent: Ran existing test suite
-    ExecutionAgent --> FailureAnalysisAgent: If tests failed
-    ExecutionAgent --> TestGeneratorAgent: If code lacks coverage
-    FailureAnalysisAgent --> ReviewAgent
-    TestGeneratorAgent --> ReviewAgent
-    ReviewAgent --> [*]: Post PR review & metrics
+ [*] --> DiffAgent
+ DiffAgent --> DependencyAgent: Identified changed symbols
+ DependencyAgent --> SearchAgent: Identified affected dependencies
+ SearchAgent --> TestDiscoveryAgent: Found relevant existing tests
+ TestDiscoveryAgent --> ExecutionAgent: Ran existing test suite
+ ExecutionAgent --> FailureAnalysisAgent: If tests failed
+ ExecutionAgent --> TestGeneratorAgent: If code lacks coverage
+ FailureAnalysisAgent --> ReviewAgent
+ TestGeneratorAgent --> ReviewAgent
+ ReviewAgent --> [*]: Post PR review & metrics
 ```
 
 1. **`DiffAgent`**: Fetches the raw PR patch, parses changed line ranges using Tree-sitter, and registers updated functions, classes, and routes.
@@ -124,7 +124,7 @@ stateDiagram-v2
 
 ---
 
-## 🗄️ Database Schema & Entities
+## ️ Database Schema & Entities
 
 The platform maintains metadata persistently in a PostgreSQL schema:
 
@@ -135,7 +135,7 @@ The platform maintains metadata persistently in a PostgreSQL schema:
 
 ---
 
-## 💻 Local Setup & Run Checklist
+## Local Setup & Run Checklist
 
 ### Prerequisites
 * Docker Desktop installed and running.
@@ -146,11 +146,11 @@ The platform maintains metadata persistently in a PostgreSQL schema:
 1. Clone the repository.
 2. Configure `.env` using `.env.example` as a baseline.
 3. Start the entire platform via Docker Compose:
-   ```bash
-   docker-compose up -d
-   ```
+ ```bash
+ docker-compose up -d
+ ```
 4. Verify the backend service health:
-   ```bash
-   curl http://localhost:8000/health
-   ```
+ ```bash
+ curl http://localhost:8000/health
+ ```
 5. Open the frontend dashboard in your browser at `http://localhost:3000`.
