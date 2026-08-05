@@ -363,7 +363,8 @@ async def _generate_and_store_embeddings(
             qdrant.upsert(collection_name="code_symbols", points=points)  # type: ignore[arg-type]
             with contextlib.suppress(Exception):
                 qdrant.upsert(
-                    collection_name=settings.qdrant_collection_repository_chunks, points=points  # type: ignore[arg-type]
+                    collection_name=settings.qdrant_collection_repository_chunks,
+                    points=points,  # type: ignore[arg-type]
                 )
             logger.info(
                 "Embeddings stored in Qdrant", repository_id=repository_id, count=len(points)
