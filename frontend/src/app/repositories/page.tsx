@@ -11,7 +11,7 @@ export default function Repositories() {
   const [userGitHubRepos, setUserGitHubRepos] = useState<Array<{ full_name: string; name: string }>>([]);
   const [ghReposError, setGhReposError] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [vcsProvider, setVcsProvider] = useState<"github" | "bitbucket" | "gitlab" | "custom_git">("github");
+  const [vcsProvider, setVcsProvider] = useState<"github" | "bitbucket" | "gitlab" | "azure_devops" | "custom_git">("github");
   const [accessToken, setAccessToken] = useState("");
   const [selectedRepo, setSelectedRepo] = useState("");
   const [customRepo, setCustomRepo] = useState("");
@@ -185,6 +185,7 @@ export default function Repositories() {
               { id: "github", label: "GitHub" },
               { id: "bitbucket", label: "Bitbucket" },
               { id: "gitlab", label: "GitLab" },
+              { id: "azure_devops", label: "Azure DevOps" },
               { id: "custom_git", label: "Custom Git URL" },
             ].map((p) => (
               <button

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from datetime import datetime
 from enum import StrEnum
 
@@ -30,7 +29,7 @@ class RepositoryConnectRequest(BaseSchema):
     )
     provider: str = Field(
         default="github",
-        description="VCS provider: github | bitbucket | gitlab | custom_git",
+        description="VCS provider: github | bitbucket | gitlab | azure_devops | custom_git",
     )
     access_token: str | None = Field(
         default=None,

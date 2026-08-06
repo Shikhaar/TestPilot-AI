@@ -5,6 +5,7 @@ Provides a unified factory function to obtain provider adapter instances.
 
 from __future__ import annotations
 
+from app.services.vcs.azure_devops_provider import AzureDevOpsProvider
 from app.services.vcs.bitbucket_provider import BitbucketProvider
 from app.services.vcs.generic_git_provider import GenericGitProvider
 from app.services.vcs.github_provider import GitHubProvider
@@ -22,6 +23,8 @@ _PROVIDERS: dict[str, VCSProvider] = {
     "github": GitHubProvider(),
     "bitbucket": BitbucketProvider(),
     "gitlab": GitLabProvider(),
+    "azure_devops": AzureDevOpsProvider(),
+    "azure": AzureDevOpsProvider(),
     "custom_git": GenericGitProvider(),
 }
 
@@ -42,6 +45,7 @@ __all__ = [
     "GitHubProvider",
     "BitbucketProvider",
     "GitLabProvider",
+    "AzureDevOpsProvider",
     "GenericGitProvider",
     "get_vcs_provider",
 ]
