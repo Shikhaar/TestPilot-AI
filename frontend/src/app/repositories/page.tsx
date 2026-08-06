@@ -209,7 +209,7 @@ export default function Repositories() {
           {(vcsProvider === "bitbucket" || vcsProvider === "gitlab") && (
             <div className="mb-4 p-3 rounded-lg bg-purple-500/10 border border-purple-500/20 flex flex-col sm:flex-row items-center justify-between gap-3">
               <div className="text-xs text-purple-200">
-                <span className="font-semibold block text-purple-300">Fast 1-Click Integration</span>
+                <span className="font-semibold block text-purple-300">1-Click OAuth 2.0 Integration</span>
                 Authorize TestPilot AI to automatically list and connect your {vcsProvider === "bitbucket" ? "Bitbucket" : "GitLab"} repositories.
               </div>
               <button
@@ -217,8 +217,12 @@ export default function Repositories() {
                 onClick={async () => {
                   try {
                     const data = await authApi.getOAuthUrl(vcsProvider as any);
-                    if (data?.url) {
+                    if (data?.url && !data.url.includes("testpilot-ai-app")) {
                       window.location.href = data.url;
+                    } else {
+                      setError(
+                        `To use 1-click ${vcsProvider === "bitbucket" ? "Bitbucket" : "GitLab"} OAuth, set ${vcsProvider.toUpperCase()}_CLIENT_ID in your backend .env file. Alternatively, connect public repos or enter an App Password below!`
+                      );
                     }
                   } catch (err: any) {
                     setError(`Failed to initiate ${vcsProvider} OAuth authorization.`);
