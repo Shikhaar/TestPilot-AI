@@ -226,7 +226,7 @@ export default function Repositories() {
                 }}
                 className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-purple-600 hover:bg-purple-500 text-white shadow-md transition whitespace-nowrap"
               >
-                ⚡ Authorize via {vcsProvider === "github" ? "GitHub" : vcsProvider === "bitbucket" ? "Bitbucket" : "GitLab"} OAuth 2.0
+                Authorize via {vcsProvider === "github" ? "GitHub" : vcsProvider === "bitbucket" ? "Bitbucket" : "GitLab"} OAuth 2.0
               </button>
             </div>
           )}
