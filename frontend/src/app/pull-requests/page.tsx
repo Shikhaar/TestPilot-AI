@@ -19,14 +19,13 @@ export default function PullRequestsPage() {
     async function loadPRs() {
       setLoading(true);
       try {
-        // Fetch all PRs from API
-        const data = await pullRequestsApi.list(undefined, filterState || undefined, page, pageSize).catch(() => null);
-        if (data && data.items && data.items.length > 0) {
+        const data = await pullRequestsApi.list(undefined, filterState || undefined, page, pageSize);
+        if (data && Array.isArray(data.items)) {
           setPrs(data.items);
-          setTotal(data.total || data.items.length);
+          setTotal(data.total ?? data.items.length);
           setIsUsingMock(false);
         } else {
-          throw new Error("Backend returned empty or offline - using mock PRs");
+          throw new Error("Backend offline");
         }
       } catch {
         // Fallback mock data for preview mode
@@ -180,7 +179,14 @@ export default function PullRequestsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-850">
-                  {filteredPRs.map((pr) => {
+                  {filteredPRs.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-12 text-center text-gray-500 text-sm">
+                        No pull requests found. Connect a repository and trigger a PR webhook analysis to populate PR data.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredPRs.map((pr) => {
                     const statusColors = {
                       pending: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
                       running: "bg-blue-500/10 text-blue-500 border-blue-500/20",
@@ -242,7 +248,8 @@ export default function PullRequestsPage() {
                         </td>
                       </tr>
                     );
-                  })}
+                  })
+                )}
                 </tbody>
               </table>
             </div>
