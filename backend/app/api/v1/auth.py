@@ -94,6 +94,25 @@ async def bitbucket_login_url(redirect_uri: str | None = None) -> dict[str, str]
     return {"url": url, "state": state}
 
 
+@router.get("/azure_devops/login", summary="Azure DevOps OAuth Login URL")
+async def azure_devops_login_url(redirect_uri: str | None = None) -> dict[str, str]:
+    """Get the Azure DevOps OAuth authorization URL."""
+    settings = get_settings()
+    state = secrets.token_urlsafe(32)
+    cb_uri = redirect_uri or "http://localhost:3000/auth/callback"
+    client_id = settings.azure_devops_client_id or "testpilot-ai-app"
+
+    url = (
+        f"https://app.vssps.visualstudio.com/oauth2/authorize"
+        f"?client_id={client_id}"
+        f"&response_type=Assertion"
+        f"&state={state}"
+        f"&scope=vso.code_full%20vso.build_execute"
+        f"&redirect_uri={cb_uri}"
+    )
+    return {"url": url, "state": state}
+
+
 @router.post("/github/callback", response_model=TokenResponse)
 async def github_callback(
     request: GitHubCallbackRequest,

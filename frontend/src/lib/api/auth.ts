@@ -23,7 +23,7 @@ export const authApi = {
     return res.data;
   },
 
-  getOAuthUrl: async (provider: "github" | "bitbucket" | "gitlab") => {
+  getOAuthUrl: async (provider: "github" | "bitbucket" | "gitlab" | "azure_devops") => {
     try {
       const res = await client.get<{ url: string; state: string }>(`/auth/${provider}/login`);
       if (res.data?.url) return res.data;
@@ -36,6 +36,9 @@ export const authApi = {
     }
     if (provider === "gitlab") {
       return { url: `https://gitlab.com/oauth/authorize?client_id=testpilot-ai-app&redirect_uri=${encodeURIComponent("http://localhost:3000/auth/callback")}&response_type=code&state=${state}&scope=api`, state };
+    }
+    if (provider === "azure_devops") {
+      return { url: `https://app.vssps.visualstudio.com/oauth2/authorize?client_id=testpilot-ai-app&response_type=Assertion&state=${state}&scope=vso.code_full&redirect_uri=${encodeURIComponent("http://localhost:3000/auth/callback")}`, state };
     }
     return { url: `https://github.com/login/oauth/authorize?client_id=testpilot-ai-app&state=${state}`, state };
   },
