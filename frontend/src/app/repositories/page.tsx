@@ -221,7 +221,7 @@ export default function Repositories() {
                       window.location.href = data.url;
                     } else {
                       setError(
-                        `To use 1-click ${vcsProvider === "bitbucket" ? "Bitbucket" : "GitLab"} OAuth, set ${vcsProvider.toUpperCase()}_CLIENT_ID in your backend .env file. Alternatively, connect public repos or enter an App Password below!`
+                        `1-Click OAuth for ${vcsProvider === "bitbucket" ? "Bitbucket" : "GitLab"} is not enabled on this instance. Easily connect your repository by entering an Access Token / App Password below!`
                       );
                     }
                   } catch (err: any) {
