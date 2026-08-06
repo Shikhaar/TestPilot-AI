@@ -126,18 +126,17 @@ export default function Repositories() {
     }
   };
 
-  return (
-    <div className="flex h-screen bg-[#030303]">
-      <Sidebar />
-      
-      <main className="flex-1 overflow-y-auto px-10 py-8">
-        {/* Header */}
-        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Connected Repositories</h1>
-            <p className="text-gray-500 text-sm">Manage connected codebases, index AST structures, and run test suites</p>
-          </div>
+  const [vcsProvider, setVcsProvider] = useState<"github" | "bitbucket" | "gitlab" | "custom_git">("github");
 
+  return (
+    <div className="flex h-screen bg-[#07090e] font-sans overflow-hidden">
+      <Sidebar />
+      <main className="flex-1 overflow-y-auto p-8 text-gray-200">
+        <header className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-100">Repositories</h1>
+            <p className="text-sm text-gray-400 mt-1">Connect, index, and manage VCS repositories across GitHub, Bitbucket, and GitLab.</p>
+          </div>
           <a
             href="https://github.com/apps/testpilot-ai-shikhar/installations/new"
             target="_blank"
