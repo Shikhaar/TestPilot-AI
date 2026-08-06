@@ -51,6 +51,7 @@ export default function Monitoring() {
             avg_generation_latency_seconds: 2.8,
             avg_execution_latency_seconds: 2.2,
             avg_queue_wait_seconds: 0.4,
+            is_sample_data: true,
             last_7_prs_trend: [
               { pr_id: "PR-138", timestamp: "Aug 1", pass_at_1: 78.5, developer_acceptance_rate: 82.0, mean_repair_iterations: 1.8, total_tokens: 14200, estimated_usd: 0.021, generation_latency_seconds: 4.2, execution_latency_seconds: 3.1 },
               { pr_id: "PR-139", timestamp: "Aug 2", pass_at_1: 81.0, developer_acceptance_rate: 85.0, mean_repair_iterations: 1.6, total_tokens: 15100, estimated_usd: 0.023, generation_latency_seconds: 3.9, execution_latency_seconds: 2.9 },
@@ -70,6 +71,8 @@ export default function Monitoring() {
     }
     loadData();
   }, []);
+
+  const isSample = evalops?.is_sample_data !== false;
 
   return (
     <div className="flex h-screen bg-[#030303]">
@@ -105,7 +108,7 @@ export default function Monitoring() {
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <h2 className="text-lg font-bold text-gray-100">EvalOps & AI Benchmarks</h2>
-                      {evalops.is_sample_data ? (
+                      {isSample ? (
                         <span className="text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wide bg-amber-500/10 border border-amber-500/30 text-amber-400">
                           ℹ Baseline Sample Benchmark
                         </span>
@@ -117,7 +120,7 @@ export default function Monitoring() {
                       )}
                     </div>
                     <p className="text-xs text-gray-400">
-                      {evalops.is_sample_data
+                      {isSample
                         ? "Displaying initial baseline benchmark metrics (0 PRs in database). Connect a repository and run PR analysis to populate live telemetry."
                         : "Aggregated live from your database across analyzed pull requests."}
                     </p>
