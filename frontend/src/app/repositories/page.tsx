@@ -205,12 +205,12 @@ export default function Repositories() {
             ))}
           </div>
 
-          {/* 1-Click OAuth 2.0 Authorization Option */}
-          {vcsProvider !== "custom_git" && (
+          {/* 1-Click OAuth 2.0 Authorization Option for Bitbucket / GitLab */}
+          {(vcsProvider === "bitbucket" || vcsProvider === "gitlab") && (
             <div className="mb-4 p-3 rounded-lg bg-purple-500/10 border border-purple-500/20 flex flex-col sm:flex-row items-center justify-between gap-3">
               <div className="text-xs text-purple-200">
                 <span className="font-semibold block text-purple-300">Fast 1-Click Integration</span>
-                Authorize TestPilot AI to automatically list and connect your {vcsProvider === "github" ? "GitHub" : vcsProvider === "bitbucket" ? "Bitbucket" : "GitLab"} repositories.
+                Authorize TestPilot AI to automatically list and connect your {vcsProvider === "bitbucket" ? "Bitbucket" : "GitLab"} repositories.
               </div>
               <button
                 type="button"
@@ -226,7 +226,7 @@ export default function Repositories() {
                 }}
                 className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-purple-600 hover:bg-purple-500 text-white shadow-md transition whitespace-nowrap"
               >
-                Authorize via {vcsProvider === "github" ? "GitHub" : vcsProvider === "bitbucket" ? "Bitbucket" : "GitLab"} OAuth 2.0
+                Authorize via {vcsProvider === "bitbucket" ? "Bitbucket" : "GitLab"} OAuth 2.0
               </button>
             </div>
           )}
