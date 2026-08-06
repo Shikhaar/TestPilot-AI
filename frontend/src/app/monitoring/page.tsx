@@ -103,8 +103,24 @@ export default function Monitoring() {
               <section className="space-y-6">
                 <div className="border-b border-gray-800 pb-3 flex justify-between items-center">
                   <div>
-                    <h2 className="text-lg font-bold text-gray-100">EvalOps & AI Benchmarks</h2>
-                    <p className="text-xs text-gray-400">Quality, self-healing, cost, and historical time-series trends across PR pipeline runs</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h2 className="text-lg font-bold text-gray-100">EvalOps & AI Benchmarks</h2>
+                      {evalops.is_sample_data ? (
+                        <span className="text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wide bg-amber-500/10 border border-amber-500/30 text-amber-400">
+                          ℹ Baseline Sample Benchmark
+                        </span>
+                      ) : (
+                        <span className="text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wide bg-green-500/10 border border-green-500/30 text-green-400 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                          Live DB Telemetry
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-400">
+                      {evalops.is_sample_data
+                        ? "Displaying initial baseline benchmark metrics (0 PRs in database). Connect a repository and run PR analysis to populate live telemetry."
+                        : "Aggregated live from your database across analyzed pull requests."}
+                    </p>
                   </div>
                   <span className="text-xs px-2.5 py-1 rounded-md bg-blue-500/10 border border-blue-500/30 text-blue-400 font-semibold">
                     v1.1 Metrics Pipeline

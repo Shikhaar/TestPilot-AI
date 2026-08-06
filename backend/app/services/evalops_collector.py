@@ -74,6 +74,12 @@ class EvalOpsMetricsSummary(BaseModel):
     )
     avg_queue_wait_seconds: float = Field(description="Average Celery queue wait time")
 
+    # Data Source Origin
+    is_sample_data: bool = Field(
+        default=True,
+        description="True if displaying baseline sample metrics (0 PRs in DB), False if live DB telemetry",
+    )
+
     # 5. Historical Time-Series Trends
     last_7_prs_trend: list[EvalOpsPRTrendPoint] = Field(
         description="Time-series data across the last 7 PR runs"
@@ -162,6 +168,7 @@ class EvalOpsCollector:
                         avg_generation_latency_seconds=avg_gen_lat,
                         avg_execution_latency_seconds=2.2,
                         avg_queue_wait_seconds=0.4,
+                        is_sample_data=False,
                         last_7_prs_trend=history_points,
                     )
             except Exception as e:

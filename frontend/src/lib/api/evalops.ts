@@ -29,6 +29,7 @@ export interface EvalOpsMetrics {
   avg_generation_latency_seconds: number;
   avg_execution_latency_seconds: number;
   avg_queue_wait_seconds: number;
+  is_sample_data?: boolean;
   last_7_prs_trend: EvalOpsPRTrendPoint[];
 }
 
