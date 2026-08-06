@@ -104,6 +104,7 @@ class EvalOpsCollector:
                 )
                 prs = list(res.scalars().all())
 
+                has_real_agent_runs = False
                 if prs:
                     history_points: list[EvalOpsPRTrendPoint] = []
                     total_tokens_sum = 0
@@ -115,6 +116,8 @@ class EvalOpsCollector:
                             select(AgentRun).where(AgentRun.pull_request_id == pr.id)
                         )
                         agent_runs = list(agent_res.scalars().all())
+                        if agent_runs:
+                            has_real_agent_runs = True
                         pr_tokens = sum(ar.total_tokens or 0 for ar in agent_runs)
                         total_tokens_sum += pr_tokens
 
@@ -146,31 +149,34 @@ class EvalOpsCollector:
                             )
                         )
 
-                    latest_pt = history_points[-1]
-                    avg_gen_lat = (
-                        round(sum(gen_latencies) / len(gen_latencies), 1) if gen_latencies else 2.8
-                    )
+                    if has_real_agent_runs:
+                        latest_pt = history_points[-1]
+                        avg_gen_lat = (
+                            round(sum(gen_latencies) / len(gen_latencies), 1)
+                            if gen_latencies
+                            else 2.8
+                        )
 
-                    return EvalOpsMetricsSummary(
-                        developer_acceptance_rate=latest_pt.developer_acceptance_rate,
-                        pass_at_1=latest_pt.pass_at_1,
-                        pass_at_n=98.5,
-                        compilation_success_rate=99.1,
-                        unresolved_symbol_rate=1.8,
-                        flaky_test_rate=0.4,
-                        mean_repair_iterations=latest_pt.mean_repair_iterations,
-                        repair_success_rate=92.3,
-                        time_to_heal_seconds=3.2,
-                        total_input_tokens=int(total_tokens_sum * 0.7) or 84700,
-                        total_output_tokens=int(total_tokens_sum * 0.3) or 31200,
-                        estimated_usd_cost=round(latest_pt.estimated_usd * 8.5, 3),
-                        prompt_vs_context_ratio=0.88,
-                        avg_generation_latency_seconds=avg_gen_lat,
-                        avg_execution_latency_seconds=2.2,
-                        avg_queue_wait_seconds=0.4,
-                        is_sample_data=False,
-                        last_7_prs_trend=history_points,
-                    )
+                        return EvalOpsMetricsSummary(
+                            developer_acceptance_rate=latest_pt.developer_acceptance_rate,
+                            pass_at_1=latest_pt.pass_at_1,
+                            pass_at_n=98.5,
+                            compilation_success_rate=99.1,
+                            unresolved_symbol_rate=1.8,
+                            flaky_test_rate=0.4,
+                            mean_repair_iterations=latest_pt.mean_repair_iterations,
+                            repair_success_rate=92.3,
+                            time_to_heal_seconds=3.2,
+                            total_input_tokens=int(total_tokens_sum * 0.7) or 84700,
+                            total_output_tokens=int(total_tokens_sum * 0.3) or 31200,
+                            estimated_usd_cost=round(latest_pt.estimated_usd * 8.5, 3),
+                            prompt_vs_context_ratio=0.88,
+                            avg_generation_latency_seconds=avg_gen_lat,
+                            avg_execution_latency_seconds=2.2,
+                            avg_queue_wait_seconds=0.4,
+                            is_sample_data=False,
+                            last_7_prs_trend=history_points,
+                        )
             except Exception as e:
                 logger.warning("Dynamic EvalOps calculation fallback", error=str(e))
 
