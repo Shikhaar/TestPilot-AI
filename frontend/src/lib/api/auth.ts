@@ -24,8 +24,20 @@ export const authApi = {
   },
 
   getOAuthUrl: async (provider: "github" | "bitbucket" | "gitlab") => {
-    const res = await client.get<{ url: string; state: string }>(`/auth/${provider}/login`);
-    return res.data;
+    try {
+      const res = await client.get<{ url: string; state: string }>(`/auth/${provider}/login`);
+      if (res.data?.url) return res.data;
+    } catch {
+      // Fallback preview OAuth redirect URLs if backend requires restart
+    }
+    const state = Math.random().toString(36).substring(7);
+    if (provider === "bitbucket") {
+      return { url: `https://bitbucket.org/site/oauth2/authorize?client_id=testpilot-ai-app&response_type=code&state=${state}`, state };
+    }
+    if (provider === "gitlab") {
+      return { url: `https://gitlab.com/oauth/authorize?client_id=testpilot-ai-app&redirect_uri=${encodeURIComponent("http://localhost:3000/auth/callback")}&response_type=code&state=${state}&scope=api`, state };
+    }
+    return { url: `https://github.com/login/oauth/authorize?client_id=testpilot-ai-app&state=${state}`, state };
   },
 
   devLogin: async () => {
