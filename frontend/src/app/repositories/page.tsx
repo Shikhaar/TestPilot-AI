@@ -178,7 +178,7 @@ export default function Repositories() {
         {/* Connect Repo Form */}
         <section className="glass-panel p-6 mb-8">
           <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-4">Connect VCS repository</h2>
-          
+
           {/* Provider Selection Tabs */}
           <div className="flex space-x-2 mb-4 border-b border-gray-800/80 pb-3">
             {[
@@ -194,11 +194,10 @@ export default function Repositories() {
                   setVcsProvider(p.id as any);
                   setError("");
                 }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                  vcsProvider === p.id
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${vcsProvider === p.id
                     ? "bg-purple-600/30 text-purple-300 border border-purple-500/40 shadow-sm"
                     : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/40"
-                }`}
+                  }`}
               >
                 {p.label}
               </button>
@@ -221,7 +220,7 @@ export default function Repositories() {
                       window.location.href = data.url;
                     } else {
                       setError(
-                        `1-Click OAuth for ${vcsProvider === "bitbucket" ? "Bitbucket" : "GitLab"} is not enabled on this instance. Easily connect your repository by entering an Access Token / App Password below!`
+                        `To use 1-click ${vcsProvider === "bitbucket" ? "Bitbucket" : "GitLab"} OAuth, set ${vcsProvider.toUpperCase()}_CLIENT_ID in your backend .env file. Alternatively, connect public repos or enter an App Password below!`
                       );
                     }
                   } catch (err: any) {
@@ -328,9 +327,8 @@ export default function Repositories() {
         ) : (
           <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {repos.map((repo) => (
-              <div key={repo.id} className={`glass-card p-6 flex flex-col justify-between h-56 relative overflow-hidden ${
-                isIndexing(repo) ? "border border-purple-500/30" : ""
-              }`}>
+              <div key={repo.id} className={`glass-card p-6 flex flex-col justify-between h-56 relative overflow-hidden ${isIndexing(repo) ? "border border-purple-500/30" : ""
+                }`}>
                 {/* Indexing shimmer bar */}
                 {isIndexing(repo) && (
                   <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-purple-500 to-transparent animate-[shimmer_1.5s_ease-in-out_infinite]" style={{ backgroundSize: '200% 100%', animation: 'shimmer 1.5s linear infinite' }} />
@@ -347,11 +345,10 @@ export default function Repositories() {
                           Indexing…
                         </span>
                       )}
-                      <span className={`text-[10px] px-2 py-0.5 rounded border ${
-                        repo.is_private
+                      <span className={`text-[10px] px-2 py-0.5 rounded border ${repo.is_private
                           ? "text-orange-400 border-orange-500/20 bg-orange-500/5"
                           : "text-green-400 border-green-500/20 bg-green-500/5"
-                      }`}>
+                        }`}>
                         {repo.is_private ? "Private" : "Public"}
                       </span>
                       <button
