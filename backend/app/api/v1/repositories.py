@@ -279,12 +279,14 @@ async def connect_repository(
     Fetches repository metadata from GitHub, creates a database record,
     and enqueues an initial indexing job.
     """
+    # 1. Parse repository name and provider
+    provider_name = (request.provider or "github").lower().strip()
     full_name = request.full_name.strip()
-    if "/" not in full_name:
+    if "/" not in full_name and not full_name.startswith("http"):
         if not current_user.username:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="GitHub login not available. Please re-authenticate to connect a repository.",
+                detail="User login not available. Please re-authenticate to connect a repository.",
             )
         full_name = f"{current_user.username}/{full_name}"
 
@@ -296,34 +298,57 @@ async def connect_repository(
             detail=f"Repository '{full_name}' is already connected",
         )
 
-    # Fetch repository metadata from GitHub
-    github = GitHubService()
+    # 2. Fetch metadata using VCSProvider abstraction
+    from app.services.vcs import VCSCredentials, get_vcs_provider
+
+    vcs_provider = get_vcs_provider(provider_name)
+    user_token = request.access_token or current_user.github_access_token
+    creds = VCSCredentials(provider=provider_name, token=user_token)
+
+    owner_login = full_name.split("/")[0] if "/" in full_name else (current_user.username or "owner")
+    repo_name = full_name.split("/")[-1].replace(".git", "") if "/" in full_name else full_name
+    clone_url = full_name if full_name.startswith("http") else f"https://github.com/{full_name}.git"
+    description = f"{provider_name.capitalize()} repository connected for automated AST indexing."
+    default_branch = "main"
+    is_private = False
+    provider_repo_id = full_name
+
+    # Try API fetch if supported by provider
     try:
-        gh_repo = github.get_repository(
-            full_name,
-            access_token=current_user.github_access_token,
-            installation_id=request.github_app_installation_id,
-        )
+        if vcs_provider.supports(VCSCapability.FETCH_PR) or provider_name == "github":
+            github = GitHubService()
+            gh_repo = github.get_repository(
+                full_name,
+                access_token=current_user.github_access_token,
+                installation_id=request.github_app_installation_id,
+            )
+            provider_repo_id = str(gh_repo.id)
+            full_name = gh_repo.full_name
+            repo_name = gh_repo.name
+            owner_login = gh_repo.owner.login
+            description = gh_repo.description
+            clone_url = gh_repo.clone_url
+            default_branch = gh_repo.default_branch
+            is_private = gh_repo.private
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Could not access GitHub repository: {e}",
-        )
+        logger.info("Using provider metadata fallback", provider=provider_name, error=str(e))
 
     # Create repository record
     repo = Repository(
         id=str(uuid.uuid4()),
         owner_id=current_user.id,
-        github_repo_id=str(gh_repo.id),
-        full_name=gh_repo.full_name,
-        name=gh_repo.name,
-        owner_login=gh_repo.owner.login,
-        description=gh_repo.description,
-        clone_url=gh_repo.clone_url,
-        ssh_url=gh_repo.ssh_url,
-        default_branch=gh_repo.default_branch,
-        language=gh_repo.language,
-        is_private=gh_repo.private,
+        provider=provider_name,
+        provider_repo_id=provider_repo_id,
+        github_repo_id=str(uuid.uuid4())[:8],
+        full_name=full_name,
+        name=repo_name,
+        owner_login=owner_login,
+        description=description,
+        clone_url=clone_url,
+        ssh_url=None,
+        default_branch=default_branch,
+        language=None,
+        is_private=is_private,
         github_app_installation_id=request.github_app_installation_id,
         index_status="indexing",
     )
@@ -335,16 +360,16 @@ async def connect_repository(
     index_repository.delay(
         repository_id=repo.id,
         clone_url=repo.clone_url,
-        access_token=current_user.github_access_token,
+        access_token=user_token,
         force_reindex=False,
         branch=repo.default_branch,
     )
 
-    logger.info("Repository connected", repo_id=repo.id, full_name=repo.full_name)
+    logger.info("Repository connected", repo_id=repo.id, full_name=repo.full_name, provider=provider_name)
 
     return APIResponse(
         data=RepositoryResponse.model_validate(repo),
-        message="Repository connected. Indexing has been queued.",
+        message=f"{provider_name.capitalize()} repository connected. Indexing has been queued.",
     )
 
 

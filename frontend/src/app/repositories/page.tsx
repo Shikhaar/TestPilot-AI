@@ -10,6 +10,8 @@ export default function Repositories() {
   const [userGitHubRepos, setUserGitHubRepos] = useState<Array<{ full_name: string; name: string }>>([]);
   const [ghReposError, setGhReposError] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [vcsProvider, setVcsProvider] = useState<"github" | "bitbucket" | "gitlab" | "custom_git">("github");
+  const [accessToken, setAccessToken] = useState("");
   const [selectedRepo, setSelectedRepo] = useState("");
   const [customRepo, setCustomRepo] = useState("");
   const [isCustom, setIsCustom] = useState(false);
@@ -92,15 +94,25 @@ export default function Repositories() {
 
   const handleConnect = async (e: React.FormEvent) => {
     e.preventDefault();
-    let targetRepo = isCustom ? customRepo.trim() : selectedRepo;
+    let targetRepo = isCustom || vcsProvider !== "github" ? customRepo.trim() : selectedRepo;
     if (!targetRepo) {
-      setError("Please select a repository from the list or enter a custom repository name.");
+      setError("Please enter or select a repository name/URL.");
       return;
     }
 
-    // Support full GitHub URL parsing (e.g. https://github.com/Shikhaar/DSA.git -> Shikhaar/DSA)
+    // Support full Git URL parsing
     if (targetRepo.includes("github.com/")) {
       const parts = targetRepo.split("github.com/")[1].replace(/\.git$/, "").split("/");
+      if (parts.length >= 2) {
+        targetRepo = `${parts[0]}/${parts[1]}`;
+      }
+    } else if (targetRepo.includes("bitbucket.org/")) {
+      const parts = targetRepo.split("bitbucket.org/")[1].replace(/\.git$/, "").split("/");
+      if (parts.length >= 2) {
+        targetRepo = `${parts[0]}/${parts[1]}`;
+      }
+    } else if (targetRepo.includes("gitlab.com/")) {
+      const parts = targetRepo.split("gitlab.com/")[1].replace(/\.git$/, "").split("/");
       if (parts.length >= 2) {
         targetRepo = `${parts[0]}/${parts[1]}`;
       }
@@ -110,15 +122,16 @@ export default function Repositories() {
     setError("");
 
     try {
-      const newRepo = await repositoriesApi.connect(targetRepo);
+      const newRepo = await repositoriesApi.connect(targetRepo, vcsProvider, accessToken);
       setRepos([newRepo.data, ...repos]);
       setCustomRepo("");
       setSelectedRepo("");
+      setAccessToken("");
       setIsCustom(false);
     } catch (err: any) {
       const msg =
         err?.response?.status === 401
-          ? "Please sign in with GitHub to connect repositories."
+          ? "Please sign in or provide a valid access token."
           : err?.response?.data?.detail || err?.response?.data?.message || err.message || "Failed to connect repository";
       setError(msg);
     } finally {
@@ -126,7 +139,18 @@ export default function Repositories() {
     }
   };
 
-  const [vcsProvider, setVcsProvider] = useState<"github" | "bitbucket" | "gitlab" | "custom_git">("github");
+  const getPlaceholder = () => {
+    switch (vcsProvider) {
+      case "bitbucket":
+        return "e.g. workspace/repo-name or https://bitbucket.org/workspace/repo-name";
+      case "gitlab":
+        return "e.g. group/project-name or https://gitlab.com/group/project-name";
+      case "custom_git":
+        return "e.g. https://git.company.com/team/service.git";
+      default:
+        return "e.g. owner/my-repo or https://github.com/owner/my-repo";
+    }
+  };
 
   return (
     <div className="flex h-screen bg-[#07090e] font-sans overflow-hidden">
@@ -165,8 +189,11 @@ export default function Repositories() {
               <button
                 key={p.id}
                 type="button"
-                onClick={() => setVcsProvider(p.id as any)}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
+                onClick={() => {
+                  setVcsProvider(p.id as any);
+                  setError("");
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
                   vcsProvider === p.id
                     ? "bg-purple-600/30 text-purple-300 border border-purple-500/40 shadow-sm"
                     : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/40"
@@ -177,69 +204,87 @@ export default function Repositories() {
             ))}
           </div>
 
-          <form onSubmit={handleConnect} className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
-            <div className="flex-1">
-              {!isCustom ? (
-                <select
-                  value={selectedRepo}
-                  onChange={(e) => {
-                    if (e.target.value === "custom") {
-                      setIsCustom(true);
-                    } else {
-                      setSelectedRepo(e.target.value);
-                    }
-                  }}
-                  className="w-full px-4 py-2.5 glass-input text-sm bg-[#0d0d12] text-white border border-white/10 rounded-lg outline-none cursor-pointer"
-                >
-                  <option value="" disabled hidden className="bg-[#0d0d12] text-gray-500">
-                    Select a repository...
-                  </option>
-                  {userGitHubRepos.length === 0 && !ghReposError && (
-                    <option disabled className="bg-[#0d0d12] text-gray-500">Loading your repositories…</option>
-                  )}
-                  {ghReposError && (
-                    <option disabled className="bg-[#0d0d12] text-yellow-400">⚠ Sign in with GitHub to load your repositories</option>
-                  )}
-                  {userGitHubRepos.map((r) => (
-                    <option key={r.full_name} value={r.full_name} className="bg-[#0d0d12] text-white">
-                      {r.full_name}
+          <form onSubmit={handleConnect} className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+              <div className="flex-1">
+                {vcsProvider === "github" && !isCustom ? (
+                  <select
+                    value={selectedRepo}
+                    onChange={(e) => {
+                      if (e.target.value === "custom") {
+                        setIsCustom(true);
+                      } else {
+                        setSelectedRepo(e.target.value);
+                      }
+                    }}
+                    className="w-full px-4 py-2.5 glass-input text-sm bg-[#0d0d12] text-white border border-white/10 rounded-lg outline-none cursor-pointer"
+                  >
+                    <option value="" disabled hidden className="bg-[#0d0d12] text-gray-500">
+                      Select a GitHub repository...
                     </option>
-                  ))}
-                  <option value="custom" className="bg-[#0d0d12] text-purple-400 font-semibold">
-                    + Enter Custom Repository Name or URL...
-                  </option>
-                </select>
-              ) : (
-                <div className="space-y-1">
-                  <div className="flex justify-between items-center text-xs mb-1">
-                    <span className="text-gray-400">Custom Repo Name or URL</span>
-                    <button
-                      type="button"
-                      onClick={() => setIsCustom(false)}
-                      className="text-purple-400 hover:text-purple-300 font-medium"
-                    >
-                      ← Back to Repositories Dropdown
-                    </button>
+                    {userGitHubRepos.length === 0 && !ghReposError && (
+                      <option disabled className="bg-[#0d0d12] text-gray-500">Loading your GitHub repositories…</option>
+                    )}
+                    {ghReposError && (
+                      <option disabled className="bg-[#0d0d12] text-yellow-400">⚠ Sign in with GitHub to load repositories</option>
+                    )}
+                    {userGitHubRepos.map((r) => (
+                      <option key={r.full_name} value={r.full_name} className="bg-[#0d0d12] text-white">
+                        {r.full_name}
+                      </option>
+                    ))}
+                    <option value="custom" className="bg-[#0d0d12] text-purple-400 font-semibold">
+                      + Enter Custom Repository Name or URL...
+                    </option>
+                  </select>
+                ) : (
+                  <div className="space-y-1">
+                    {vcsProvider === "github" && isCustom && (
+                      <div className="flex justify-between items-center text-xs mb-1">
+                        <span className="text-gray-400">GitHub Repository Name or URL</span>
+                        <button
+                          type="button"
+                          onClick={() => setIsCustom(false)}
+                          className="text-purple-400 hover:text-purple-300 font-medium"
+                        >
+                          ← Back to Repositories Dropdown
+                        </button>
+                      </div>
+                    )}
+                    <input
+                      type="text"
+                      value={customRepo}
+                      onChange={(e) => setCustomRepo(e.target.value)}
+                      placeholder={getPlaceholder()}
+                      className="w-full px-4 py-2.5 glass-input text-sm text-white border border-white/10 rounded-lg outline-none"
+                      required
+                    />
                   </div>
-                  <input
-                    type="text"
-                    value={customRepo}
-                    onChange={(e) => setCustomRepo(e.target.value)}
-                    placeholder="e.g. owner/my-repo or https://github.com/owner/my-repo"
-                    className="w-full px-4 py-2.5 glass-input text-sm text-white"
-                    autoFocus
-                    required
-                  />
-                </div>
-              )}
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={connecting}
+                className="px-6 py-2.5 bg-blue-700 hover:bg-blue-800 disabled:bg-gray-800 text-white rounded-lg text-sm font-semibold shadow-lg shadow-blue-900/30 transition self-start sm:self-auto"
+              >
+                {connecting ? "Connecting..." : `Connect ${vcsProvider === "custom_git" ? "Git" : vcsProvider.toUpperCase()} Repo`}
+              </button>
             </div>
-            <button
-              type="submit"
-              disabled={connecting}
-              className="px-6 py-2.5 bg-blue-700 hover:bg-blue-800 disabled:bg-gray-800 text-white rounded-lg text-sm font-semibold shadow-lg shadow-blue-900/30 transition self-start sm:self-auto"
-            >
-              {connecting ? "Connecting..." : "Connect Repository"}
-            </button>
+
+            {/* Optional Personal Access Token / App Password input for Bitbucket/GitLab/Custom */}
+            {vcsProvider !== "github" && (
+              <div className="pt-2 border-t border-gray-800/50 flex flex-col sm:flex-row gap-3 items-center">
+                <input
+                  type="password"
+                  value={accessToken}
+                  onChange={(e) => setAccessToken(e.target.value)}
+                  placeholder={`Optional Access Token / App Password for private ${vcsProvider} repo...`}
+                  className="w-full sm:w-2/3 px-3.5 py-1.5 glass-input text-xs text-white border border-white/10 rounded-md"
+                />
+                <span className="text-[11px] text-gray-500">Leave blank for public repositories</span>
+              </div>
+            )}
           </form>
           {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
         </section>

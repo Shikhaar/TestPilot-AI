@@ -21,12 +21,20 @@ class IndexStatus(StrEnum):
 
 
 class RepositoryConnectRequest(BaseSchema):
-    """Request body to connect a new GitHub repository."""
+    """Request body to connect a new VCS repository."""
 
     full_name: str = Field(
         ...,
-        description="GitHub repository full name (e.g., 'owner/repo')",
+        description="Repository full name or Git URL (e.g., 'owner/repo' or 'https://gitlab.com/group/repo')",
         examples=["octocat/Hello-World"],
+    )
+    provider: str = Field(
+        default="github",
+        description="VCS provider: github | bitbucket | gitlab | custom_git",
+    )
+    access_token: str | None = Field(
+        default=None,
+        description="Personal Access Token or App Password for private Bitbucket/GitLab repos",
     )
     github_app_installation_id: str | None = Field(
         default=None,
@@ -37,10 +45,8 @@ class RepositoryConnectRequest(BaseSchema):
     @classmethod
     def validate_full_name(cls, v: str) -> str:
         v = v.strip()
-        if not re.match(r"^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$", v):
-            raise ValueError(
-                "full_name must be in 'owner/repository' format (e.g. 'octocat/Hello-World')"
-            )
+        if not v:
+            raise ValueError("Repository name or URL cannot be empty")
         return v
 
 
