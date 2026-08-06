@@ -3,36 +3,7 @@
 import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import { dashboardApi, DetailedMetrics } from "@/lib/api/dashboard";
-
-interface EvalOpsMetrics {
-  developer_acceptance_rate: number;
-  pass_at_1: number;
-  pass_at_n: number;
-  compilation_success_rate: number;
-  unresolved_symbol_rate: number;
-  flaky_test_rate: number;
-  mean_repair_iterations: number;
-  repair_success_rate: number;
-  time_to_heal_seconds: number;
-  total_input_tokens: number;
-  total_output_tokens: number;
-  estimated_usd_cost: number;
-  prompt_vs_context_ratio: number;
-  avg_generation_latency_seconds: number;
-  avg_execution_latency_seconds: number;
-  avg_queue_wait_seconds: number;
-  last_7_prs_trend: Array<{
-    pr_id: string;
-    timestamp: string;
-    pass_at_1: number;
-    developer_acceptance_rate: number;
-    mean_repair_iterations: number;
-    total_tokens: number;
-    estimated_usd: number;
-    generation_latency_seconds: number;
-    execution_latency_seconds: number;
-  }>;
-}
+import { evalopsApi, EvalOpsMetrics } from "@/lib/api/evalops";
 
 export default function Monitoring() {
   const [detailed, setDetailed] = useState<DetailedMetrics | null>(null);
@@ -43,48 +14,59 @@ export default function Monitoring() {
   useEffect(() => {
     async function loadData() {
       try {
-        const data = await dashboardApi.getDetailedMetrics();
-        setDetailed(data);
-        setIsUsingMock(false);
+        const [dashMetrics, evalMetrics] = await Promise.all([
+          dashboardApi.getDetailedMetrics().catch(() => null),
+          evalopsApi.getMetrics().catch(() => null),
+        ]);
+
+        if (dashMetrics) {
+          setDetailed(dashMetrics);
+          setIsUsingMock(false);
+        } else {
+          setIsUsingMock(true);
+          setDetailed({
+            ai_usage: { total_tokens: 450200, estimated_cost_usd: 1.84 },
+            coverage: { average_percentage: 82.4 },
+          });
+        }
+
+        if (evalMetrics) {
+          setEvalops(evalMetrics);
+        } else {
+          // Fallback if backend API endpoint not reached
+          setEvalops({
+            developer_acceptance_rate: 95.8,
+            pass_at_1: 94.2,
+            pass_at_n: 98.5,
+            compilation_success_rate: 99.1,
+            unresolved_symbol_rate: 1.8,
+            flaky_test_rate: 0.4,
+            mean_repair_iterations: 1.1,
+            repair_success_rate: 92.3,
+            time_to_heal_seconds: 3.2,
+            total_input_tokens: 84700,
+            total_output_tokens: 31200,
+            estimated_usd_cost: 0.136,
+            prompt_vs_context_ratio: 0.88,
+            avg_generation_latency_seconds: 2.8,
+            avg_execution_latency_seconds: 2.2,
+            avg_queue_wait_seconds: 0.4,
+            last_7_prs_trend: [
+              { pr_id: "PR-138", timestamp: "Aug 1", pass_at_1: 78.5, developer_acceptance_rate: 82.0, mean_repair_iterations: 1.8, total_tokens: 14200, estimated_usd: 0.021, generation_latency_seconds: 4.2, execution_latency_seconds: 3.1 },
+              { pr_id: "PR-139", timestamp: "Aug 2", pass_at_1: 81.0, developer_acceptance_rate: 85.0, mean_repair_iterations: 1.6, total_tokens: 15100, estimated_usd: 0.023, generation_latency_seconds: 3.9, execution_latency_seconds: 2.9 },
+              { pr_id: "PR-140", timestamp: "Aug 3", pass_at_1: 84.5, developer_acceptance_rate: 88.0, mean_repair_iterations: 1.4, total_tokens: 13800, estimated_usd: 0.019, generation_latency_seconds: 3.5, execution_latency_seconds: 2.8 },
+              { pr_id: "PR-141", timestamp: "Aug 4", pass_at_1: 87.0, developer_acceptance_rate: 90.0, mean_repair_iterations: 1.3, total_tokens: 14500, estimated_usd: 0.022, generation_latency_seconds: 3.4, execution_latency_seconds: 2.7 },
+              { pr_id: "PR-142", timestamp: "Aug 5", pass_at_1: 89.2, developer_acceptance_rate: 92.5, mean_repair_iterations: 1.2, total_tokens: 12900, estimated_usd: 0.018, generation_latency_seconds: 3.1, execution_latency_seconds: 2.5 },
+              { pr_id: "PR-143", timestamp: "Aug 6", pass_at_1: 91.8, developer_acceptance_rate: 94.0, mean_repair_iterations: 1.1, total_tokens: 12400, estimated_usd: 0.017, generation_latency_seconds: 2.9, execution_latency_seconds: 2.4 },
+              { pr_id: "PR-144", timestamp: "Aug 6", pass_at_1: 94.2, developer_acceptance_rate: 95.8, mean_repair_iterations: 1.1, total_tokens: 11800, estimated_usd: 0.016, generation_latency_seconds: 2.8, execution_latency_seconds: 2.2 },
+            ],
+          });
+        }
       } catch (err) {
-        console.error("Failed to load metrics, using mock fallback", err);
-        setIsUsingMock(true);
-        setDetailed({
-          ai_usage: { total_tokens: 450200, estimated_cost_usd: 1.84 },
-          coverage: { average_percentage: 82.4 },
-        });
+        console.error("Failed to load telemetry", err);
       } finally {
         setLoading(false);
       }
-
-      // Default mock EvalOps metrics if endpoint initializing
-      setEvalops({
-        developer_acceptance_rate: 95.8,
-        pass_at_1: 94.2,
-        pass_at_n: 98.5,
-        compilation_success_rate: 99.1,
-        unresolved_symbol_rate: 1.8,
-        flaky_test_rate: 0.4,
-        mean_repair_iterations: 1.1,
-        repair_success_rate: 92.3,
-        time_to_heal_seconds: 3.2,
-        total_input_tokens: 84700,
-        total_output_tokens: 31200,
-        estimated_usd_cost: 0.136,
-        prompt_vs_context_ratio: 0.88,
-        avg_generation_latency_seconds: 2.8,
-        avg_execution_latency_seconds: 2.2,
-        avg_queue_wait_seconds: 0.4,
-        last_7_prs_trend: [
-          { pr_id: "PR-138", timestamp: "Aug 1", pass_at_1: 78.5, developer_acceptance_rate: 82.0, mean_repair_iterations: 1.8, total_tokens: 14200, estimated_usd: 0.021, generation_latency_seconds: 4.2, execution_latency_seconds: 3.1 },
-          { pr_id: "PR-139", timestamp: "Aug 2", pass_at_1: 81.0, developer_acceptance_rate: 85.0, mean_repair_iterations: 1.6, total_tokens: 15100, estimated_usd: 0.023, generation_latency_seconds: 3.9, execution_latency_seconds: 2.9 },
-          { pr_id: "PR-140", timestamp: "Aug 3", pass_at_1: 84.5, developer_acceptance_rate: 88.0, mean_repair_iterations: 1.4, total_tokens: 13800, estimated_usd: 0.019, generation_latency_seconds: 3.5, execution_latency_seconds: 2.8 },
-          { pr_id: "PR-141", timestamp: "Aug 4", pass_at_1: 87.0, developer_acceptance_rate: 90.0, mean_repair_iterations: 1.3, total_tokens: 14500, estimated_usd: 0.022, generation_latency_seconds: 3.4, execution_latency_seconds: 2.7 },
-          { pr_id: "PR-142", timestamp: "Aug 5", pass_at_1: 89.2, developer_acceptance_rate: 92.5, mean_repair_iterations: 1.2, total_tokens: 12900, estimated_usd: 0.018, generation_latency_seconds: 3.1, execution_latency_seconds: 2.5 },
-          { pr_id: "PR-143", timestamp: "Aug 6", pass_at_1: 91.8, developer_acceptance_rate: 94.0, mean_repair_iterations: 1.1, total_tokens: 12400, estimated_usd: 0.017, generation_latency_seconds: 2.9, execution_latency_seconds: 2.4 },
-          { pr_id: "PR-144", timestamp: "Aug 6", pass_at_1: 94.2, developer_acceptance_rate: 95.8, mean_repair_iterations: 1.1, total_tokens: 11800, estimated_usd: 0.016, generation_latency_seconds: 2.8, execution_latency_seconds: 2.2 },
-        ],
-      });
     }
     loadData();
   }, []);
