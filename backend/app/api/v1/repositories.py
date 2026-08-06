@@ -299,7 +299,7 @@ async def connect_repository(
         )
 
     # 2. Fetch metadata using VCSProvider abstraction
-    from app.services.vcs import VCSCapability, VCSCredentials, get_vcs_provider
+    from app.services.vcs import VCSCapability, get_vcs_provider
 
     vcs_provider = get_vcs_provider(provider_name)
     user_token = request.access_token or current_user.github_access_token
@@ -320,7 +320,7 @@ async def connect_repository(
             github = GitHubService()
             gh_repo = github.get_repository(
                 full_name,
-                access_token=current_user.github_access_token,
+                access_token=user_token,
                 installation_id=request.github_app_installation_id,
             )
             provider_repo_id = str(gh_repo.id)
