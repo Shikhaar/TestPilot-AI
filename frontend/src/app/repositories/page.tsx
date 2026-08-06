@@ -152,7 +152,31 @@ export default function Repositories() {
 
         {/* Connect Repo Form */}
         <section className="glass-panel p-6 mb-8">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-4">Connect new repository</h2>
+          <h2 className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-4">Connect VCS repository</h2>
+          
+          {/* Provider Selection Tabs */}
+          <div className="flex space-x-2 mb-4 border-b border-gray-800/80 pb-3">
+            {[
+              { id: "github", label: "GitHub" },
+              { id: "bitbucket", label: "Bitbucket" },
+              { id: "gitlab", label: "GitLab" },
+              { id: "custom_git", label: "Custom Git URL" },
+            ].map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setVcsProvider(p.id as any)}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
+                  vcsProvider === p.id
+                    ? "bg-purple-600/30 text-purple-300 border border-purple-500/40 shadow-sm"
+                    : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/40"
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+
           <form onSubmit={handleConnect} className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
             <div className="flex-1">
               {!isCustom ? (
