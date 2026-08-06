@@ -115,6 +115,8 @@ class Settings(BaseSettings):
     github_client_id: str = Field(default="")
     github_client_secret: str = Field(default="")
     github_app_name: str = Field(default="testpilot-ai-app")
+    gitlab_client_id: str = Field(default="", description="GitLab OAuth Client ID")
+    bitbucket_client_id: str = Field(default="", description="Bitbucket OAuth Client ID")
 
     @property
     def github_private_key(self) -> str | None:

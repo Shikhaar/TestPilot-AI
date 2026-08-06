@@ -23,6 +23,11 @@ export const authApi = {
     return res.data;
   },
 
+  getOAuthUrl: async (provider: "github" | "bitbucket" | "gitlab") => {
+    const res = await client.get<{ url: string; state: string }>(`/auth/${provider}/login`);
+    return res.data;
+  },
+
   devLogin: async () => {
     const res = await client.post<AuthResponse>("/auth/dev-login");
     if (res.data.access_token) {

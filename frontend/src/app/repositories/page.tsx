@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
+import { authApi } from "@/lib/api/auth";
 import { repositoriesApi, Repository } from "@/lib/api/repositories";
 
 export default function Repositories() {
@@ -203,6 +204,32 @@ export default function Repositories() {
               </button>
             ))}
           </div>
+
+          {/* 1-Click OAuth 2.0 Authorization Option */}
+          {vcsProvider !== "custom_git" && (
+            <div className="mb-4 p-3 rounded-lg bg-purple-500/10 border border-purple-500/20 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="text-xs text-purple-200">
+                <span className="font-semibold block text-purple-300">Fast 1-Click Integration</span>
+                Authorize TestPilot AI to automatically list and connect your {vcsProvider === "github" ? "GitHub" : vcsProvider === "bitbucket" ? "Bitbucket" : "GitLab"} repositories.
+              </div>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const data = await authApi.getOAuthUrl(vcsProvider as any);
+                    if (data?.url) {
+                      window.location.href = data.url;
+                    }
+                  } catch (err: any) {
+                    setError(`Failed to initiate ${vcsProvider} OAuth authorization.`);
+                  }
+                }}
+                className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-purple-600 hover:bg-purple-500 text-white shadow-md transition whitespace-nowrap"
+              >
+                ⚡ Authorize via {vcsProvider === "github" ? "GitHub" : vcsProvider === "bitbucket" ? "Bitbucket" : "GitLab"} OAuth 2.0
+              </button>
+            </div>
+          )}
 
           <form onSubmit={handleConnect} className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">

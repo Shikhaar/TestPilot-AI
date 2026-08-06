@@ -59,6 +59,41 @@ async def github_login_url(redirect_uri: str | None = None) -> dict[str, str]:
     }
 
 
+@router.get("/gitlab/login", summary="GitLab OAuth Login URL")
+async def gitlab_login_url(redirect_uri: str | None = None) -> dict[str, str]:
+    """Get the GitLab OAuth authorization URL."""
+    settings = get_settings()
+    state = secrets.token_urlsafe(32)
+    cb_uri = redirect_uri or "http://localhost:3000/auth/callback"
+    client_id = settings.gitlab_client_id or "testpilot-ai-gitlab-app"
+
+    url = (
+        f"https://gitlab.com/oauth/authorize"
+        f"?client_id={client_id}"
+        f"&redirect_uri={cb_uri}"
+        f"&response_type=code"
+        f"&state={state}"
+        f"&scope=api+read_repository+write_repository"
+    )
+    return {"url": url, "state": state}
+
+
+@router.get("/bitbucket/login", summary="Bitbucket OAuth Login URL")
+async def bitbucket_login_url(redirect_uri: str | None = None) -> dict[str, str]:
+    """Get the Bitbucket Cloud OAuth authorization URL."""
+    settings = get_settings()
+    state = secrets.token_urlsafe(32)
+    client_id = settings.bitbucket_client_id or "testpilot-ai-bitbucket-app"
+
+    url = (
+        f"https://bitbucket.org/site/oauth2/authorize"
+        f"?client_id={client_id}"
+        f"&response_type=code"
+        f"&state={state}"
+    )
+    return {"url": url, "state": state}
+
+
 @router.post("/github/callback", response_model=TokenResponse)
 async def github_callback(
     request: GitHubCallbackRequest,
