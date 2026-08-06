@@ -299,13 +299,14 @@ async def connect_repository(
         )
 
     # 2. Fetch metadata using VCSProvider abstraction
-    from app.services.vcs import VCSCredentials, get_vcs_provider
+    from app.services.vcs import VCSCapability, VCSCredentials, get_vcs_provider
 
     vcs_provider = get_vcs_provider(provider_name)
     user_token = request.access_token or current_user.github_access_token
-    creds = VCSCredentials(provider=provider_name, token=user_token)
 
-    owner_login = full_name.split("/")[0] if "/" in full_name else (current_user.username or "owner")
+    owner_login = (
+        full_name.split("/")[0] if "/" in full_name else (current_user.username or "owner")
+    )
     repo_name = full_name.split("/")[-1].replace(".git", "") if "/" in full_name else full_name
     clone_url = full_name if full_name.startswith("http") else f"https://github.com/{full_name}.git"
     description = f"{provider_name.capitalize()} repository connected for automated AST indexing."
@@ -365,7 +366,9 @@ async def connect_repository(
         branch=repo.default_branch,
     )
 
-    logger.info("Repository connected", repo_id=repo.id, full_name=repo.full_name, provider=provider_name)
+    logger.info(
+        "Repository connected", repo_id=repo.id, full_name=repo.full_name, provider=provider_name
+    )
 
     return APIResponse(
         data=RepositoryResponse.model_validate(repo),
