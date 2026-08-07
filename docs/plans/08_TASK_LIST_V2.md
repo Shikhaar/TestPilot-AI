@@ -42,3 +42,18 @@
 - [x] GitHub Actions CD workflow (`cd.yml`) to build and push images to GHCR on push to main
 - [x] Live GitHub App webhook integration configuration guide (`GITHUB_APP_SETUP.md`)
 
+## Phase 7: Multi-VCS Provider & EvalOps Quality Telemetry Platform (Completed — Release v1.1.0)
+- [x] Multi-VCS provider architecture adapters (GitHub, Bitbucket, GitLab, Azure DevOps, Custom Git)
+- [x] Bitbucket 1-Click OAuth 2.0 & Personal Access Token (PAT) / App Password authentication
+- [x] Token HTTPS clone URL injection (`x-access-token`, `x-token-auth`, `oauth2`, `Basic base64`)
+- [x] Non-interactive Git safety (`GIT_TERMINAL_PROMPT="0"`, `GIT_ASKPASS="echo"`) & default branch fallback
+- [x] Upfront REST API validation (HTTP 400 rejection for 404/401 non-existent repos)
+- [x] 4-Category EvalOps telemetry collector (`GET /api/v1/evalops/metrics`)
+- [x] Live EvalOps monitoring dashboard (`/monitoring`) with time-series trends and quality gauges
+- [x] 1-Click Dev Authentication (`POST /api/v1/auth/dev-login`)
+- [x] Startup database lifespan migration for `provider` and `provider_repo_id` columns
+- [x] SQLite local dev fallback & FastAPI `background_tasks` Celery fallback
+- [x] Created `docs/features/VCS_PROVIDERS.md` and `docs/features/EVALOPS_AND_TELEMETRY.md`
+- [x] 16/16 Full System Integration Tests passed & released as `v1.1.0` on `main`
+
+
