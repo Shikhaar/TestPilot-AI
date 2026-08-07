@@ -4,26 +4,26 @@ TestPilot AI includes a built-in **EvalOps Telemetry Collector & Benchmark Engin
 
 ---
 
-## 📊 4-Category EvalOps Telemetry Metrics
+## 4-Category EvalOps Telemetry Metrics
 
 ```mermaid
 graph TD
-    Agent[Multi-Agent Test Pipeline] -->|Emits Metrics| Collector[EvalOps Collector Service]
-    
-    Collector -->|Category 1| Quality[Quality Metrics]
-    Collector -->|Category 2| Healing[Self-Healing Metrics]
-    Collector -->|Category 3| Cost[Cost & Token Analytics]
-    Collector -->|Category 4| Trends[Historical PR Time-Series]
-    
-    Quality -->|API Endpoint /api/v1/evalops/metrics| UI[Frontend Monitoring Page]
-    Healing --> UI
-    Cost --> UI
-    Trends --> UI
+ Agent[Multi-Agent Test Pipeline] -->|Emits Metrics| Collector[EvalOps Collector Service]
+
+ Collector -->|Category 1| Quality[Quality Metrics]
+ Collector -->|Category 2| Healing[Self-Healing Metrics]
+ Collector -->|Category 3| Cost[Cost & Token Analytics]
+ Collector -->|Category 4| Trends[Historical PR Time-Series]
+
+ Quality -->|API Endpoint /api/v1/evalops/metrics| UI[Frontend Monitoring Page]
+ Healing --> UI
+ Cost --> UI
+ Trends --> UI
 ```
 
 ---
 
-## 📈 Metric Specifications
+## Metric Specifications
 
 ### 1. Quality Benchmarks
 - **Developer Acceptance Rate** (`94.2%`): Percentage of AI-generated unit test suites committed by developers without manual modifications.
@@ -48,6 +48,6 @@ graph TD
 
 ---
 
-## 🔌 API Endpoints
+## API Endpoints
 
 - **`GET /api/v1/evalops/metrics`**: Returns current 4-Category summary metrics and time-series trend points.

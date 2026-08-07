@@ -4,33 +4,33 @@ TestPilot AI provides first-class support for listing, connecting, indexing, and
 
 ---
 
-## 🏗️ Architecture Overview
+## ️ Architecture Overview
 
 The multi-VCS architecture is built on top of a standardized `VCSProvider` abstract base class pattern (`backend/app/services/vcs/vcs_base.py`), which abstracts provider-specific REST API calls, OAuth 2.0 authentication flows, and Git clone operations into unified system models.
 
 ```mermaid
 graph TD
-    Client[Frontend Connect VCS Modal] -->|HTTP Request| API[FastAPI /repositories/connect]
-    
-    API -->|Factory Lookup| Factory[VCS Provider Factory]
-    Factory -->|instantiates| GH[GitHubProvider]
-    Factory -->|instantiates| BB[BitbucketProvider]
-    Factory -->|instantiates| GL[GitLabProvider]
-    Factory -->|instantiates| ADO[AzureDevOpsProvider]
-    Factory -->|instantiates| Custom[GenericGitProvider]
-    
-    GH -->|GitHub REST v3/v4| Metadata[VCSRepoMetadata Model]
-    BB -->|Bitbucket REST v2| Metadata
-    GL -->|GitLab REST v4| Metadata
-    ADO -->|Azure DevOps REST v7.0| Metadata
-    
-    Metadata -->|Save Record| DB[(PostgreSQL Database)]
-    Metadata -->|Queue Indexing| Task[Repository Indexer Task]
+ Client[Frontend Connect VCS Modal] -->|HTTP Request| API[FastAPI /repositories/connect]
+
+ API -->|Factory Lookup| Factory[VCS Provider Factory]
+ Factory -->|instantiates| GH[GitHubProvider]
+ Factory -->|instantiates| BB[BitbucketProvider]
+ Factory -->|instantiates| GL[GitLabProvider]
+ Factory -->|instantiates| ADO[AzureDevOpsProvider]
+ Factory -->|instantiates| Custom[GenericGitProvider]
+
+ GH -->|GitHub REST v3/v4| Metadata[VCSRepoMetadata Model]
+ BB -->|Bitbucket REST v2| Metadata
+ GL -->|GitLab REST v4| Metadata
+ ADO -->|Azure DevOps REST v7.0| Metadata
+
+ Metadata -->|Save Record| DB[(PostgreSQL Database)]
+ Metadata -->|Queue Indexing| Task[Repository Indexer Task]
 ```
 
 ---
 
-## 🔑 Supported VCS Providers & Authentication
+## Supported VCS Providers & Authentication
 
 | Provider | Metadata REST API | Auth Header Format | Git Clone Token URL Format |
 | :--- | :--- | :--- | :--- |
@@ -42,19 +42,19 @@ graph TD
 
 ---
 
-## 🛡️ Security & Reliability Engineering
+## ️ Security & Reliability Engineering
 
 1. **Upfront REST API Validation**:
-   - Before any repository record is saved into PostgreSQL, the target provider adapter validates the repository path against the provider's REST API.
-   - Non-existent repositories (`HTTP 404`) or unauthorized private repositories (`HTTP 401/403`) return clear, immediate validation messages in the modal without leaving dead database records.
+ - Before any repository record is saved into PostgreSQL, the target provider adapter validates the repository path against the provider's REST API.
+ - Non-existent repositories (`HTTP 404`) or unauthorized private repositories (`HTTP 401/403`) return clear, immediate validation messages in the modal without leaving dead database records.
 
 2. **Non-Interactive Git Execution**:
-   - Background Git tasks operate with `GIT_TERMINAL_PROMPT="0"` and `GIT_ASKPASS="echo"`.
-   - Prevents background workers from locking or waiting indefinitely for interactive credentials.
+ - Background Git tasks operate with `GIT_TERMINAL_PROMPT="0"` and `GIT_ASKPASS="echo"`.
+ - Prevents background workers from locking or waiting indefinitely for interactive credentials.
 
 3. **Automatic Remote Branch Fallback**:
-   - If a target branch (e.g. `main`) is specified but does not exist on the remote, the indexer automatically cleans the target directory and checks out the repository's native default branch (`master`, `main`, or `trunk`).
+ - If a target branch (e.g. `main`) is specified but does not exist on the remote, the indexer automatically cleans the target directory and checks out the repository's native default branch (`master`, `main`, or `trunk`).
 
 4. **1-Click OAuth 2.0 & PAT Support**:
-   - Supports 1-Click OAuth 2.0 integration for enterprise team workspaces.
-   - Provides optional Personal Access Token (PAT) / App Password input fields for private, internal, or self-hosted repositories.
+ - Supports 1-Click OAuth 2.0 integration for enterprise team workspaces.
+ - Provides optional Personal Access Token (PAT) / App Password input fields for private, internal, or self-hosted repositories.

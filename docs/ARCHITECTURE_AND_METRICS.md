@@ -9,7 +9,7 @@
 ## 1. System Architecture
 
 ```
-[ Frontend (Next.js 15 / React 19) ] 
+[ Frontend (Next.js 15 / React 19) ]
  │
  ▼ (REST API / JSON)
  [ Backend (FastAPI / Async SQLAlchemy) ]
@@ -42,7 +42,7 @@ $$\text{Test Ratio} = \left(\frac{\text{Test Files}}{\max(1, \text{Total Files})
 
 $$\text{Function Density} = \frac{\text{Total Functions}}{\max(1, \text{Total Files})}$$
 
-$$\text{Coverage \%} = \begin{cases} 
+$$\text{Coverage \%} = \begin{cases}
 \min\left(96.0, \max\left(55.0, 68.0 + 4.0 \cdot \text{Test Ratio} + 2.5 \cdot \text{Function Density} + 0.7 \cdot (\text{Total Files} \cdot 11 \pmod{19})\right)\right) & \text{if Test Files} > 0 \\
 \min\left(94.0, \max\left(52.0, 64.0 + 3.2 \cdot \text{Function Density} + 0.9 \cdot (\text{Total Files} \cdot 17 \pmod{23})\right)\right) & \text{otherwise}
 \end{cases}$$

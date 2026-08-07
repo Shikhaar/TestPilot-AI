@@ -1,6 +1,6 @@
 # Future Roadmap: Observability & Monitoring Redesign
 
-This document outlines the proposed architecture and implementation plan for a production-grade, native observability dashboard for TestPilot AI. 
+This document outlines the proposed architecture and implementation plan for a production-grade, native observability dashboard for TestPilot AI.
 
 The goal is to replace direct user exposure of Celery Flower and Grafana with a premium, unified engineering platform dashboard built directly into the Next.js application, consuming a custom FastAPI metrics aggregation layer.
 

@@ -41,6 +41,7 @@ For technical recruiters, engineering leaders, and open-source contributors, com
 | [**Monitoring & Telemetry**](docs/features/MONITORING_AND_TELEMETRY.md) | Queue monitoring & graceful fallback UI | Celery queue latency, Prometheus metrics, fallback banners |
 | [**Developer Setup Guide**](docs/setup.md) | Containerized and local development guide | Docker Compose, environment variables, alembic migrations |
 | [**Implementation Roadmap**](docs/plans/01_INITIAL_IMPLEMENTATION_PLAN.md) | Chronological development roadmap & milestone plans | Phase-by-phase implementation logs |
+| [**Version 2.0.0 Architecture Plan**](docs/plans/10_VERSION2_IMPLEMENTATION_PLAN.md) | Version 2.0.0 enterprise roadmap & milestones | Monorepos, Docker runner, auto-remediation, RBAC |
 
 ---
 
@@ -48,22 +49,22 @@ For technical recruiters, engineering leaders, and open-source contributors, com
 
 ```mermaid
 graph TD
-    Client[Next.js 16 Frontend Client] -->|REST / WebSockets| FastAPI[FastAPI Backend Server]
-    
-    FastAPI -->|VCS Abstraction Layer| VCS[VCS Providers: GitHub, Bitbucket, GitLab, Azure DevOps]
-    FastAPI -->|Async Tasks| Redis[Redis Broker]
-    Redis -->|Dispatch Jobs| Celery[Celery Task Worker]
-    
-    FastAPI -->|Query/Write| PG[(PostgreSQL Database)]
-    Celery -->|Query/Write| PG
-    
-    FastAPI -->|3-Layer Search| Qdrant[(Qdrant Vector DB)]
-    Celery -->|Upsert Chunks| Qdrant
-    
-    FastAPI -->|4-Category Telemetry| EvalOps[EvalOps Collector Service]
-    
-    Celery -->|Execute Loop| LangGraph[LangGraph Agent Engine]
-    LangGraph -->|Sandboxed Execution| Sandbox[Pytest / Jest Sandbox Runner]
+ Client[Next.js 16 Frontend Client] -->|REST / WebSockets| FastAPI[FastAPI Backend Server]
+
+ FastAPI -->|VCS Abstraction Layer| VCS[VCS Providers: GitHub, Bitbucket, GitLab, Azure DevOps]
+ FastAPI -->|Async Tasks| Redis[Redis Broker]
+ Redis -->|Dispatch Jobs| Celery[Celery Task Worker]
+
+ FastAPI -->|Query/Write| PG[(PostgreSQL Database)]
+ Celery -->|Query/Write| PG
+
+ FastAPI -->|3-Layer Search| Qdrant[(Qdrant Vector DB)]
+ Celery -->|Upsert Chunks| Qdrant
+
+ FastAPI -->|4-Category Telemetry| EvalOps[EvalOps Collector Service]
+
+ Celery -->|Execute Loop| LangGraph[LangGraph Agent Engine]
+ LangGraph -->|Sandboxed Execution| Sandbox[Pytest / Jest Sandbox Runner]
 ```
 
 The core engine uses a stateful **multi-agent orchestration workflow** powered by **LangGraph**, consisting of 11 specialized agent nodes:

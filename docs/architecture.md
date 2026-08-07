@@ -8,22 +8,22 @@ TestPilot AI is structured as an enterprise-grade, decoupled web application wit
 
 ```mermaid
 graph TD
-    Client[Next.js 16 Frontend Client] -->|REST / WebSockets| FastAPI[FastAPI Backend Server]
-    
-    FastAPI -->|VCS Abstraction Layer| VCS[VCS Providers: GitHub, Bitbucket, GitLab, Azure DevOps]
-    FastAPI -->|Async Tasks| Redis[Redis Broker]
-    Redis -->|Dispatch Jobs| Celery[Celery Task Worker]
-    
-    FastAPI -->|Query/Write| PG[(PostgreSQL Database)]
-    Celery -->|Query/Write| PG
-    
-    FastAPI -->|3-Layer Search| Qdrant[(Qdrant Vector DB)]
-    Celery -->|Upsert Chunks| Qdrant
-    
-    FastAPI -->|4-Category Telemetry| EvalOps[EvalOps Collector Service]
-    
-    Celery -->|Execute Loop| LangGraph[LangGraph Agent Engine]
-    LangGraph -->|Sandboxed Execution| Sandbox[Pytest / Jest Sandbox Runner]
+ Client[Next.js 16 Frontend Client] -->|REST / WebSockets| FastAPI[FastAPI Backend Server]
+
+ FastAPI -->|VCS Abstraction Layer| VCS[VCS Providers: GitHub, Bitbucket, GitLab, Azure DevOps]
+ FastAPI -->|Async Tasks| Redis[Redis Broker]
+ Redis -->|Dispatch Jobs| Celery[Celery Task Worker]
+
+ FastAPI -->|Query/Write| PG[(PostgreSQL Database)]
+ Celery -->|Query/Write| PG
+
+ FastAPI -->|3-Layer Search| Qdrant[(Qdrant Vector DB)]
+ Celery -->|Upsert Chunks| Qdrant
+
+ FastAPI -->|4-Category Telemetry| EvalOps[EvalOps Collector Service]
+
+ Celery -->|Execute Loop| LangGraph[LangGraph Agent Engine]
+ LangGraph -->|Sandboxed Execution| Sandbox[Pytest / Jest Sandbox Runner]
 ```
 
 ---
