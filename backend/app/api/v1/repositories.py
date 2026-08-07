@@ -354,7 +354,7 @@ async def connect_repository(
             default_branch = meta.default_branch
             is_private = meta.visibility == "private"
     except Exception as e:
-        logger.info("Using provider metadata fallback", provider=provider_name, error=str(e))
+        logger.exception("Using provider metadata fallback due to exception", provider=provider_name, error=str(e))
 
     # Create repository record
     repo = Repository(

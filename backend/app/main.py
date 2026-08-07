@@ -135,8 +135,14 @@ async def _ensure_db_columns() -> None:
         from app.database.session import AsyncSessionLocal
 
         async with AsyncSessionLocal() as db:
-            await db.execute(text("ALTER TABLE repositories ADD COLUMN IF NOT EXISTS provider VARCHAR DEFAULT 'github';"))
-            await db.execute(text("ALTER TABLE repositories ADD COLUMN IF NOT EXISTS provider_repo_id VARCHAR;"))
+            await db.execute(
+                text(
+                    "ALTER TABLE repositories ADD COLUMN IF NOT EXISTS provider VARCHAR DEFAULT 'github';"
+                )
+            )
+            await db.execute(
+                text("ALTER TABLE repositories ADD COLUMN IF NOT EXISTS provider_repo_id VARCHAR;")
+            )
             await db.commit()
     except Exception as e:
         logger.warning("DB column migration check non-fatal warning", error=str(e))
