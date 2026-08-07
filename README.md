@@ -50,6 +50,7 @@ For technical recruiters, engineering leaders, and open-source contributors, com
 graph TD
     Client[Next.js 16 Frontend Client] -->|REST / WebSockets| FastAPI[FastAPI Backend Server]
     
+    FastAPI -->|VCS Abstraction Layer| VCS[VCS Providers: GitHub, Bitbucket, GitLab, Azure DevOps]
     FastAPI -->|Async Tasks| Redis[Redis Broker]
     Redis -->|Dispatch Jobs| Celery[Celery Task Worker]
     
@@ -58,6 +59,8 @@ graph TD
     
     FastAPI -->|3-Layer Search| Qdrant[(Qdrant Vector DB)]
     Celery -->|Upsert Chunks| Qdrant
+    
+    FastAPI -->|4-Category Telemetry| EvalOps[EvalOps Collector Service]
     
     Celery -->|Execute Loop| LangGraph[LangGraph Agent Engine]
     LangGraph -->|Sandboxed Execution| Sandbox[Pytest / Jest Sandbox Runner]
