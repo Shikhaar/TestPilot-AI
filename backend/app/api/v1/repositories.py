@@ -379,14 +379,25 @@ async def connect_repository(
     await db.commit()
     await db.refresh(repo)
 
-    # Trigger background indexing
-    index_repository.delay(
-        repository_id=repo.id,
-        clone_url=repo.clone_url,
-        access_token=user_token,
-        force_reindex=False,
-        branch=repo.default_branch,
-    )
+    # Trigger background indexing with FastAPI background tasks fallback
+    try:
+        index_repository.delay(
+            repository_id=repo.id,
+            clone_url=repo.clone_url,
+            access_token=user_token,
+            force_reindex=False,
+            branch=repo.default_branch,
+        )
+    except Exception as e:
+        logger.warning("Celery dispatch fallback to asyncio background task", error=str(e))
+        background_tasks.add_task(
+            index_repository,
+            repository_id=repo.id,
+            clone_url=repo.clone_url,
+            access_token=user_token,
+            force_reindex=False,
+            branch=repo.default_branch,
+        )
 
     logger.info(
         "Repository connected", repo_id=repo.id, full_name=repo.full_name, provider=provider_name
