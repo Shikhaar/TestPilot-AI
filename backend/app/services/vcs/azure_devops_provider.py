@@ -313,10 +313,11 @@ class AzureDevOpsProvider(VCSProvider):
         return "organization", "project", parts[0] if parts else "repo"
 
     @staticmethod
-    def _get_auth_headers(token: str | None) -> dict[str, str]:
+    def _get_auth_headers(token: str | VCSCredentials | None) -> dict[str, str]:
         """Format Personal Access Token (PAT) header for Azure DevOps Basic auth."""
         headers = {"Content-Type": "application/json"}
-        if token:
-            b64_pat = base64.b64encode(f":{token}".encode()).decode("utf-8")
+        raw_token = token.token if isinstance(token, VCSCredentials) else token
+        if raw_token:
+            b64_pat = base64.b64encode(f":{raw_token}".encode()).decode("utf-8")
             headers["Authorization"] = f"Basic {b64_pat}"
         return headers
