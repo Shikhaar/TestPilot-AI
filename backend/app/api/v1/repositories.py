@@ -353,6 +353,8 @@ async def connect_repository(
             clone_url = meta.clone_url
             default_branch = meta.default_branch
             is_private = meta.visibility == "private"
+    except ValueError as ve:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
     except Exception as e:
         logger.exception("Using provider metadata fallback due to exception", provider=provider_name, error=str(e))
 
