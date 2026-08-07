@@ -27,6 +27,7 @@ settings = get_settings()
 # Engine
 # ==============================================================================
 
+
 def _create_engine_with_fallback() -> AsyncEngine:
     try:
         if "sqlite" in settings.database_url:
@@ -47,7 +48,9 @@ def _create_engine_with_fallback() -> AsyncEngine:
             },
         )
     except Exception as e:
-        logger.warning("Failed to initialize PostgreSQL engine, falling back to SQLite", error=str(e))
+        logger.warning(
+            "Failed to initialize PostgreSQL engine, falling back to SQLite", error=str(e)
+        )
         return create_async_engine("sqlite+aiosqlite:///./testpilot.db", echo=False)
 
 

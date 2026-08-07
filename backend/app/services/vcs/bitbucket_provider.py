@@ -147,7 +147,9 @@ class BitbucketProvider(VCSProvider):
                 elif res.status_code == 404:
                     raise ValueError(f"Repository '{clean_name}' was not found on Bitbucket.")
                 elif res.status_code in (401, 403):
-                    raise ValueError(f"Access denied to Bitbucket repository '{clean_name}'. Please provide a valid Access Token / App Password.")
+                    raise ValueError(
+                        f"Access denied to Bitbucket repository '{clean_name}'. Please provide a valid Access Token / App Password."
+                    )
         except ValueError:
             raise
         except Exception as e:

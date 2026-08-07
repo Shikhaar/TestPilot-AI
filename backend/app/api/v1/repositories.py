@@ -337,7 +337,9 @@ async def connect_repository(
                 if "404" in err_str or "not found" in err_str:
                     raise ValueError(f"Repository '{full_name}' was not found on GitHub.")
                 if "401" in err_str or "403" in err_str or "bad credentials" in err_str:
-                    raise ValueError(f"Access denied to GitHub repository '{full_name}'. Please provide a valid Personal Access Token.")
+                    raise ValueError(
+                        f"Access denied to GitHub repository '{full_name}'. Please provide a valid Personal Access Token."
+                    )
                 raise
             provider_repo_id = str(gh_repo.id)
             full_name = gh_repo.full_name
@@ -364,7 +366,11 @@ async def connect_repository(
     except ValueError as ve:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
     except Exception as e:
-        logger.exception("Using provider metadata fallback due to exception", provider=provider_name, error=str(e))
+        logger.exception(
+            "Using provider metadata fallback due to exception",
+            provider=provider_name,
+            error=str(e),
+        )
 
     # Create repository record
     repo = Repository(
