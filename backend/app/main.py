@@ -1,5 +1,5 @@
 """
-TestPilot AI — FastAPI Application Entry Point.
+# TestPilot AI Main FastAPI Application Entrypoint (Reload triggered)
 
 Configures:
 - CORS, middleware, and compression
@@ -114,6 +114,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     REDIS_QUEUE_DEPTH.set(0)
     AGENT_SUCCESS_RATE.set(100.0)
 
+    # Ensure database schema has provider column
+    await _ensure_db_columns()
+
     # Initialize Qdrant collections
     await _initialize_qdrant()
 
@@ -122,6 +125,27 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     # Shutdown
     logger.info("Shutting down TestPilot AI")
+
+
+async def _ensure_db_columns() -> None:
+    """Ensure database schema migration for VCS provider support."""
+    try:
+        from sqlalchemy import text
+
+        from app.database.session import AsyncSessionLocal
+
+        async with AsyncSessionLocal() as db:
+            await db.execute(
+                text(
+                    "ALTER TABLE repositories ADD COLUMN IF NOT EXISTS provider VARCHAR DEFAULT 'github';"
+                )
+            )
+            await db.execute(
+                text("ALTER TABLE repositories ADD COLUMN IF NOT EXISTS provider_repo_id VARCHAR;")
+            )
+            await db.commit()
+    except Exception as e:
+        logger.warning("DB column migration check non-fatal warning", error=str(e))
 
 
 # ==============================================================================

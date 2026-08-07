@@ -175,7 +175,20 @@ class GitHubService:
             GithubException: If the repository is not found or inaccessible.
         """
         client = self._get_client(access_token, installation_id)
-        return client.get_repo(full_name)
+        try:
+            return client.get_repo(full_name)
+        except Exception as e:
+            # If authenticated call fails (e.g. 401 Bad credentials / invalid dev token), try unauthenticated for public repos
+            if access_token:
+                try:
+                    logger.info(
+                        "Retrying get_repo with unauthenticated client for public repo",
+                        repo=full_name,
+                    )
+                    return Github().get_repo(full_name)
+                except Exception:
+                    pass
+            raise e
 
     async def list_user_repositories(
         self,

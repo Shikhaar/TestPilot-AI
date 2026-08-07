@@ -144,26 +144,56 @@ def _clone_or_pull(
     clone_url: str, repo_path: Path, access_token: str | None, branch: str | None = None
 ) -> None:
     """Clone a repository or pull latest if already cloned, checking out target branch."""
+    import os
 
-    # Inject access token into URL for private repos
-    if access_token and "github.com" in clone_url:
-        clone_url = clone_url.replace("https://", f"https://x-access-token:{access_token}@")
+    # Environment variables to disable interactive password prompts
+    env = os.environ.copy()
+    env["GIT_TERMINAL_PROMPT"] = "0"
+    env["GIT_ASKPASS"] = "echo"
+
+    # Inject access token into URL for private repos across providers
+    if access_token and "https://" in clone_url:
+        if "github.com" in clone_url:
+            clone_url = clone_url.replace("https://", f"https://x-access-token:{access_token}@")
+        elif "bitbucket.org" in clone_url:
+            clone_url = clone_url.replace("https://", f"https://x-token-auth:{access_token}@")
+        elif "gitlab.com" in clone_url:
+            clone_url = clone_url.replace("https://", f"https://oauth2:{access_token}@")
+        elif "dev.azure.com" in clone_url or "visualstudio.com" in clone_url:
+            clone_url = clone_url.replace("https://", f"https://{access_token}@")
 
     if repo_path.exists() and (repo_path / ".git").exists():
         logger.info("Pulling repository updates", path=str(repo_path), branch=branch)
         repo = git.Repo(repo_path)
-        repo.remotes.origin.fetch()
-        if branch:
-            repo.git.checkout(branch)
-            repo.remotes.origin.pull(branch)
-        else:
-            repo.remotes.origin.pull()
+        with repo.git.custom_environment(**env):
+            repo.remotes.origin.fetch()
+            if branch:
+                try:
+                    repo.git.checkout(branch)
+                    repo.remotes.origin.pull(branch)
+                except Exception:
+                    repo.remotes.origin.pull()
+            else:
+                repo.remotes.origin.pull()
     else:
         logger.info("Cloning repository", url=clone_url, path=str(repo_path), branch=branch)
-        repo_path.mkdir(parents=True, exist_ok=True)
-        kwargs: dict[str, Any] = {"depth": 50}
+        if repo_path.exists():
+            shutil.rmtree(repo_path, ignore_errors=True)
+        kwargs: dict[str, Any] = {"depth": 50, "env": env}
+
         if branch:
-            kwargs["branch"] = branch
+            try:
+                git.Repo.clone_from(clone_url, repo_path, branch=branch, **kwargs)  # type: ignore[arg-type]
+                return
+            except Exception as e:
+                logger.warning(
+                    "Branch clone failed, falling back to default branch",
+                    branch=branch,
+                    error=str(e),
+                )
+                if repo_path.exists():
+                    shutil.rmtree(repo_path, ignore_errors=True)
+
         git.Repo.clone_from(clone_url, repo_path, **kwargs)  # type: ignore[arg-type]
 
 

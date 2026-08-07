@@ -27,21 +27,31 @@ settings = get_settings()
 # Engine
 # ==============================================================================
 
-engine: AsyncEngine = create_async_engine(
-    settings.database_url,
-    echo=settings.db_echo,
-    pool_size=settings.db_pool_size,
-    max_overflow=settings.db_max_overflow,
-    pool_timeout=settings.db_pool_timeout,
-    pool_recycle=settings.db_pool_recycle,
-    pool_pre_ping=True,
-    connect_args={
-        "server_settings": {
-            "application_name": settings.app_name,
-            "jit": "off",  # Disable JIT for better pg performance on short queries
-        }
-    },
-)
+def _create_engine_with_fallback() -> AsyncEngine:
+    try:
+        if "sqlite" in settings.database_url:
+            return create_async_engine(settings.database_url, echo=settings.db_echo)
+        return create_async_engine(
+            settings.database_url,
+            echo=settings.db_echo,
+            pool_size=settings.db_pool_size,
+            max_overflow=settings.db_max_overflow,
+            pool_timeout=settings.db_pool_timeout,
+            pool_recycle=settings.db_pool_recycle,
+            pool_pre_ping=True,
+            connect_args={
+                "server_settings": {
+                    "application_name": settings.app_name,
+                    "jit": "off",
+                }
+            },
+        )
+    except Exception as e:
+        logger.warning("Failed to initialize PostgreSQL engine, falling back to SQLite", error=str(e))
+        return create_async_engine("sqlite+aiosqlite:///./testpilot.db", echo=False)
+
+
+engine: AsyncEngine = _create_engine_with_fallback()
 
 # ==============================================================================
 # Session Factory

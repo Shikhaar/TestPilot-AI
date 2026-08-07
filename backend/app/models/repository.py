@@ -53,6 +53,8 @@ class Repository(Base, UUIDMixin, TimestampMixin):
     owner_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    provider: Mapped[str] = mapped_column(String(50), default="github", nullable=False, index=True)
+    provider_repo_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     github_repo_id: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
     full_name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)

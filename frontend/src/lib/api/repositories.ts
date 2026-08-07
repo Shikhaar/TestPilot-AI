@@ -41,10 +41,15 @@ export const repositoriesApi = {
     return { items: Array.isArray(res.data) ? res.data : [], total: 0 };
   },
 
-  connect: async (fullName: string, githubAppInstallationId?: string) => {
+  connect: async (fullName: string, provider: string = "github", accessToken?: string, githubAppInstallationId?: string) => {
     const res = await client.post<{ success: boolean; data: Repository; message: string }>(
       "/repositories/connect",
-      { full_name: fullName, github_app_installation_id: githubAppInstallationId }
+      {
+        full_name: fullName,
+        provider: provider,
+        access_token: accessToken,
+        github_app_installation_id: githubAppInstallationId,
+      }
     );
     return res.data;
   },

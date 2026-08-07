@@ -6,11 +6,12 @@ TestPilot AI is an advanced, production-grade **AI-Powered Regression Testing an
 
 ## Key Capabilities
 
-1. **Automated PR Reviews**: Generates senior-engineer-level, structured markdown feedback directly in GitHub PR comments.
-2. **Impact & Dependency Mapping**: Uses Tree-sitter AST parsing to trace exactly which functions, classes, and REST endpoints are impacted by code changes.
-3. **Sandbox Test Execution**: Automatically spins up isolated environments to run modified or newly-added tests.
-4. **Generative Test Writing**: Uses Gemini 2.0 Flash (via LiteLLM & Instructor) to automatically author missing test suites for untested changed code lines.
-5. **AI Failure Analysis**: If tests fail, an AI analysis agent inspects traceback outputs to pinpoint the precise root cause.
+1. **Multi-VCS Provider Support**: Connect, index, and manage repositories across **GitHub**, **Bitbucket**, **GitLab**, **Azure DevOps**, and **Custom Git URLs** with 1-Click OAuth 2.0 and PAT authentication.
+2. **Automated PR Reviews**: Generates senior-engineer-level, structured markdown feedback directly in GitHub/VCS PR comments.
+3. **Impact & Dependency Mapping**: Uses Tree-sitter AST parsing to trace exactly which functions, classes, and REST endpoints are impacted by code changes.
+4. **Sandbox Test Execution**: Automatically spins up isolated environments to run modified or newly-added tests.
+5. **Generative Test Writing**: Uses Gemini 2.0 Flash (via LiteLLM & Instructor) to automatically author missing test suites for untested changed code lines.
+6. **AI Failure Analysis**: If tests fail, an AI analysis agent inspects traceback outputs to pinpoint the precise root cause.
 
 ---
 
