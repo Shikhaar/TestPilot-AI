@@ -326,11 +326,19 @@ async def connect_repository(
     try:
         if provider_name == "github":
             github = GitHubService()
-            gh_repo = github.get_repository(
-                full_name,
-                access_token=user_token,
-                installation_id=request.github_app_installation_id,
-            )
+            try:
+                gh_repo = github.get_repository(
+                    full_name,
+                    access_token=user_token,
+                    installation_id=request.github_app_installation_id,
+                )
+            except Exception as gh_err:
+                err_str = str(gh_err).lower()
+                if "404" in err_str or "not found" in err_str:
+                    raise ValueError(f"Repository '{full_name}' was not found on GitHub.")
+                if "401" in err_str or "403" in err_str or "bad credentials" in err_str:
+                    raise ValueError(f"Access denied to GitHub repository '{full_name}'. Please provide a valid Personal Access Token.")
+                raise
             provider_repo_id = str(gh_repo.id)
             full_name = gh_repo.full_name
             repo_name = gh_repo.name
