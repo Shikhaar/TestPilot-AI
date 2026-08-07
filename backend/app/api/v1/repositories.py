@@ -299,24 +299,32 @@ async def connect_repository(
         )
 
     # 2. Fetch metadata using VCSProvider abstraction
-    from app.services.vcs import VCSCapability, get_vcs_provider
+    from app.services.vcs import get_vcs_provider
 
     vcs_provider = get_vcs_provider(provider_name)
-    user_token = request.access_token or current_user.github_access_token
+    user_token = (
+        request.access_token
+        if provider_name != "github"
+        else (request.access_token or current_user.github_access_token)
+    )
 
     owner_login = (
         full_name.split("/")[0] if "/" in full_name else (current_user.username or "owner")
     )
     repo_name = full_name.split("/")[-1].replace(".git", "") if "/" in full_name else full_name
-    clone_url = full_name if full_name.startswith("http") else f"https://github.com/{full_name}.git"
+    clone_url = (
+        full_name
+        if full_name.startswith("http")
+        else f"https://{provider_name}.org/{full_name}.git"
+    )
     description = f"{provider_name.capitalize()} repository connected for automated AST indexing."
     default_branch = "main"
     is_private = False
     provider_repo_id = full_name
 
-    # Try API fetch if supported by provider
+    # Try API fetch based on VCS provider
     try:
-        if vcs_provider.supports(VCSCapability.FETCH_PR) or provider_name == "github":
+        if provider_name == "github":
             github = GitHubService()
             gh_repo = github.get_repository(
                 full_name,
@@ -331,6 +339,20 @@ async def connect_repository(
             clone_url = gh_repo.clone_url
             default_branch = gh_repo.default_branch
             is_private = gh_repo.private
+        else:
+            from app.services.vcs.vcs_base import VCSCredentials
+
+            creds = VCSCredentials(provider=provider_name, token=request.access_token)
+            meta = await vcs_provider.get_repository_metadata(full_name, credentials=creds)
+            provider_repo_id = meta.provider_repo_id
+            full_name = meta.full_name
+            repo_name = meta.name
+            owner_login = meta.owner
+            if meta.description:
+                description = meta.description
+            clone_url = meta.clone_url
+            default_branch = meta.default_branch
+            is_private = meta.visibility == "private"
     except Exception as e:
         logger.info("Using provider metadata fallback", provider=provider_name, error=str(e))
 

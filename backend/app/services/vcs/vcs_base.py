@@ -109,6 +109,25 @@ class VCSProvider(ABC):
         """List repositories accessible to the authenticated user/token."""
         ...
 
+    async def get_repository_metadata(
+        self, repo_identifier: str, credentials: VCSCredentials | None = None
+    ) -> VCSRepoMetadata:
+        """Fetch standardized repository metadata."""
+        org, repo_name = (
+            repo_identifier.split("/")[0] if "/" in repo_identifier else "owner",
+            repo_identifier.split("/")[-1],
+        )
+        return VCSRepoMetadata(
+            provider_repo_id=repo_identifier,
+            name=repo_name,
+            full_name=repo_identifier,
+            owner=org,
+            clone_url=f"https://{self.provider_name}.org/{repo_identifier}.git",
+            default_branch="main",
+            visibility="private",
+            description=f"{self.provider_name.capitalize()} repository {repo_identifier}",
+        )
+
     @abstractmethod
     async def clone(self, repo_url: str, target_dir: Path, token: str | None = None) -> Path:
         """Clone a remote repository to local target directory."""
