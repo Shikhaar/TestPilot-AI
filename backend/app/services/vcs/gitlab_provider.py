@@ -46,12 +46,17 @@ class GitLabProvider(VCSProvider):
             VCSCapability.DOWNLOAD_DIFF,
         }
 
+    def _get_auth_headers(self, credentials: VCSCredentials | None) -> dict[str, str]:
+        if credentials and credentials.token:
+            return {"PRIVATE-TOKEN": credentials.token}
+        return {}
+
     async def authenticate(self, credentials: VCSCredentials) -> bool:
         self._ensure_capability(VCSCapability.AUTHENTICATE)
-        if not credentials.token:
+        headers = self._get_auth_headers(credentials)
+        if not headers:
             return False
 
-        headers = {"PRIVATE-TOKEN": credentials.token}
         base_url = credentials.host_url or "https://gitlab.com/api/v4"
 
         async with httpx.AsyncClient(timeout=10.0) as client:
@@ -60,10 +65,10 @@ class GitLabProvider(VCSProvider):
 
     async def list_repositories(self, credentials: VCSCredentials) -> list[VCSRepoMetadata]:
         self._ensure_capability(VCSCapability.LIST_REPOS)
-        if not credentials.token:
+        headers = self._get_auth_headers(credentials)
+        if not headers:
             return []
 
-        headers = {"PRIVATE-TOKEN": credentials.token}
         base_url = credentials.host_url or "https://gitlab.com/api/v4"
 
         async with httpx.AsyncClient(timeout=15.0) as client:
@@ -88,6 +93,54 @@ class GitLabProvider(VCSProvider):
                 )
                 for r in repos
             ]
+
+    async def get_repository_metadata(
+        self, repo_identifier: str, credentials: VCSCredentials | None = None
+    ) -> VCSRepoMetadata:
+        """Fetch GitLab repository metadata via API with fallback."""
+        headers = self._get_auth_headers(credentials) if credentials else {}
+        base_url = (
+            credentials.host_url if credentials and credentials.host_url else None
+        ) or "https://gitlab.com/api/v4"
+        clean_name = (
+            repo_identifier.replace("https://gitlab.com/", "").replace(".git", "").strip("/")
+        )
+        encoded = urllib.parse.quote(clean_name, safe="")
+
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                res = await client.get(f"{base_url}/projects/{encoded}", headers=headers)
+                if res.status_code == 200:
+                    r = res.json()
+                    return VCSRepoMetadata(
+                        provider_repo_id=str(r.get("id", clean_name)),
+                        name=r.get("name", clean_name.split("/")[-1]),
+                        full_name=r.get("path_with_namespace", clean_name),
+                        owner=r.get("namespace", {}).get(
+                            "path", clean_name.split("/")[0] if "/" in clean_name else "group"
+                        ),
+                        clone_url=r.get("http_url_to_repo", f"https://gitlab.com/{clean_name}.git"),
+                        default_branch=r.get("default_branch", "main"),
+                        visibility=r.get("visibility", "public"),
+                        description=r.get("description") or f"GitLab repository {clean_name}",
+                    )
+        except Exception as e:
+            logger.info("GitLab API get_repository_metadata fallback", error=str(e))
+
+        org, repo_name = (
+            clean_name.split("/")[0] if "/" in clean_name else "group",
+            clean_name.split("/")[-1],
+        )
+        return VCSRepoMetadata(
+            provider_repo_id=clean_name,
+            name=repo_name,
+            full_name=clean_name,
+            owner=org,
+            clone_url=f"https://gitlab.com/{clean_name}.git",
+            default_branch="main",
+            visibility="public",
+            description=f"GitLab repository {clean_name}",
+        )
 
     async def clone(self, repo_url: str, target_dir: Path, token: str | None = None) -> Path:
         self._ensure_capability(VCSCapability.CLONE)

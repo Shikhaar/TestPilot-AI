@@ -106,6 +106,62 @@ class BitbucketProvider(VCSProvider):
                 )
             return results
 
+    async def get_repository_metadata(
+        self, repo_identifier: str, credentials: VCSCredentials | None = None
+    ) -> VCSRepoMetadata:
+        """Fetch Bitbucket repository metadata via API with fallback."""
+        headers = self._get_auth_headers(credentials) if credentials else {}
+        base_url = (
+            credentials.host_url if credentials and credentials.host_url else None
+        ) or "https://api.bitbucket.org/2.0"
+        clean_name = (
+            repo_identifier.replace("https://bitbucket.org/", "").replace(".git", "").strip("/")
+        )
+
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                res = await client.get(f"{base_url}/repositories/{clean_name}", headers=headers)
+                if res.status_code == 200:
+                    r = res.json()
+                    clone_links = r.get("links", {}).get("clone", [])
+                    https_link = next(
+                        (
+                            link_item["href"]
+                            for link_item in clone_links
+                            if link_item.get("name") == "https"
+                        ),
+                        f"https://bitbucket.org/{clean_name}.git",
+                    )
+                    return VCSRepoMetadata(
+                        provider_repo_id=r.get("full_name", clean_name),
+                        name=r.get("name", clean_name.split("/")[-1]),
+                        full_name=r.get("full_name", clean_name),
+                        owner=r.get("workspace", {}).get(
+                            "slug", clean_name.split("/")[0] if "/" in clean_name else "workspace"
+                        ),
+                        clone_url=https_link,
+                        default_branch=r.get("mainbranch", {}).get("name", "main"),
+                        visibility="private" if r.get("is_private") else "public",
+                        description=r.get("description") or f"Bitbucket repository {clean_name}",
+                    )
+        except Exception as e:
+            logger.info("Bitbucket API get_repository_metadata fallback", error=str(e))
+
+        org, repo_name = (
+            clean_name.split("/")[0] if "/" in clean_name else "workspace",
+            clean_name.split("/")[-1],
+        )
+        return VCSRepoMetadata(
+            provider_repo_id=clean_name,
+            name=repo_name,
+            full_name=clean_name,
+            owner=org,
+            clone_url=f"https://bitbucket.org/{clean_name}.git",
+            default_branch="main",
+            visibility="public",
+            description=f"Bitbucket repository {clean_name}",
+        )
+
     async def clone(self, repo_url: str, target_dir: Path, token: str | None = None) -> Path:
         self._ensure_capability(VCSCapability.CLONE)
         import subprocess
