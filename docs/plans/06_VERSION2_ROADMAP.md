@@ -11,10 +11,10 @@ TestPilot AI Version 2 (v2.0.0) expands the platform into an enterprise-grade, m
 - Unified Webhook Receiver: Expand webhook endpoints (`/api/v1/webhooks/*`) to process pull request events, commit pushes, and comment triggers from Bitbucket, GitLab, and Azure DevOps in addition to GitHub.
 - Scope-Based Indexing: Allow selective AST vector indexing for sub-directories and individual microservices within large repositories.
 
-### Phase 2: Sandboxed Ephemeral Test Execution Engine
-- Isolated Container Runner: Execute generated Pytest, Vitest, Jest, Go, and JUnit test suites inside ephemeral Docker / WebAssembly sandbox containers to guarantee zero host pollution and secure execution.
-- Security Policy Enforcement: Enforce memory limits, CPU quotas, network isolation, and execution timeouts on test runs.
-- Cross-Language Test Adapters: Add native test execution adapters for Go (`go test`), Java (`JUnit 5`), Rust (`cargo test`), and C# (`dotnet test`).
+### Phase 2: Docker Containerized Test Sandbox & Isolation
+- Host Subprocess to Docker Sandbox Migration: Transition test execution in `execution_agent_node` (`backend/app/agents/execution_agent.py`) from local host `subprocess.run()` calls to isolated ephemeral Docker sandbox containers (`docker run --rm --network none --memory=2g`).
+- Sandbox Security Policy Enforcement: Enforce memory limits, CPU quotas, filesystem read-only locks, network isolation, and execution timeouts to protect host infrastructure from malicious or runaway test code.
+- Multi-Language Runtime Images: Add pre-built runner images for Python (pytest), Node.js (jest/vitest), Go (`go test`), Java (`mvn test`), and Rust (`cargo test`).
 
 ### Phase 3: Automated Pull Request Auto-Remediation
 - Auto-Fix Branch Push: Enable AI agents to automatically commit synthesized unit test files and code fix patches back to target branches on GitHub, Bitbucket, GitLab, and Azure DevOps.

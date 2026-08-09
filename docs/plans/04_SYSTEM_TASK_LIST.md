@@ -59,7 +59,7 @@
 ## Phase 8: Version 2.0.0 Architecture Roadmap (Planned)
 - [ ] Multi-Package AST Graph Resolution for monorepos (npm workspaces, Lerna, Nx, Cargo, Go)
 - [ ] Enterprise Webhook Receiver for Bitbucket, GitLab, and Azure DevOps pull requests
-- [ ] Sandboxed Ephemeral Docker / WebAssembly Test Execution Runner
+- [ ] Docker sandbox container runner migration from host subprocess calls (`execution_agent.py`)
 - [ ] Automated Pull Request Auto-Remediation and auto-fix branch commits
 - [ ] LangGraph parallel sub-graphs and dynamic context window pruning (40% latency reduction)
 - [ ] Fine-Tuned Local LLM integration (DeepSeek-Coder, CodeLlama, Qwen-Coder via Ollama/vLLM)
