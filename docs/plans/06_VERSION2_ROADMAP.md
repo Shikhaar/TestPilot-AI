@@ -16,10 +16,10 @@ TestPilot AI Version 2 (v2.0.0) expands the platform into an enterprise-grade, m
 - Sandbox Security Policy Enforcement: Enforce memory limits, CPU quotas, filesystem read-only locks, network isolation, and execution timeouts to protect host infrastructure from malicious or runaway test code.
 - Multi-Language Runtime Images: Add pre-built runner images for Python (pytest), Node.js (jest/vitest), Go (`go test`), Java (`mvn test`), and Rust (`cargo test`).
 
-### Phase 3: Automated Pull Request Auto-Remediation
-- Auto-Fix Branch Push: Enable AI agents to automatically commit synthesized unit test files and code fix patches back to target branches on GitHub, Bitbucket, GitLab, and Azure DevOps.
-- Inline Code Annotations: Post line-level inline code review comments and suggested fixes directly inside pull request diff viewers.
-- Flaky Test Detection & Auto-Healing: Automatically re-run failed test suites across multiple seeds and push repair commits when non-deterministic behavior is resolved.
+### Phase 3: Automated Pull Request Auto-Remediation & Inline Annotations
+- Manual Commit Button to Autonomous Remediation: Upgrade from manual UI test commitment (`POST /repositories/{id}/commit-tests`) to autonomous AI agent patch commits on target branches (`testpilot/fix-<pr-id>`).
+- Inline Line-Level PR Annotations: Transition top-level PR summary comments into line-by-line inline code annotations on GitHub, Bitbucket, GitLab, and Azure DevOps diff viewers.
+- Autonomous Fix Branch Generation: Automatically synthesize repair commits and open fix pull requests when non-deterministic or regression test failures are detected.
 
 ### Phase 4: LangGraph Parallel Orchestration & Context Optimization
 - Hierarchical Sub-Graphs: Refactor LangGraph multi-agent architecture into parallel sub-graphs for concurrent AST search, impact analysis, and test generation.
