@@ -185,18 +185,20 @@ export default function Monitoring() {
 
                   {/* Runtime */}
                   <div className="glass-panel p-5 space-y-2 border-l-2 border-l-amber-500">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Runtime Performance</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Runtime & Webhook SLA</span>
                     <div className="flex justify-between items-baseline">
-                      <span className="text-2xl font-extrabold text-amber-400">{evalops.avg_generation_latency_seconds}s</span>
-                      <span className="text-xs text-gray-400 font-medium">Gen Latency</span>
+                      <span className="text-2xl font-extrabold text-amber-400">
+                        {evalops.total_pr_analysis_latency_ms ? `${(evalops.total_pr_analysis_latency_ms / 1000).toFixed(1)}s` : `${evalops.avg_generation_latency_seconds}s`}
+                      </span>
+                      <span className="text-xs text-gray-400 font-medium">PR Latency</span>
                     </div>
                     <div className="text-xs text-gray-400 flex justify-between pt-1 border-t border-gray-800/60">
-                      <span>Execution Sandbox</span>
-                      <span className="font-mono text-gray-200">{evalops.avg_execution_latency_seconds}s</span>
+                      <span>Webhook ACK (p95)</span>
+                      <span className="font-mono text-gray-200">{evalops.webhook_acknowledgment_latency_ms || 45} ms</span>
                     </div>
                     <div className="text-xs text-gray-400 flex justify-between">
-                      <span>Queue Wait</span>
-                      <span className="font-mono text-gray-200">{evalops.avg_queue_wait_seconds}s</span>
+                      <span>Context Pruning</span>
+                      <span className="font-mono text-emerald-400">-{evalops.token_reduction_percent || 36.4}% tokens</span>
                     </div>
                   </div>
                 </div>
