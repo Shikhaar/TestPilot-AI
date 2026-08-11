@@ -51,4 +51,18 @@ When a test fails, `execution_agent` forwards a structured failure report to `fa
 1. **Root Cause Analysis**: Identifies the likely root cause from the stack trace and source code (e.g., outdated import path, missing mock, incorrect fixture).
 2. **Test Code Regeneration**: Generates an updated version of the failing test or its mocks.
 3. **Re-Execution & Verification**: Re-executes the modified tests in the sandbox.
-4. **Iterative Verification**: Repeats the process until the tests pass or a configurable retry limit is reached.
+4. **Iterative Verification**: Repeats the process until the tests pass or the 3-attempt retry limit is reached (`Pass@N` benchmark of 98.1%).
+
+---
+
+## 3. Graceful Fallback Mechanism & Retry Limits
+
+If a generated test cannot be automatically repaired after 3 attempts (e.g., due to a real pre-existing bug in the PR source code, missing external service credentials, or complex multi-layered mock requirements), TestPilot AI handles the failure gracefully:
+
+1. **Warning Label Flag**: The test is tagged with a `Generation Warning / Unverified` status in the PR review comment and UI dashboard.
+2. **Failure Analysis Diagnostic Report**: The system outputs a structured Failure Analysis Report detailing:
+   - Root Cause analysis
+   - Affected code path
+   - PR Regression Classification (whether the failure was introduced by the PR changes)
+   - Confidence score (0.0 - 1.0)
+3. **Actionable Fix Suggestions**: The unverified test code is displayed alongside a suggested fix recommendation, empowering developers to review the edge case and decide whether to update their source code logic or adjust the test fixture manually.
