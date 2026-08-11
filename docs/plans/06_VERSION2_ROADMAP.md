@@ -16,7 +16,7 @@ TestPilot AI Version 2 (v2.0.0) will expand the platform into an enterprise-grad
 - Inline Line-Level PR Annotations: Transition top-level PR summary comments into line-by-line inline code annotations on GitHub, Bitbucket, GitLab, and Azure DevOps diff viewers.
 - Autonomous Fix Branch Generation: Automatically synthesize repair commits and open fix pull requests when non-deterministic or regression test failures are detected.
 
-### Phase 3: Enterprise Governance, Audit & RBAC
+### Phase 3: Enterprise Governance, Audit Logging & RBAC
 - Role-Based Access Control (RBAC): Enterprise permissions model (Admin, Developer, Auditor, Viewer).
 - Security & Compliance Audit Logging: Log all repository connections, code indexing operations, AI test generations, and API token usage for SOC2/ISO27001 compliance.
 - SAML 2.0 & Single Sign-On (SSO): Integrate Okta, Azure AD, and Keycloak authentication.

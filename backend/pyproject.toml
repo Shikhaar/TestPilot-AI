@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "testpilot-ai-backend"
-version = "1.2.0"
+version = "1.1.0"
 description = "TestPilot AI — AI-Powered Regression Testing Platform"
 authors = ["TestPilot AI <team@testpilot.ai>"]
 readme = "README.md"

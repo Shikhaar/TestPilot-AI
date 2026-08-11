@@ -41,8 +41,8 @@ For technical recruiters, engineering leaders, and open-source contributors, com
 | [**Monitoring & Telemetry**](docs/features/MONITORING_AND_TELEMETRY.md) | Queue monitoring & graceful fallback UI | Celery queue latency, Prometheus metrics, fallback banners |
 | [**Developer Setup Guide**](docs/setup.md) | Containerized and local development guide | Docker Compose, environment variables, alembic migrations |
 | [**Implementation Roadmap**](docs/plans/01_INITIAL_IMPLEMENTATION_PLAN.md) | Chronological development roadmap & milestone plans | Phase-by-phase implementation logs |
-| [**Release v1.2.0 Implementation Record**](docs/plans/05_RELEASE_V1_2_MULTIVCS_AND_PARALLEL_LANGGRAPH.md) | Release v1.2.0 completed features & test results | Secured webhooks, parallel LangGraph, context pruning |
-| [**Version 2.0.0 Architecture Plan**](docs/plans/06_VERSION2_ROADMAP.md) | Version 2.0.0 enterprise roadmap & milestones | Docker sandbox runner, auto-remediation, RBAC |
+| [**Release v1.1.0 Implementation Record**](docs/plans/05_RELEASE_V1_1_MULTIVCS_AND_PARALLEL_LANGGRAPH.md) | Release v1.1.0 completed features & test results | Multi-VCS, secured webhooks, parallel LangGraph, context pruning |
+| [**Version 2.0.0 Architecture Plan**](docs/plans/06_VERSION2_ROADMAP.md) | Version 2.0.0 enterprise roadmap & milestones | Phase 1 (Docker sandbox), Phase 2 (Auto-remediation), Phase 3 (RBAC) |
 
 ---
 

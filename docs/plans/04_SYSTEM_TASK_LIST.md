@@ -42,14 +42,12 @@
 - [x] GitHub Actions CD workflow (`cd.yml`) to build and push images to GHCR on push to main
 - [x] Live GitHub App webhook integration configuration guide (`GITHUB_APP_SETUP.md`)
 
-## Release v1.1.0: Multi-VCS Integration & Upfront Validation (Completed)
+## Release v1.1.0: Multi-VCS Integration, Secured Webhooks, Parallel LangGraph & AST Context Pruning (Completed)
 - [x] Multi-VCS provider architecture adapters (GitHub, Bitbucket, GitLab, Azure DevOps, Custom Git)
 - [x] Bitbucket 1-Click OAuth 2.0 & Personal Access Token (PAT) / App Password authentication
 - [x] Token HTTPS clone URL injection (`x-access-token`, `x-token-auth`, `oauth2`, `Basic base64`)
 - [x] Non-interactive Git safety (`GIT_TERMINAL_PROMPT="0"`, `GIT_ASKPASS="echo"`) & default branch fallback
 - [x] Upfront REST API validation (HTTP 400 rejection for 404/401 non-existent repos)
-
-## Release v1.2.0: Secured Multi-VCS Webhooks, Parallel LangGraph & AST Context Pruning (Completed)
 - [x] `WebhookAdapter` protocol architecture (GitHub HMAC, Bitbucket HMAC, GitLab secret token, Azure DevOps secret token)
 - [x] Provider-normalized `NormalizedPREvent` DTO (actions: `opened`, `synchronize`, `reopened`, `closed`)
 - [x] Decoupled `IdempotencyService` infrastructure layer using Redis `webhook:{provider}:{repository}:{delivery_id}`
@@ -62,6 +60,13 @@
 - [x] 5/5 Pytest unit tests, 16/16 Full System Integration tests, 6/6 Feature tests passed
 
 ## Version 2.0.0 Architecture Roadmap (Planned — To Be Done Later)
+### Phase 1: Docker Containerized Test Sandbox & Isolation
 - [ ] Docker sandbox container runner migration from host subprocess calls (`execution_agent.py`)
-- [ ] Automated Pull Request Auto-Remediation and autonomous fix branch commits
-- [ ] Enterprise RBAC, SAML/SSO integration, and SOC2 audit compliance logging
+- [ ] Memory limit, CPU quota, read-only locks, and network isolation policy enforcement
+
+### Phase 2: Automated Pull Request Auto-Remediation & Inline Annotations
+- [ ] Automated Pull Request Auto-Remediation and autonomous fix branch commits (`testpilot/fix-<pr-id>`)
+- [ ] Line-by-line inline code annotations on GitHub, Bitbucket, GitLab, and Azure DevOps diff viewers
+
+### Phase 3: Enterprise Governance, Audit Logging & RBAC
+- [ ] Enterprise RBAC, SAML 2.0 / SSO integration, and SOC2 audit compliance logging
