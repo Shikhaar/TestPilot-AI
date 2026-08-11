@@ -132,9 +132,14 @@ def build_pr_analysis_graph() -> StateGraph:
         },
     )
 
+    # Parallel Fan-Out: trigger impact_agent, search_agent, and test_discovery_agent concurrently
     graph.add_edge("dependency_agent", "impact_agent")
-    graph.add_edge("impact_agent", "search_agent")
-    graph.add_edge("search_agent", "test_discovery_agent")
+    graph.add_edge("dependency_agent", "search_agent")
+    graph.add_edge("dependency_agent", "test_discovery_agent")
+
+    # Fan-In Join: all 3 parallel branches merge into test_generator_agent
+    graph.add_edge("impact_agent", "test_generator_agent")
+    graph.add_edge("search_agent", "test_generator_agent")
     graph.add_edge("test_discovery_agent", "test_generator_agent")
 
     # Conditional: skip execution if no tests generated

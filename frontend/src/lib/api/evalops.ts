@@ -26,6 +26,9 @@ export interface EvalOpsMetrics {
   total_output_tokens: number;
   estimated_usd_cost: number;
   prompt_vs_context_ratio: number;
+  total_pr_analysis_latency_ms?: number;
+  webhook_acknowledgment_latency_ms?: number;
+  token_reduction_percent?: number;
   avg_generation_latency_seconds: number;
   avg_execution_latency_seconds: number;
   avg_queue_wait_seconds: number;

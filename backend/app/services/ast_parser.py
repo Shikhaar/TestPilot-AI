@@ -50,6 +50,56 @@ LANGUAGE_EXTENSIONS: dict[str, str] = {
 
 
 @dataclass
+class PackageScope:
+    """Represents a monorepo sub-package workspace boundary."""
+
+    name: str
+    root_path: str
+    language: str
+    manifest: str
+
+
+def detect_monorepo_packages(repo_path: Path) -> list[PackageScope]:
+    """Detect package boundaries in monorepos by scanning for package manifests."""
+    manifest_map = {
+        "package.json": "javascript/typescript",
+        "pyproject.toml": "python",
+        "go.mod": "go",
+        "Cargo.toml": "rust",
+        "pom.xml": "java",
+    }
+    packages: list[PackageScope] = []
+    if not repo_path.exists():
+        return packages
+
+    for manifest_name, lang in manifest_map.items():
+        for manifest_file in repo_path.glob(f"**/{manifest_name}"):
+            if "node_modules" in manifest_file.parts or ".venv" in manifest_file.parts:
+                continue
+            rel_dir = str(manifest_file.parent.relative_to(repo_path))
+            name = "root" if rel_dir == "." else manifest_file.parent.name
+            packages.append(
+                PackageScope(
+                    name=name,
+                    root_path=rel_dir,
+                    language=lang,
+                    manifest=manifest_name,
+                )
+            )
+
+    if not packages:
+        packages.append(
+            PackageScope(
+                name="root",
+                root_path=".",
+                language="unknown",
+                manifest="none",
+            )
+        )
+    return packages
+
+
+@dataclass
 class FunctionInfo:
     """Extracted function/method information."""
 

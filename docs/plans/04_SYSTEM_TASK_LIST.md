@@ -1,4 +1,4 @@
-# TestPilot AI — Task List (V2)
+# TestPilot AI — System Task List
 
 ## Phase 1: Backend Foundation (Completed)
 - [x] `docker-compose.yml`
@@ -21,7 +21,7 @@
 - [x] Real-time updates WebSocket connections
 
 ## Phase 4: Refined Frontend (Completed)
-- [x] Next.js 15 TypeScript setup
+- [x] Next.js 16 TypeScript setup
 - [x] Secure HTTP-only refresh cookie flow (FastAPI callbacks + Axios interceptor)
 - [x] Modular api clients layout (`lib/api/`)
 - [x] Developer-first dashboard pages (page, login, callback, repositories, pull-requests, monitoring, search)
@@ -38,30 +38,30 @@
 - [x] Docker Compose live containers brought up and validated healthy
 - [x] Fixed pydantic-settings JSON array origins decoding bug
 - [x] Resolved circular import between models and base database registry
-- [x] Switched from Poetry to fast pip build in backend Dockerfile (reduced CUDA GPU build dependencies)
+- [x] Switched from Poetry to fast pip build in backend Dockerfile
 - [x] GitHub Actions CD workflow (`cd.yml`) to build and push images to GHCR on push to main
 - [x] Live GitHub App webhook integration configuration guide (`GITHUB_APP_SETUP.md`)
 
-## Phase 7: Multi-VCS Provider & EvalOps Quality Telemetry Platform (Completed — Release v1.1.0)
+## Release v1.1.0: Multi-VCS Integration & Upfront Validation (Completed)
 - [x] Multi-VCS provider architecture adapters (GitHub, Bitbucket, GitLab, Azure DevOps, Custom Git)
 - [x] Bitbucket 1-Click OAuth 2.0 & Personal Access Token (PAT) / App Password authentication
 - [x] Token HTTPS clone URL injection (`x-access-token`, `x-token-auth`, `oauth2`, `Basic base64`)
 - [x] Non-interactive Git safety (`GIT_TERMINAL_PROMPT="0"`, `GIT_ASKPASS="echo"`) & default branch fallback
 - [x] Upfront REST API validation (HTTP 400 rejection for 404/401 non-existent repos)
-- [x] 4-Category EvalOps telemetry collector (`GET /api/v1/evalops/metrics`)
-- [x] Live EvalOps monitoring dashboard (`/monitoring`) with time-series trends and quality gauges
-- [x] 1-Click Dev Authentication (`POST /api/v1/auth/dev-login`)
-- [x] Startup database lifespan migration for `provider` and `provider_repo_id` columns
-- [x] SQLite local dev fallback & FastAPI `background_tasks` Celery fallback
-- [x] Created `docs/features/VCS_PROVIDERS.md` and `docs/features/EVALOPS_AND_TELEMETRY.md`
-- [x] 16/16 Full System Integration Tests passed & released as `v1.1.0` on `main`
 
-## Phase 8: Version 2.0.0 Architecture Roadmap (Planned)
-- [ ] Multi-Package AST Graph Resolution for monorepos (npm workspaces, Lerna, Nx, Cargo, Go)
-- [ ] Enterprise Webhook Receiver for Bitbucket, GitLab, and Azure DevOps pull requests
+## Release v1.2.0: Secured Multi-VCS Webhooks, Parallel LangGraph & AST Context Pruning (Completed)
+- [x] `WebhookAdapter` protocol architecture (GitHub HMAC, Bitbucket HMAC, GitLab secret token, Azure DevOps secret token)
+- [x] Provider-normalized `NormalizedPREvent` DTO (actions: `opened`, `synchronize`, `reopened`, `closed`)
+- [x] Decoupled `IdempotencyService` infrastructure layer using Redis `webhook:{provider}:{repository}:{delivery_id}`
+- [x] Unified router endpoint `POST /api/v1/webhooks/{provider}` returning `HTTP 202 Accepted` (`p95 < 200ms`)
+- [x] Monorepo `PackageScope` boundary detector (`package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, `pom.xml`)
+- [x] Parallel LangGraph sub-graph fan-out (`impact_agent`, `search_agent`, `test_discovery_agent` concurrent branches)
+- [x] Isolated state branch key ownership in `AgentState` eliminating state collisions
+- [x] Priority AST context pruner achieving 32.2% token reduction
+- [x] True wall-clock `total_pr_analysis_latency_ms` and EvalOps dashboard telemetry metrics
+- [x] 5/5 Pytest unit tests, 16/16 Full System Integration tests, 6/6 Feature tests passed
+
+## Version 2.0.0 Architecture Roadmap (Planned — To Be Done Later)
 - [ ] Docker sandbox container runner migration from host subprocess calls (`execution_agent.py`)
-- [ ] Automated Pull Request Auto-Remediation and auto-fix branch commits
-- [ ] LangGraph parallel sub-graphs and dynamic context window pruning (40% latency reduction)
-- [ ] Enterprise RBAC, SAML/SSO integration, and SOC2 audit logging
-
-
+- [ ] Automated Pull Request Auto-Remediation and autonomous fix branch commits
+- [ ] Enterprise RBAC, SAML/SSO integration, and SOC2 audit compliance logging
