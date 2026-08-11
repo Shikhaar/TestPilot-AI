@@ -15,7 +15,7 @@ TestPilot AI is an advanced, production-grade **AI-Powered Regression Testing an
 
 ---
 
-## ️ Technology Stack & Core Infrastructure
+## Technology Stack & Core Infrastructure
 
 ```mermaid
 graph TD
