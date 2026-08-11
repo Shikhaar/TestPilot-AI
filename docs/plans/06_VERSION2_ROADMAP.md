@@ -24,7 +24,6 @@ TestPilot AI Version 2 (v2.0.0) expands the platform into an enterprise-grade, m
 ### Phase 4: LangGraph Parallel Orchestration & Context Optimization
 - Hierarchical Sub-Graphs: Refactor LangGraph multi-agent architecture into parallel sub-graphs for concurrent AST search, impact analysis, and test generation.
 - Dynamic Token Context Pruning: Optimize prompt context windows by filtering out non-essential AST nodes before LLM synthesis, reducing API costs and latency by 40%.
-- Fine-Tuned Local LLM Support: Support self-hosted open-source coding LLMs (CodeLlama, DeepSeek-Coder, Qwen-Coder) via Ollama and vLLM backends.
 
 ### Phase 5: Enterprise Governance, Audit & RBAC
 - Role-Based Access Control (RBAC): Enterprise permissions model (Admin, Developer, Auditor, Viewer).

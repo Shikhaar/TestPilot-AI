@@ -62,7 +62,6 @@
 - [ ] Docker sandbox container runner migration from host subprocess calls (`execution_agent.py`)
 - [ ] Automated Pull Request Auto-Remediation and auto-fix branch commits
 - [ ] LangGraph parallel sub-graphs and dynamic context window pruning (40% latency reduction)
-- [ ] Fine-Tuned Local LLM integration (DeepSeek-Coder, CodeLlama, Qwen-Coder via Ollama/vLLM)
 - [ ] Enterprise RBAC, SAML/SSO integration, and SOC2 audit logging
 
 
