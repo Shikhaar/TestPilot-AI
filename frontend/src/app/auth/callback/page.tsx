@@ -14,24 +14,46 @@ function AuthCallbackInner() {
     const code = searchParams.get("code");
     const state = searchParams.get("state") || undefined;
 
-    if (!code) {
-      setStatus("Error: Authorization code missing from callback parameters.");
-      return;
-    }
-
     // Prevent double execution in React StrictMode
     if (executedRef.current) return;
     executedRef.current = true;
 
+    if (!code) {
+      console.error("Authorization code missing from callback parameters.");
+      router.replace("/login");
+      return;
+    }
+
     async function exchangeToken() {
       try {
         await authApi.handleCallback(code!, state);
-        setStatus("Authentication successful! Redirecting to dashboard...");
         router.push("/");
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("GitHub OAuth Callback error:", err);
-        const detail = err.response?.data?.detail || err.message || "Failed to exchange authorization code";
-        setStatus(`Authentication error: ${detail}. Please try logging in again.`);
+
+        let detail = "Failed to exchange authorization code";
+
+        if (err instanceof Error) {
+          detail = err.message;
+        } else if (
+          typeof err === "object" &&
+          err !== null &&
+          "response" in err
+        ) {
+          const response = (err as {
+            response?: {
+              data?: {
+                detail?: string;
+              };
+            };
+          }).response;
+
+          detail = response?.data?.detail || detail;
+        }
+
+        setStatus(
+          `Authentication error: ${detail}. Please try logging in again.`,
+        );
       }
     }
 

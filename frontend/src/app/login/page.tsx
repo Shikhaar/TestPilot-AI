@@ -23,9 +23,29 @@ export default function Login() {
       } else {
         throw new Error("Invalid OAuth URL response from backend");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("GitHub Login error:", err);
-      const msg = err.response?.data?.detail || err.message || "Network error connecting to backend";
+
+      let msg = "Network error connecting to backend";
+
+      if (err instanceof Error) {
+        msg = err.message;
+      } else if (
+        typeof err === "object" &&
+        err !== null &&
+        "response" in err
+      ) {
+        const response = (err as {
+          response?: {
+            data?: {
+              detail?: string;
+            };
+          };
+        }).response;
+
+        msg = response?.data?.detail || msg;
+      }
+
       setError(`GitHub OAuth Error: ${msg}`);
       setLoading(false);
     }

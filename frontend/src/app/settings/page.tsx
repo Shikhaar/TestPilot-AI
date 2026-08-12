@@ -83,6 +83,7 @@ export default function SettingsPage() {
               </h2>
               <div className="flex items-center gap-4">
                 {settings?.avatar_url ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
                   <img
                     src={settings.avatar_url}
                     alt={settings.name ?? settings.username}

@@ -19,7 +19,6 @@ export default function Repositories() {
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState("");
   const [disconnectingId, setDisconnectingId] = useState<string | null>(null);
-  const [disconnectConfirmId, setDisconnectConfirmId] = useState<string | null>(null);
 
   const handleDisconnect = async (repo: Repository, e: React.MouseEvent) => {
     e.preventDefault();
@@ -39,9 +38,10 @@ export default function Repositories() {
         await repositoriesApi.disconnect(repo.full_name);
       }
       setRepos((prev) => prev.filter((r) => r.id !== repo.id && r.full_name !== repo.full_name));
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Disconnect error:", err);
-      const msg = err?.response?.data?.detail || err?.message || "Failed to disconnect repository";
+      const responseErr = err as { response?: { data?: { detail?: string } }; message?: string };
+      const msg = responseErr?.response?.data?.detail || responseErr?.message || "Failed to disconnect repository";
       setError(msg);
       alert(`Failed to disconnect repository: ${msg}`);
     } finally {
@@ -129,11 +129,12 @@ export default function Repositories() {
       setSelectedRepo("");
       setAccessToken("");
       setIsCustom(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const responseErr = err as { response?: { status?: number; data?: { detail?: string; message?: string } }; message?: string };
       const msg =
-        err?.response?.status === 401
+        responseErr?.response?.status === 401
           ? "Please sign in or provide a valid access token."
-          : err?.response?.data?.detail || err?.response?.data?.message || err.message || "Failed to connect repository";
+          : responseErr?.response?.data?.detail || responseErr?.response?.data?.message || responseErr.message || "Failed to connect repository";
       setError(msg);
     } finally {
       setConnecting(false);
@@ -192,7 +193,7 @@ export default function Repositories() {
                 key={p.id}
                 type="button"
                 onClick={() => {
-                  setVcsProvider(p.id as any);
+                  setVcsProvider(p.id as "github" | "bitbucket" | "gitlab" | "azure_devops" | "custom_git");
                   setError("");
                 }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${vcsProvider === p.id
@@ -216,7 +217,7 @@ export default function Repositories() {
                 type="button"
                 onClick={async () => {
                   try {
-                    const data = await authApi.getOAuthUrl(vcsProvider as any);
+                    const data = await authApi.getOAuthUrl(vcsProvider);
                     if (data?.url && !data.url.includes("testpilot-ai-app")) {
                       window.location.href = data.url;
                     } else {
@@ -224,7 +225,7 @@ export default function Repositories() {
                         `To use 1-click ${vcsProvider === "bitbucket" ? "Bitbucket" : vcsProvider === "gitlab" ? "GitLab" : "Azure DevOps"} OAuth, set ${vcsProvider.toUpperCase()}_CLIENT_ID in your backend .env file. Alternatively, connect public repos or enter an App Password below!`
                       );
                     }
-                  } catch (err: any) {
+                  } catch {
                     setError(`Failed to initiate ${vcsProvider} OAuth authorization.`);
                   }
                 }}
@@ -365,7 +366,7 @@ export default function Repositories() {
                   {isIndexing(repo) ? (
                     <div className="space-y-1.5 mb-4">
                       <p className="text-purple-300/70 text-xs">
-                        🔍 TestPilot AI is cloning and parsing this repository's AST graph. This usually takes 1–2 minutes.
+                        🔍 TestPilot AI is cloning and parsing this repository&apos;s AST graph. This usually takes 1–2 minutes.
                       </p>
                       <div className="w-full bg-white/5 rounded-full h-1">
                         <div className="bg-purple-500 h-1 rounded-full animate-pulse" style={{ width: '60%' }} />

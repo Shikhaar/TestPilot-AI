@@ -6,7 +6,7 @@ import { dashboardApi, DetailedMetrics } from "@/lib/api/dashboard";
 import { evalopsApi, EvalOpsMetrics } from "@/lib/api/evalops";
 
 export default function Monitoring() {
-  const [detailed, setDetailed] = useState<DetailedMetrics | null>(null);
+  const [, setDetailed] = useState<DetailedMetrics | null>(null);
   const [evalops, setEvalops] = useState<EvalOpsMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [isUsingMock, setIsUsingMock] = useState(false);

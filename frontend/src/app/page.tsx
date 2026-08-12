@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
-import Logo from "@/components/Logo";
 import { dashboardApi, DashboardMetrics, DetailedMetrics } from "@/lib/api/dashboard";
 import { repositoriesApi } from "@/lib/api/repositories";
 

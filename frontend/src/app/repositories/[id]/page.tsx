@@ -1,14 +1,13 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
-import Link from "next/link";
+import { use, useCallback, useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import { repositoriesApi, Repository } from "@/lib/api/repositories";
 
 import { pullRequestsApi, PullRequest } from "@/lib/api/pullRequests";
 
-export default function RepositoryDetail({ params }: { params: any }) {
-  const resolvedParams = params && typeof params.then === "function" ? use(params) : params;
+export default function RepositoryDetail({ params }: { params: Promise<{ id: string }> | { id: string } }) {
+  const resolvedParams = params && typeof (params as Promise<{ id: string }>).then === "function" ? use(params as Promise<{ id: string }>) : (params as { id: string });
   const rawId = (resolvedParams?.id || "").toString();
   const id = decodeURIComponent(rawId);
   const [repo, setRepo] = useState<Repository | null>(null);
@@ -16,7 +15,6 @@ export default function RepositoryDetail({ params }: { params: any }) {
   const [loading, setLoading] = useState(true);
   const [reindexing, setReindexing] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
-  const [confirmDisconnect, setConfirmDisconnect] = useState(false);
 
   const [selectedBranch, setSelectedBranch] = useState("");
   const [branches, setBranches] = useState<string[]>([]);
@@ -52,7 +50,7 @@ export default function RepositoryDetail({ params }: { params: any }) {
     }
   };
 
-  const fetchRepo = async () => {
+  const fetchRepo = useCallback(async () => {
     try {
       const [data, prData, branchData] = await Promise.all([
         repositoriesApi.get(id).catch(() => null),
@@ -61,9 +59,7 @@ export default function RepositoryDetail({ params }: { params: any }) {
       ]);
       if (data) {
         setRepo(data);
-        if (!selectedBranch) {
-          setSelectedBranch(data.default_branch || "main");
-        }
+        setSelectedBranch((prev) => prev || data.default_branch || "main");
       }
       if (prData && prData.items) setPrs(prData.items);
       if (branchData && branchData.length > 0) setBranches(branchData);
@@ -72,10 +68,34 @@ export default function RepositoryDetail({ params }: { params: any }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
-    fetchRepo();
+    let ignore = false;
+    async function loadData() {
+      try {
+        const [data, prData, branchData] = await Promise.all([
+          repositoriesApi.get(id).catch(() => null),
+          pullRequestsApi.list(id).catch(() => null),
+          repositoriesApi.listBranches(id).catch(() => ["main", "dev", "master", "staging"]),
+        ]);
+        if (ignore) return;
+        if (data) {
+          setRepo(data);
+          setSelectedBranch((prev) => prev || data.default_branch || "main");
+        }
+        if (prData && prData.items) setPrs(prData.items);
+        if (branchData && branchData.length > 0) setBranches(branchData);
+      } catch (err) {
+        console.error("Failed to load repo", err);
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    }
+    loadData();
+    return () => {
+      ignore = true;
+    };
   }, [id]);
 
   // Poll repository status every 3s while indexing is in progress or pending
@@ -85,7 +105,7 @@ export default function RepositoryDetail({ params }: { params: any }) {
       fetchRepo();
     }, 3000);
     return () => clearInterval(interval);
-  }, [repo?.index_status, id]);
+  }, [repo?.index_status, fetchRepo]);
 
   const handleReindex = async () => {
     if (!repo) return;
@@ -115,9 +135,10 @@ export default function RepositoryDetail({ params }: { params: any }) {
         await repositoriesApi.disconnect(repo.full_name);
       }
       window.location.href = "/repositories";
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to disconnect repository", err);
-      const msg = err?.response?.data?.detail || err?.message || "Failed to disconnect repository";
+      const responseErr = err as { response?: { data?: { detail?: string } }; message?: string };
+      const msg = responseErr?.response?.data?.detail || responseErr?.message || "Failed to disconnect repository";
       alert(`Failed to disconnect repository: ${msg}`);
       setDisconnecting(false);
     }
@@ -436,11 +457,12 @@ export default function RepositoryDetail({ params }: { params: any }) {
                               setPrBranch(res.data.branch);
                               setPrCreated(true);
                             }
-                          } catch (err: any) {
+                          } catch (err: unknown) {
+                            const responseErr = err as { response?: { status?: number; data?: { detail?: string } }; message?: string };
                             const msg =
-                              err?.response?.status === 401
+                              responseErr?.response?.status === 401
                                 ? "Please sign in with GitHub to create a Pull Request on GitHub."
-                                : err?.response?.data?.detail || err?.message || "Failed to create PR on GitHub";
+                                : responseErr?.response?.data?.detail || responseErr?.message || "Failed to create PR on GitHub";
                             alert(msg);
                           } finally {
                             setPrCreating(false);

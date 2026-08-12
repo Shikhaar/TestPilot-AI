@@ -121,6 +121,7 @@ export default function Sidebar() {
       {/* User Info / Settings Link */}
       <div className="p-4 border-t border-white/5 flex items-center space-x-3">
         {user?.avatar_url ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
           <img
             src={user.avatar_url}
             alt={displayName}

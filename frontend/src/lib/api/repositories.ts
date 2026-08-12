@@ -29,14 +29,14 @@ export interface Repository {
 
 export const repositoriesApi = {
   list: async (page = 1, pageSize = 20): Promise<{ items: Repository[]; total: number }> => {
-    const res = await client.get<any>("/repositories", {
+    const res = await client.get<{ items?: Repository[]; data?: { items: Repository[]; total: number }; total?: number }>("/repositories", {
       params: { page, page_size: pageSize },
     });
     if (res.data?.data?.items) {
       return res.data.data;
     }
     if (res.data?.items) {
-      return res.data;
+      return { items: res.data.items, total: res.data.total || res.data.items.length };
     }
     return { items: Array.isArray(res.data) ? res.data : [], total: 0 };
   },
@@ -65,13 +65,13 @@ export const repositoriesApi = {
     try {
       const res = await client.post<{ success: boolean; message: string }>("/repositories/disconnect", { id });
       return res.data;
-    } catch (_err) {
+    } catch {
       // 2. Fallback to path-based DELETE or POST
       const path = id.includes("/") ? id : encodeURIComponent(id);
       try {
         const res = await client.delete<{ success: boolean; message: string }>(`/repositories/${path}`);
         return res.data;
-      } catch (_err2) {
+      } catch {
         const res = await client.post<{ success: boolean; message: string }>(`/repositories/${path}/disconnect`);
         return res.data;
       }

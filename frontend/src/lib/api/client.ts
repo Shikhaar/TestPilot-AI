@@ -23,15 +23,13 @@ client.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 // Auto-refresh Access Token on 401 responses
 client.interceptors.response.use(
   (response: AxiosResponse) => response,
-  async (error: any) => {
-    const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
+  async (error: unknown) => {
+    const axiosErr = error as { config?: InternalAxiosRequestConfig & { _retry?: boolean }; response?: { status?: number } };
+    const originalRequest = axiosErr.config;
+    if (axiosErr.response?.status === 401 && originalRequest && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        // Hits /auth/refresh — browser automatically attaches HTTP-only cookie
-        // Send no body so FastAPI treats the optional RefreshTokenRequest as None
-        // and falls through to reading the refresh_token from the HTTP-only cookie
-        const res = await axios.post(
+        const res = await axios.post<{ access_token?: string }>(
           `${API_BASE_URL}/auth/refresh`,
           undefined,
           { withCredentials: true }
@@ -39,11 +37,12 @@ client.interceptors.response.use(
         const { access_token } = res.data;
         if (access_token) {
           localStorage.setItem("access_token", access_token);
-          originalRequest.headers.Authorization = `Bearer ${access_token}`;
+          if (originalRequest.headers) {
+            originalRequest.headers.Authorization = `Bearer ${access_token}`;
+          }
           return client(originalRequest);
         }
-      } catch (_refreshError) {
-        // Refresh token expired or invalid -> clear local storage token
+      } catch {
         if (typeof window !== "undefined") {
           localStorage.removeItem("access_token");
         }
