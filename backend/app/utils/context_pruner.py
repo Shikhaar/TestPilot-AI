@@ -20,7 +20,7 @@ logger = get_logger(__name__)
 def prune_code_context(
     retrieved_context: list[dict[str, Any]],
     max_char_limit: int = 4000,
-) -> tuple[list[dict[str, Any]], dict[str, int]]:
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Prune code context snippets using priority rules.
 
     Priority Rules:

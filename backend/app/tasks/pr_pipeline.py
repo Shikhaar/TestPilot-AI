@@ -149,6 +149,10 @@ def run_pr_analysis(
             return {"pr_id": pr_id, "status": "failed", "error": str(exc)}
 
 
+# Alias for webhook task dispatch
+analyze_pull_request = run_pr_analysis
+
+
 async def _update_pr_status(
     pr_id: str,
     status: str,
