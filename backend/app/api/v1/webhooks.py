@@ -59,7 +59,9 @@ async def handle_vcs_webhook(
         )
 
     # Handle Ping event
-    event_type = (headers_dict.get("x-github-event") or headers_dict.get("X-GitHub-Event") or "").lower()
+    event_type = (
+        headers_dict.get("x-github-event") or headers_dict.get("X-GitHub-Event") or ""
+    ).lower()
     if event_type == "ping":
         return JSONResponse(
             status_code=status.HTTP_202_ACCEPTED,
