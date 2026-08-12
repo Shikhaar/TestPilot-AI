@@ -5,202 +5,220 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/Shikhaar/TestPilot-AI/pulls)
 
-**Automated Regression Testing & Tree-Sitter AST Code Indexing Platform**
+**TestPilot AI** is an autonomous regression testing platform that analyzes code changes, maps their dependency impact, retrieves relevant code context, generates tests, executes them in isolated environments, diagnoses failures, and creates pull requests — end to end, without manual intervention.
 
-TestPilot AI is an open-source AI software engineering platform designed to automate regression analysis, map codebase dependency impact trees, discover existing test structures, synthesize unit test suites using Large Language Models (LLMs), and automate Pull Request reviews on GitHub.
+**One-command setup:** `docker compose up -d`
 
 ---
 
-## Platform Overview
+## Key Capabilities
+
+- AST-based change and dependency analysis (Tree-sitter)
+- 3-layer hybrid codebase RAG (dense vectors + keyword + disk scan)
+- Stateful multi-agent test generation (11 specialized LangGraph agents)
+- Sandboxed test execution (PyTest, Jest, JUnit, Go Test)
+- Automated failure diagnosis with root-cause reporting
+- Multi-VCS support (GitHub, Bitbucket, GitLab, Azure DevOps)
+- 4-category EvalOps telemetry (Pass@1/N, repair rate, token cost)
+- GitHub PR automation with structured review comments
+
+---
+
+## Why TestPilot?
+
+Traditional testing requires developers to manually identify affected areas, write tests for every change, and interpret failure output. This is slow, inconsistent, and scales poorly across large codebases.
+
+TestPilot closes this loop by combining static code analysis, dependency graphs, semantic retrieval, and LLM agents into a single automated pipeline. The result is regression coverage that runs on every change, not just when someone has time to write tests.
+
+---
+
+## Dashboard
 
 ![TestPilot AI Dashboard](docs/images/dashboard.png)
 
-> **Platform Overview** — Automated regression testing, vector AST indexing, and risk impact analysis dashboard showing repository health metrics, live AI agent telemetry, and quality token analytics.
+> Automated regression testing, vector AST indexing, and risk impact analysis dashboard showing repository health metrics, live AI agent telemetry, and quality token analytics.
 
 ---
 
-## Executive Summary
+## How It Works
 
-Modern software engineering teams face significant friction verifying regression risks across complex, microservice-oriented codebases. TestPilot AI solves this by combining deterministic static analysis (Tree-sitter Abstract Syntax Trees) with non-deterministic artificial intelligence (LangGraph Multi-Agent Orchestration and Qdrant Vector Retrieval) to perform context-aware test generation and risk evaluation in CI/CD pipelines.
+```
+Developer opens PR or pushes a commit
+           |
+           v
+  Analyze changed files with Tree-sitter AST
+           |
+           v
+  Map upstream/downstream dependency graph
+           |
+           v
+  Calculate regression blast radius
+           |
+           v
+  Retrieve relevant code context via hybrid RAG
+           |
+           v
+  Generate unit tests matching repo style (LLM)
+           |
+           v
+  Execute tests in isolated sandbox environment
+           |
+           v
+  Diagnose failures, generate root-cause report
+           |
+           v
+  Post structured review comment + open PR
+```
 
 ---
 
-## Engineering & System Documentation
+## Key Engineering Decisions
 
-For technical recruiters, engineering leaders, and open-source contributors, comprehensive system specifications and feature deep-dives are organized in the [`docs/`](docs/) directory:
+**Why Tree-sitter?**
+Deterministic, language-agnostic AST parsing. Change analysis is based on actual syntax structure rather than LLM interpretation, which keeps the impact graph reliable and auditable.
 
-| Document | Description | Key Technical Concepts |
-| :--- | :--- | :--- |
-| [**System Architecture**](docs/architecture.md) | Decoupled platform topology & component interactions | Next.js 16, FastAPI, PostgreSQL, Qdrant, Celery |
-| [**Project Overview**](docs/PROJECT_OVERVIEW.md) | Comprehensive platform overview & system capabilities | End-to-end PR review pipeline & AST impact mapping |
-| [**Multi-VCS Provider Architecture**](docs/features/VCS_PROVIDERS.md) | Multi-VCS integration & authentication model | GitHub, Bitbucket, GitLab, Azure DevOps, PAT tokens |
-| [**EvalOps Telemetry Engine**](docs/features/EVALOPS_AND_TELEMETRY.md) | Quality benchmarks, repair metrics & token analytics | Pass@1/Pass@N, repair success rate, token cost estimation |
-| [**3-Layer Code Search Engine**](docs/features/CODE_SEARCH_AND_INDEXING.md) | Parallel multi-layer code retrieval architecture | Dense 384-dim vectors, PostgreSQL ILIKE, disk scanner |
-| [**Test Generation & Verification**](docs/features/TEST_GENERATION_AND_VERIFICATION.md) | Multi-agent test synthesis & self-healing verification | Exit codes, pytest/jest JSON reports, self-healing loop |
-| [**GitHub OAuth & Session Security**](docs/features/GITHUB_OAUTH_AND_SECURITY.md) | Enterprise authentication & security model | GitHub OAuth 2.0, JWT tokens, zero password storage |
-| [**Monitoring & Telemetry**](docs/features/MONITORING_AND_TELEMETRY.md) | Queue monitoring & graceful fallback UI | Celery queue latency, Prometheus metrics, fallback banners |
-| [**Developer Setup Guide**](docs/setup.md) | Containerized and local development guide | Docker Compose, environment variables, alembic migrations |
-| [**Implementation Roadmap**](docs/plans/01_INITIAL_IMPLEMENTATION_PLAN.md) | Chronological development roadmap & milestone plans | Phase-by-phase implementation logs |
-| [**Release v1.1.0 Implementation Record**](docs/plans/05_RELEASE_V1_1_MULTIVCS_AND_PARALLEL_LANGGRAPH.md) | Release v1.1.0 completed features & test results | Multi-VCS, secured webhooks, parallel LangGraph, context pruning |
-| [**Version 2.0.0 Architecture Plan**](docs/plans/06_VERSION2_ROADMAP.md) | Version 2.0.0 enterprise roadmap & milestones | Phase 1 (Docker sandbox), Phase 2 (Auto-remediation), Phase 3 (RBAC) |
+**Why LangGraph?**
+Stateful orchestration with conditional branching, retries, and failure recovery. Each agent node is independently testable and observable, making the pipeline debuggable rather than a black box.
+
+**Why separate agents rather than one prompt?**
+Each stage — planning, diff parsing, dependency traversal, retrieval, generation, execution, failure analysis — has distinct inputs, outputs, and failure modes. Separating them makes the system easier to observe, retry selectively, and extend.
+
+**Why Qdrant?**
+Dense vector retrieval over repository code with 384-dimensional embeddings. Combined with PostgreSQL keyword search and a disk scanner, this gives three independent retrieval strategies that complement each other.
+
+**Why Celery + Redis?**
+Test generation and sandboxed execution are expensive and long-running. Moving them out of the synchronous API path keeps the backend responsive and allows the frontend to stream real-time progress updates.
+
+**Why sandboxed execution?**
+Generated tests must not run against the host environment directly. Subprocess isolation prevents generated code from having side effects on the running system.
 
 ---
 
 ## System Architecture
 
+```
+              Next.js 16 Frontend
+                      |
+                 FastAPI Backend
+                /     |      \
+        LangGraph   Qdrant   Celery + Redis
+         Agents      RAG     Async Workers
+            |
+       Test Sandbox
+    (PyTest / Jest / JUnit)
+```
+
+Full component topology with database and telemetry layers is documented in [System Architecture](docs/architecture.md).
+
 ```mermaid
 graph TD
- Client[Next.js 16 Frontend Client] -->|REST / WebSockets| FastAPI[FastAPI Backend Server]
+    Client[Next.js 16 Frontend] -->|REST / WebSockets| FastAPI[FastAPI Backend]
 
- FastAPI -->|VCS Abstraction Layer| VCS[VCS Providers: GitHub, Bitbucket, GitLab, Azure DevOps]
- FastAPI -->|Async Tasks| Redis[Redis Broker]
- Redis -->|Dispatch Jobs| Celery[Celery Task Worker]
+    FastAPI -->|VCS Layer| VCS[GitHub · Bitbucket · GitLab · Azure DevOps]
+    FastAPI -->|Async Tasks| Redis[Redis Broker]
+    Redis -->|Dispatch| Celery[Celery Worker]
 
- FastAPI -->|Query/Write| PG[(PostgreSQL Database)]
- Celery -->|Query/Write| PG
+    FastAPI -->|Query/Write| PG[(PostgreSQL)]
+    Celery -->|Query/Write| PG
 
- FastAPI -->|3-Layer Search| Qdrant[(Qdrant Vector DB)]
- Celery -->|Upsert Chunks| Qdrant
+    FastAPI -->|3-Layer Search| Qdrant[(Qdrant Vector DB)]
+    Celery -->|Upsert Chunks| Qdrant
 
- FastAPI -->|4-Category Telemetry| EvalOps[EvalOps Collector Service]
+    FastAPI -->|Telemetry| EvalOps[EvalOps Collector]
 
- Celery -->|Execute Loop| LangGraph[LangGraph Agent Engine]
- LangGraph -->|Sandboxed Execution| Sandbox[Pytest / Jest Sandbox Runner]
+    Celery -->|Execute| LangGraph[LangGraph Agent Engine]
+    LangGraph -->|Sandbox| Sandbox[Test Runner]
 ```
-
-The core engine uses a stateful **multi-agent orchestration workflow** powered by **LangGraph**, consisting of 11 specialized agent nodes:
-
-1. **Planner Agent**: Validates incoming pipeline requests and normalizes execution state.
-2. **Diff Agent**: Parses unified Git diffs and maps changed line ranges to Tree-sitter AST nodes (functions, classes, routes).
-3. **Dependency Agent**: Queries the static import graph to construct an upstream and downstream call graph.
-4. **Impact Agent**: Performs graph traversal across imported models, services, and route handlers to calculate total blast radius.
-5. **Search Agent**: Queries Qdrant vector embeddings to retrieve relevant reference code snippets via hybrid RAG.
-6. **Test Discovery Agent**: Indexes existing test frameworks (PyTest, Vitest/Jest, JUnit, Go Test) and identifies coverage gaps.
-7. **Test Generator Agent**: Synthesizes production-ready unit test files matching repository code style using LLM structured outputs.
-8. **Execution Agent**: Runs generated test suites inside isolated subprocess environments to verify test validity.
-9. **Failure Analysis Agent**: Parses stdout/stderr logs of failing tests and generates root-cause diagnostic reports.
-10. **Review Agent**: Aggregates risk metrics, affected symbols, and generated code into structured Pull Request markdown comments.
-11. **Documentation Agent**: Identifies API documentation drifts and generates OpenAPI/Markdown specification updates.
 
 ---
 
-## Tech Stack & Capabilities
+## The 11 LangGraph Agents
 
-* **Frontend**: Next.js 16, React 19, TailwindCSS, CSS Modules
-* **Backend**: Python 3.12, FastAPI, Async SQLAlchemy 2, Alembic, Pydantic v2, Poetry
-* **AI & Multi-Agent Engine**: LangGraph, Tree-sitter AST, LiteLLM, Instructor, Sentence-Transformers
-* **Vector & Relational Storage**: Qdrant Vector DB (384-dim dense vectors), PostgreSQL 16
-* **Async Infrastructure**: Celery 5, Redis 7 (Pub/Sub & Broker)
-* **Observability & Monitoring**: Prometheus, Grafana, OpenTelemetry, Celery Flower
+The agents are separated by responsibility to keep planning, static analysis, retrieval, generation, execution, and failure diagnosis independently testable and observable.
 
----
-
-## Quickstart Guide
-
-### Option 1: 60-Second Containerized Deployment (Recommended for New Users & Reviewers)
-
-1. **Clone the repository**:
- ```bash
- git clone https://github.com/Shikhaar/TestPilot-AI.git
- cd TestPilot-AI
- ```
-
-2. **Copy the environment configuration**:
- ```bash
- cp .env.example .env
- ```
-
-3. **Spin up containerized services**:
- ```bash
- docker compose up -d
- ```
-
-4. **Execute database migrations**:
- ```bash
- docker compose exec backend poetry run alembic upgrade head
- ```
-
-5. **Access the Web Dashboard** at `http://localhost:3000`.
+| # | Agent | Responsibility |
+| :--- | :--- | :--- |
+| 1 | **Planner** | Validates pipeline requests and normalizes execution state |
+| 2 | **Diff** | Parses Git diffs and maps changed line ranges to Tree-sitter AST nodes |
+| 3 | **Dependency** | Queries the static import graph to build upstream/downstream call graph |
+| 4 | **Impact** | Traverses the graph to calculate regression blast radius |
+| 5 | **Search** | Retrieves relevant code snippets via 3-layer hybrid RAG |
+| 6 | **Test Discovery** | Indexes existing test frameworks and identifies coverage gaps |
+| 7 | **Test Generator** | Synthesizes unit tests matching repository code style via LLM |
+| 8 | **Execution** | Runs tests in isolated subprocess environments |
+| 9 | **Failure Analysis** | Parses stdout/stderr and generates root-cause diagnostic reports |
+| 10 | **Review** | Aggregates risk metrics and generated code into PR review comments |
+| 11 | **Documentation** | Detects API documentation drift and generates spec updates |
 
 ---
 
-### Option 2: Native Host Development Setup (For Active Core Contributors)
+## Engineering Metrics
 
-<details>
-<summary>Click to expand Native Host Setup instructions</summary>
+| Metric | Value |
+| :--- | :--- |
+| LangGraph agent nodes | 11 |
+| Code search layers | 3 (dense vector · keyword · disk scan) |
+| EvalOps telemetry categories | 4 (Pass@1/N · repair rate · token cost · latency) |
+| VCS providers supported | 5 (GitHub · Bitbucket · GitLab · Azure DevOps · PAT) |
+| Embedding dimensions | 384-dim dense vectors (Sentence-Transformers) |
+| Test frameworks supported | PyTest · Jest/Vitest · JUnit · Go Test |
 
-#### Prerequisites
-* Python 3.12 & Poetry
-* Node.js v18+ & npm
-* Docker & Docker Compose (for PostgreSQL, Redis, and Qdrant infrastructure)
+---
 
-#### 1. Start Infrastructure
+## Tech Stack
+
+**AI & Intelligence**
+LangGraph · Tree-sitter · LiteLLM · Instructor · Sentence-Transformers · Qdrant RAG
+
+**Backend**
+Python 3.12 · FastAPI · Async SQLAlchemy 2 · Alembic · Pydantic v2 · Poetry
+
+**Async Infrastructure**
+Celery 5 · Redis 7 · Subprocess sandboxing
+
+**Observability**
+Prometheus · Grafana · OpenTelemetry · Celery Flower · EvalOps
+
+**Frontend**
+Next.js 16 · React 19 · TailwindCSS · CSS Modules
+
+**Storage**
+PostgreSQL 16 · Qdrant Vector DB
+
+---
+
+## Quickstart
+
 ```bash
-docker compose up -d postgres redis qdrant
+git clone https://github.com/Shikhaar/TestPilot-AI.git
+cd TestPilot-AI
+cp .env.example .env
+docker compose up -d
+docker compose exec backend alembic upgrade head
 ```
 
-#### 2. Configure Host Connection Strings (`.env`)
-```env
-POSTGRES_HOST=localhost
-REDIS_HOST=localhost
-QDRANT_HOST=localhost
-DATABASE_URL=postgresql+asyncpg://testpilot:testpilot_secret@localhost:5432/testpilot
-REDIS_URL=redis://:redis_secret@localhost:6379/0
-QDRANT_URL=http://localhost:6333
-```
-
-#### 3. Start Backend API
-```bash
-cd backend
-poetry install
-poetry run alembic upgrade head
-poetry run uvicorn app.main:app --port 8000 --reload
-```
-
-#### 4. Start Frontend Client
-```bash
-cd frontend
-npm install
-npm run dev
-```
 Open `http://localhost:3000`.
 
-</details>
+See the [Developer Setup Guide](docs/setup.md) for local development, environment variables, and service endpoints.
 
 ---
 
-## Usage Workflow
+## Engineering & System Documentation
 
-1. **Access the Dashboard**: Open `http://localhost:3000`.
-2. **Connect a Repository**: Select a repository from your linked GitHub account or enter any public GitHub repository URL.
-3. **Observe AST Indexing**: Track real-time AST parsing progress, health scores, and coverage metrics.
-4. **Code Search & Unit Testing**: Execute 3-layer hybrid code searches or generate automated unit test suites.
-5. **Disconnect a Repository**: Purge storage directories and Qdrant vector collections with one click.
-
----
-
-## Infrastructure & Endpoints
-
-| Service | Endpoint | Purpose |
+| Document | Description | Key Concepts |
 | :--- | :--- | :--- |
-| **Web Interface** | `http://localhost:3000` | Application frontend dashboard |
-| **Backend Swagger API** | `http://localhost:8000/docs` | Interactive OpenAPI specification |
-| **Qdrant Vector Dashboard** | `http://localhost:6333/dashboard` | Vector storage collection manager |
-| **Celery Flower** | `http://localhost:5555` | Distributed task execution monitor |
-| **Grafana Dashboard** | `http://localhost:3001` | Prometheus telemetry visualization |
-
----
-
-## Developer Automation (Makefile)
-
-| Command | Action |
-| :--- | :--- |
-| `make dev` | Launch complete stack via Docker Compose |
-| `make stop` | Terminate all active container services |
-| `make migrate` | Execute pending Alembic migrations |
-| `make db-reset` | Reset database state and re-apply schema |
-| `make lint` | Run Ruff static analysis across Python modules |
-| `make test` | Execute Pytest automated test suite |
+| [**System Architecture**](docs/architecture.md) | Decoupled platform topology & component interactions | Next.js 16, FastAPI, PostgreSQL, Qdrant, Celery |
+| [**Project Overview**](docs/PROJECT_OVERVIEW.md) | Comprehensive platform overview & system capabilities | End-to-end PR review pipeline & AST impact mapping |
+| [**Multi-VCS Provider Architecture**](docs/features/VCS_PROVIDERS.md) | Multi-VCS integration & authentication model | GitHub, Bitbucket, GitLab, Azure DevOps, PAT tokens |
+| [**EvalOps Telemetry Engine**](docs/features/EVALOPS_AND_TELEMETRY.md) | Quality benchmarks, repair metrics & token analytics | Pass@1/Pass@N, repair success rate, token cost |
+| [**3-Layer Code Search Engine**](docs/features/CODE_SEARCH_AND_INDEXING.md) | Parallel multi-layer code retrieval architecture | Dense vectors, PostgreSQL ILIKE, disk scanner |
+| [**Test Generation & Verification**](docs/features/TEST_GENERATION_AND_VERIFICATION.md) | Multi-agent test synthesis & self-healing verification | Exit codes, pytest/jest JSON reports, self-healing |
+| [**GitHub OAuth & Session Security**](docs/features/GITHUB_OAUTH_AND_SECURITY.md) | Enterprise authentication & security model | GitHub OAuth 2.0, JWT, zero password storage |
+| [**Monitoring & Telemetry**](docs/features/MONITORING_AND_TELEMETRY.md) | Queue monitoring & graceful fallback UI | Celery latency, Prometheus metrics, fallback banners |
+| [**Developer Setup Guide**](docs/setup.md) | Containerized and local development guide | Docker Compose, env vars, alembic migrations |
+| [**Implementation Roadmap**](docs/plans/01_INITIAL_IMPLEMENTATION_PLAN.md) | Chronological development roadmap & milestones | Phase-by-phase implementation logs |
+| [**Release v1.1.0 Record**](docs/plans/05_RELEASE_V1_1_MULTIVCS_AND_PARALLEL_LANGGRAPH.md) | Release v1.1.0 features & test results | Multi-VCS, secured webhooks, parallel LangGraph |
+| [**Version 2.0.0 Roadmap**](docs/plans/06_VERSION2_ROADMAP.md) | v2.0 enterprise roadmap & milestones | Docker sandbox, auto-remediation, RBAC |
 
 ---
 
