@@ -47,7 +47,7 @@ async def test_webhook_ping(client: AsyncClient) -> None:
 @pytest.mark.asyncio
 @pytest.mark.unit
 async def test_webhook_invalid_signature(client: AsyncClient) -> None:
-    """Test that invalid signatures return 403."""
+    """Test that invalid signatures return 401."""
     payload = json.dumps({"action": "opened"}).encode()
 
     response = await client.post(
@@ -59,13 +59,13 @@ async def test_webhook_invalid_signature(client: AsyncClient) -> None:
             "X-GitHub-Event": "pull_request",
         },
     )
-    assert response.status_code == 403
+    assert response.status_code == 401
 
 
 @pytest.mark.asyncio
 @pytest.mark.unit
 async def test_webhook_missing_signature(client: AsyncClient) -> None:
-    """Test that missing signatures return 403."""
+    """Test that missing signatures return 401."""
     payload = json.dumps({"action": "opened"}).encode()
 
     response = await client.post(
@@ -73,7 +73,7 @@ async def test_webhook_missing_signature(client: AsyncClient) -> None:
         content=payload,
         headers={"Content-Type": "application/json", "X-GitHub-Event": "pull_request"},
     )
-    assert response.status_code == 403
+    assert response.status_code == 401
 
 
 @pytest.mark.asyncio
