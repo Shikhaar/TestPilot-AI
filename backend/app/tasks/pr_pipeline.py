@@ -72,6 +72,7 @@ def run_pr_analysis(
     head_sha: str,
     base_sha: str,
     installation_id: str | None = None,
+    **kwargs: Any,
 ) -> dict[str, Any]:
     """Run the full PR analysis LangGraph pipeline.
 

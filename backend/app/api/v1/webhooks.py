@@ -58,6 +58,18 @@ async def handle_vcs_webhook(
             detail=f"Invalid webhook signature or secret token for provider '{provider}'.",
         )
 
+    # Handle Ping event
+    event_type = (headers_dict.get("x-github-event") or headers_dict.get("X-GitHub-Event") or "").lower()
+    if event_type == "ping":
+        return JSONResponse(
+            status_code=status.HTTP_202_ACCEPTED,
+            content={
+                "success": True,
+                "status": "pong",
+                "message": "GitHub ping event received successfully.",
+            },
+        )
+
     # 3. Parse NormalizedPREvent
     try:
         event = adapter.parse(headers_dict, body_bytes)
@@ -105,17 +117,15 @@ async def handle_vcs_webhook(
     try:
         from app.tasks.pr_pipeline import analyze_pull_request
 
+        pr_num = int(event.pull_request_id) if event.pull_request_id.isdigit() else 1
         analyze_pull_request.delay(
-            repository_full_name=event.repository,
-            pull_request_number=int(event.pull_request_id)
-            if event.pull_request_id.isdigit()
-            else 1,
-            provider=event.provider,
+            pr_id=f"pr-{event.repository}-{pr_num}",
+            repository_id=event.repository_id or f"repo-{event.repository}",
+            repo_full_name=event.repository,
+            pr_number=pr_num,
             head_sha=event.head_sha,
             base_sha=event.base_sha,
-            source_branch=event.source_branch,
-            target_branch=event.target_branch,
-            webhook_received_time=recv_time,
+            installation_id=event.installation_id,
         )
     except Exception as e:
         logger.warning(
